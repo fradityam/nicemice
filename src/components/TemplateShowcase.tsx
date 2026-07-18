@@ -246,7 +246,7 @@ export default function TemplateShowcase() {
                 href="#try-free"
                 className="inline-block bg-[#2D2D2D] text-white hover:bg-[#C5A059] font-sans font-medium text-xs tracking-[0.2em] uppercase px-8 py-4 rounded-sm shadow-sm hover:scale-105 active:scale-95 transition-all"
               >
-                BUAT SEKARANG Urut
+                MULAI BUAT GRATIS
               </a>
             </div>
           </div>

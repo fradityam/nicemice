@@ -5,7 +5,7 @@ export default function DifferenceSection() {
     {
       icon: Award,
       title: 'Kualitas Premium',
-      description: 'Optimasi perangkat lunak modern terbaik yang dipadukan dengan rangkaian kertas fisik tebal mewah premium sesuai permintaan.'
+      description: 'Kualitas tinggi yang responsif, tajam di semua layar gadget, dan memberikan impresi kemewahan di setiap detail digital.'
     },
     {
       icon: Palette,
@@ -20,7 +20,7 @@ export default function DifferenceSection() {
     {
       icon: HeartHandshake,
       title: 'Dukungan Gratis',
-      description: 'Wujudkan visi pernikahan impian Anda. Dapatkan bantuan tim spesialis pernikahan kami untuk mendesain, menyelesaikan, dan memeriksa isi daftar kado pernikahan.'
+      description: 'Wujudkan visi pernikahan impian Anda. Dapatkan bantuan tim spesialis pernikahan kami untuk mendesain, menyelesaikan, dan memeriksa isi Daftar Hadiah Pernikahan.'
     }
   ];
 

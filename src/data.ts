@@ -78,7 +78,7 @@ export const TEMPLATES: Template[] = [
   {
     id: 'tema-16',
     name: 'TEMA 16',
-    subtitle: 'Bingkai lengkung arsitektur yang elegan dengan garis minimalis krem muda.',
+    subtitle: 'Desain bingkai lengkung arsitektur yang elegan dipadukan dengan garis minimalis bernuansa krem muda.',
     code: 'KODE TEMA 16 DESAIN AESTHETIC DAN GAK PASARAN',
     category: 'vintage',
     bgColor: 'bg-[#F5F2EB]',
@@ -214,11 +214,11 @@ export const JOURNEY_STEPS: JourneyStep[] = [
     title: 'Kumpulkan inspirasi & mulai buat moodboard',
     checklist: [
       'Jelajahi estetika pernikahan dan palet warna',
-      'Pesan kartu contoh fisik dan paket gaya',
+      'Pesan sampel desain dan panduan gaya',
       'Buat profil pernikahan digital nicemice dasar Anda',
       'Jelajahi desain tipografi Save-the-Date',
       'Kumpulkan email & alamat rumah tamu di perencana daftar kami',
-      'Pelajari lebih lanjut tentang penawaran digital dan cetak penawaran premium kami'
+      'Pelajari lebih lanjut tentang penawaran premium digital kami'
     ]
   },
   {
@@ -226,10 +226,10 @@ export const JOURNEY_STEPS: JourneyStep[] = [
     title: 'Kirimkan save the dates Anda',
     checklist: [
       'Pesan sesi desain 30 menit dengan pakar pernikahan',
-      'Jelajahi segel lilin fisik, pita kustom, & tekstur',
-      'Selesaikan dan luncurkan urutan Save-the-Date pernikahan Anda',
+      'Jelajahi pilihan aksen visual, palet kustom, & tekstur digital',
+      'Rilis halaman Save-the-Date Anda',
       'Luncurkan situs pernikahan aktif Anda untuk pemesanan penerbangan segera',
-      'Mulai menjelajahi dan mengoordinasikan paket font undangan'
+      'Mulai memilih kombinasi fon yang cocok untuk undangan Anda'
     ]
   },
   {
@@ -237,7 +237,7 @@ export const JOURNEY_STEPS: JourneyStep[] = [
     title: 'Jelajahi undangan',
     checklist: [
       'Gunakan pencari undangan cerdas kami untuk mempersempit tema',
-      'Jelajahi kartu lampiran digital/cetak dan peta',
+      'Jelajahi kartu lampiran digital dan peta',
       'Baca aturan & panduan susunan kata undangan yang kohesif',
       'Selaraskan daftar hadiah pernikahan Anda ke dasbor menu utama',
       'Lakukan uji coba alur RSVP langsung untuk melihat pratinjau tamu'
@@ -248,8 +248,8 @@ export const JOURNEY_STEPS: JourneyStep[] = [
     title: 'Kirimkan undangan Anda',
     checklist: [
       'Selesaikan daftar tamu dan klik Kirim pada undangan digital',
-      'Simpan tema makan malam latihan atau acara pranikah yang cocok',
-      'Jelajahi perlengkapan kertas hari-H: menu, kartu pengantar, panduan upacara',
+      'Sesuaikan tema untuk acara pranikah atau makan malam keluarga',
+      'Jelajahi kebutuhan hari-H: kartu menu digital, penanda meja, dan buku panduan acara',
       'Jelajahi kartu ucapan terima kasih yang sesuai dengan tema estetika Anda',
       'Lihat jumlah RSVP waktu nyata secara berkala di dasbor portal Anda'
     ]
@@ -267,7 +267,7 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     id: 'blog-2',
-    title: 'Aturan Baru Penulisan Kata Undangan Pernikahan Modern',
+    title: 'Seni Menyusun Redaksi Kalimat Undangan Pernikahan Modern',
     excerpt: 'Dari permintaan kado santai hingga dinamika keluarga terpadu, berikut adalah cara mengomunikasikan detail penting dengan keanggunan, kejelasan, dan kehangatan.',
     imageUrl: new URL('./assets/images/blog_wording_rules_1782005760022.jpg', import.meta.url).href,
     date: '20 Mei 2026',

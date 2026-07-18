@@ -27,18 +27,17 @@ export default function Hero() {
 
         {/* Major Headline */}
         <h1 className="max-w-4xl mx-auto font-sans font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-[-0.03em] text-zinc-950 leading-[1.05] mb-8">
-          AJAK TAMU PERNIKAHAN <br className="hidden sm:inline" />
-          ANDA HADIR <span className="font-serif italic font-normal text-zinc-800">TEPAT WAKTU</span> & <br className="hidden sm:inline" />
-          <span className="underline decoration-[#C5A059] decoration-wavy decoration-3 underline-offset-8">PENUH GAYA</span>
+          Undangan Pernikahan <span className="font-serif italic font-normal text-zinc-800">Estetik</span> yang Dirancang Khusus <br className="hidden sm:inline" />
+          untuk <span className="underline decoration-[#C5A059] decoration-wavy decoration-3 underline-offset-8">Hari Istimewa Anda</span>.
         </h1>
 
         {/* CTA Button */}
         <div className="mb-14">
           <a
-            href="#try-free"
+            href="#invitations"
             className="inline-flex items-center gap-3 bg-[#C5A059] hover:bg-[#b08c4a] text-white font-sans font-bold text-xs sm:text-sm tracking-widest uppercase px-8 py-4 rounded-sm border border-[#C5A059]/10 shadow-lg shadow-amber-900/10 transition-all duration-300 hover:scale-105 active:scale-95 group"
           >
-            MULAI COBA GRATIS SEKARANG
+            Lihat Template
             <ArrowRight className="w-4 h-4 text-zinc-900 group-hover:translate-x-1.5 transition-transform" />
           </a>
         </div>

@@ -8,7 +8,6 @@ export default function Header() {
     { label: 'SITUS PERNIKAHAN', href: '#websites' },
     { label: 'DAFTAR HADIAH', href: '#registry' },
     { label: 'UNDANGAN ONLINE', href: '#invitations' },
-    { label: 'UNDANGAN CETAK', href: '#printed' },
     { label: 'LOGO & MONOGRAM', href: '#logos' },
     { label: 'GALERI', href: '#gallery' },
   ];

@@ -21,8 +21,7 @@ export default function Footer() {
       links: [
         { label: 'Website Pernikahan', href: '#websites' },
         { label: 'Undangan Digital', href: '#invitations' },
-        { label: 'Alat Tulis Cetak', href: '#printed' },
-        { label: 'Portal Kado Pernikahan', href: '#registry' },
+        { label: 'Daftar Hadiah Pernikahan', href: '#registry' },
         { label: 'Kelola RSVP Tamu', href: '#guestmanager' },
       ],
     },
@@ -40,8 +39,8 @@ export default function Footer() {
       title: 'SUMBER DAYA',
       links: [
         { label: 'Aturan Penulisan Undangan', href: '#wording' },
-        { label: 'Perencana Teknis', href: '#planners' },
-        { label: 'Fon Kustom Mewah', href: '#fonts' },
+        { label: 'Panduan Teknis', href: '#planners' },
+        { label: 'Koleksi Fon Premium', href: '#fonts' },
         { label: 'FAQ / Dukungan Langsung', href: '#support' },
         { label: 'Tingkatan Harga', href: '#pricing' },
       ],
@@ -62,7 +61,7 @@ export default function Footer() {
             </a>
             
             <p className="text-zinc-400 text-xs sm:text-sm tracking-wide leading-relaxed max-w-sm">
-              Kami membantu pasangan kontemporer menciptakan undangan pernikahan berbasis web yang tak lekang oleh waktu dan website perencanaan desainer. Tanpa kekacauan templat umum, kontrol tipografi mutlak, dan fokus luar biasa pada kenyamanan pengguna.
+              Kami membantu pasangan kontemporer menciptakan undangan pernikahan berbasis web yang elegan dan website pernikahan yang dirancang secara profesional. Tanpa kekacauan templat umum, kontrol tipografi mutlak, dan fokus luar biasa pada kenyamanan pengguna.
             </p>
 
             {/* Social Links */}
@@ -154,7 +153,7 @@ export default function Footer() {
               <a href="#cookies" className="hover:text-zinc-400 transition-colors">Preferensi Cookie</a>
             </div>
             <p className="text-[9px] text-zinc-700 font-serif italic mt-4">
-              Menghadirkan kebahagiaan upacara digital bagi pasangan modern.
+              Sentuhan digital elegan untuk hari bahagia pasangan modern.
             </p>
           </div>
 
