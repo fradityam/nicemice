@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { HERO_TESTIMONIALS } from '../data';
-
-// Using actual generated image path
-const HERO_IMAGE = '/src/assets/images/nicemice_hero_mockup_1782005729125.jpg';
+import HERO_IMAGE from '../assets/images/nicemice_hero_mockup_1782005729125.jpg';
 
 export default function Hero() {
   const [currentIdx, setCurrentIdx] = useState(0);

@@ -17,7 +17,7 @@ export default function AestheticsSection() {
     {
       name: 'Sederhana & Minimalis',
       tag: 'minimalist',
-      imgUrl: 'https://images.unsplash.com/photo-1510076857177-7470068a4407?auto=format&fit=crop&w=600&q=80',
+      imgUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80',
       description: 'Keseimbangan ruang yang tenang, gaya arsitektur elegan, dan nuansa putih pualam yang menawan.'
     },
     {
