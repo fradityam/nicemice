@@ -146,6 +146,24 @@ export const TEMPLATES: Template[] = [
       quote: 'Dalam cinta, kita dipersatukan.',
       accentColor: '#D4AF37'
     }
+  },
+  {
+    id: 'tema-cherry',
+    name: 'TEMA CHERRY',
+    subtitle: 'Undangan bergaya ilustrasi hangat dengan nuansa pink lembut dan tipografi playful.',
+    code: 'KODE TEMA CHERRY DESAIN AESTHETIC DAN GAK PASARAN',
+    category: 'floral',
+    bgColor: 'bg-[#FDE8E8]',
+    textColor: 'text-[#3D1F1F]',
+    previewType: 'card',
+    details: {
+      husband: 'Jack Paro',
+      wife: 'Rose Malina',
+      date: '01 Agustus 2027',
+      location: 'Gedung Serbaguna ABC, Kota Bogor',
+      quote: 'Cinta itu bukan mencari yang sempurna, tapi menikmati perjalanan bersama orang yang tepat.',
+      accentColor: '#C1440E'
+    }
   }
 ];
 
