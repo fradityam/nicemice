@@ -26,19 +26,19 @@ export default function DifferenceSection() {
 
   return (
     <section className="py-24 bg-white border-t border-zinc-150/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="font-serif italic text-zinc-500 text-lg mb-1">Janji utama kami</p>
-          <h2 className="font-serif text-3xl sm:text-4xl font-normal text-[#1A1A1A] tracking-tight">
+          <p className="font-serif italic text-zinc-500 text-base sm:text-lg mb-1">Janji utama kami</p>
+          <h2 className="font-serif text-3xl sm:text-4xl font-normal text-[#1A1A1A] tracking-tight leading-[1.2]">
             Keistimewaan nicemice
           </h2>
           <div className="h-0.5 w-16 bg-[#C5A059] mx-auto mt-4 rounded"></div>
         </div>
 
         {/* Features 4-column layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
           {features.map((feat) => {
             const IconComponent = feat.icon;
             return (
@@ -47,15 +47,15 @@ export default function DifferenceSection() {
                 className="group flex flex-col items-center text-center p-6 rounded-2xl bg-[#FAF9F6] border border-[#E5E2D9] hover:bg-white hover:shadow-md hover:border-[#C5A059] transition-all duration-300"
               >
                 {/* Elegant Circle Icon */}
-                <div className="w-12 h-12 rounded-full bg-white group-hover:bg-[#C5A059]/5 border border-zinc-200 group-hover:border-[#C5A059]/20 flex items-center justify-center text-zinc-700 group-hover:text-[#C5A059] transition-colors mb-6 shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-white group-hover:bg-[#C5A059]/5 border border-zinc-200 group-hover:border-[#C5A059]/20 flex items-center justify-center text-zinc-700 group-hover:text-[#C5A059] transition-colors mb-6 shadow-sm flex-shrink-0">
                   <IconComponent className="w-5 h-5" />
                 </div>
 
-                <h3 className="font-serif italic text-base text-[#1A1A1A] tracking-wide mb-3">
+                <h3 className="font-serif italic text-base text-[#1A1A1A] tracking-wide leading-[1.3] mb-3">
                   {feat.title}
                 </h3>
-                
-                <p className="text-[#6B6B6B] text-xs tracking-wide leading-relaxed font-sans">
+
+                <p className="text-[#6B6B6B] text-[0.9375rem] tracking-wide leading-[1.6] font-sans">
                   {feat.description}
                 </p>
               </div>

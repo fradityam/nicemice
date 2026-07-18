@@ -30,9 +30,9 @@ export default function Marquee() {
       `}</style>
       <div className="animate-marquee whitespace-nowrap flex items-center gap-16">
         {repeatedText.map((text, idx) => (
-          <div key={idx} className="inline-flex items-center gap-3 text-[#2D2D2D] text-xs sm:text-sm font-sans tracking-[0.2em] font-medium">
+          <div key={idx} className="inline-flex items-center gap-3 text-[#2D2D2D] text-xs sm:text-sm font-sans tracking-[0.1em] sm:tracking-[0.2em] font-medium whitespace-nowrap">
             <span>{text}</span>
-            <Sparkles className="w-3.5 h-3.5 text-[#C5A059] animate-pulse fill-[#C5A059]/15" />
+            <Sparkles className="w-3.5 h-3.5 text-[#C5A059] animate-pulse fill-[#C5A059]/15 flex-shrink-0" />
           </div>
         ))}
       </div>

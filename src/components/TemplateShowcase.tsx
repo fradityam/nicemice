@@ -137,15 +137,15 @@ export default function TemplateShowcase() {
 
   return (
     <section id="invitations" className="py-24 bg-[#FAF9F6]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+
         {/* Headings */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <p className="font-serif italic text-zinc-500 text-lg mb-2">Didesain untuk pasangan modern</p>
-          <h2 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-950 tracking-tight leading-none">
+          <p className="font-serif italic text-zinc-500 text-base sm:text-lg mb-2">Didesain untuk pasangan modern</p>
+          <h2 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-extrabold text-zinc-950 tracking-tight leading-[1.2]">
             Jelajahi pilihan templat terbaik kami
           </h2>
-          <p className="mt-4 text-zinc-500 text-sm tracking-wide font-sans leading-relaxed">
+          <p className="mt-4 text-zinc-500 text-[0.9375rem] sm:text-sm tracking-wide font-sans leading-[1.6]">
             Dirancang dengan indah, sangat interaktif, dan dioptimalkan secara sempurna untuk seluler, desktop, dan tablet.
             Pilih desain apa pun dan sesuaikan warna, tipografi, atau rincian konten Anda.
           </p>
@@ -165,7 +165,7 @@ export default function TemplateShowcase() {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-5 py-2.5 rounded-full text-xs font-sans tracking-[0.2em] uppercase font-medium transition-all duration-300 border ${
+                className={`px-4 sm:px-5 py-2.5 rounded-full text-xs font-sans tracking-[0.1em] sm:tracking-[0.2em] uppercase font-medium transition-all duration-300 border ${
                   selectedCategory === category
                     ? 'bg-[#2D2D2D] border-[#2D2D2D] text-white shadow-sm'
                     : 'bg-white border-[#E5E2D9] text-[#6B6B6B] hover:text-[#1A1A1A] hover:border-[#C5A059]'
@@ -196,39 +196,39 @@ export default function TemplateShowcase() {
               {/* Card descriptions & actions */}
               <div className="p-5 flex-1 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-sans tracking-widest font-bold text-xs text-zinc-950">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="font-sans tracking-wide sm:tracking-widest font-bold text-xs text-zinc-950">
                       {tpl.name}
                     </span>
-                    <span className="text-[10px] uppercase font-semibold tracking-widest text-[#C5A059] px-2.5 py-0.5 bg-[#C5A059]/10 rounded-full font-sans">
+                    <span className="text-xs uppercase font-semibold tracking-wide sm:tracking-widest text-[#C5A059] px-2.5 py-0.5 bg-[#C5A059]/10 rounded-full font-sans whitespace-nowrap">
                       {tpl.category}
                     </span>
                   </div>
-                  <p className="text-[10px] font-sans text-zinc-400 uppercase tracking-widest font-medium mb-3 line-clamp-1 block">
+                  <p className="text-xs font-sans text-zinc-400 uppercase tracking-wide sm:tracking-widest font-medium mb-3 line-clamp-1 block">
                     {tpl.code}
                   </p>
-                  <p className="text-zinc-500 text-xs tracking-wide line-clamp-2 leading-relaxed">
+                  <p className="text-zinc-500 text-xs tracking-wide line-clamp-2 leading-[1.5]">
                     {tpl.subtitle}
                   </p>
                 </div>
 
                 {/* Indonesian/mockup matching buttons: Contoh and Pesan */}
-                <div className="grid grid-cols-2 gap-3 mt-6 border-t border-[#E5E2D9] pt-4">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-6 border-t border-[#E5E2D9] pt-4">
                   <button
                     onClick={() => {
                       const route = CUSTOM_TEMPLATE_ROUTES[tpl.id];
                       route ? navigate(route) : openPreview(tpl);
                     }}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FAF9F6] hover:bg-[#E5E2D9]/40 border border-[#E5E2D9] text-[#2D2D2D] rounded-sm font-sans font-medium text-[10px] tracking-widest uppercase transition-all active:scale-95 cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 sm:px-3 bg-[#FAF9F6] hover:bg-[#E5E2D9]/40 border border-[#E5E2D9] text-[#2D2D2D] rounded-sm font-sans font-medium text-xs tracking-wide sm:tracking-widest uppercase transition-all active:scale-95 cursor-pointer"
                   >
-                    <Eye className="w-3.5 h-3.5 text-[#C5A059]" />
+                    <Eye className="w-3.5 h-3.5 text-[#C5A059] flex-shrink-0" />
                     Contoh
                   </button>
                   <button
                     onClick={() => { setOrderTemplate(tpl); setShowOrderModal(true); }}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#2D2D2D] hover:bg-[#C5A059] text-white border border-transparent rounded-sm font-sans font-medium text-[10px] tracking-widest uppercase transition-all active:scale-95 cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 py-2.5 px-2 sm:px-3 bg-[#2D2D2D] hover:bg-[#C5A059] text-white border border-transparent rounded-sm font-sans font-medium text-xs tracking-wide sm:tracking-widest uppercase transition-all active:scale-95 cursor-pointer"
                   >
-                    <MessageCircle className="w-3.5 h-3.5" />
+                    <MessageCircle className="w-3.5 h-3.5 flex-shrink-0" />
                     Pesan
                   </button>
                 </div>
@@ -238,25 +238,25 @@ export default function TemplateShowcase() {
         </div>
 
         {/* Call to action stripe (luxury gold-neutral stripe right below mockups) */}
-        <div className="relative bg-[#E5E2D9]/80 rounded-3xl p-8 sm:p-12 text-[#2D2D2D] overflow-hidden border border-[#D6D1C4] shadow-sm">
+        <div className="relative bg-[#E5E2D9]/80 rounded-3xl p-6 sm:p-12 text-[#2D2D2D] overflow-hidden border border-[#D6D1C4] shadow-sm">
           {/* Subtle nature circle patterns in background */}
           <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full border border-[#2D2D2D]/5 pointer-events-none" />
           <div className="absolute -bottom-16 -left-16 w-80 h-80 rounded-full border border-[#2D2D2D]/5 pointer-events-none" />
 
-          <div className="relative flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
             <div className="max-w-2xl text-center md:text-left">
-              <h3 className="font-serif text-2xl sm:text-3xl font-normal tracking-tight leading-tight">
+              <h3 className="font-serif text-xl sm:text-2xl md:text-3xl font-normal tracking-tight leading-[1.3]">
                 Website pernikahan gratis
               </h3>
-              <p className="mt-2 text-[#6B6B6B] text-[13px] sm:text-sm tracking-wide font-sans max-w-xl leading-relaxed">
+              <p className="mt-2 text-[#6B6B6B] text-[0.9375rem] sm:text-sm tracking-wide font-sans max-w-xl leading-[1.6]">
                 Mudah dibuat, mudah disesuaikan, dan sangat mudah digunakan oleh tamu Anda. Hubungkan RSVP, peta lokasi, dan daftar hadiah secara elegan.
               </p>
             </div>
 
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 w-full md:w-auto">
               <a
                 href="#try-free"
-                className="inline-block bg-[#2D2D2D] text-white hover:bg-[#C5A059] font-sans font-medium text-xs tracking-[0.2em] uppercase px-8 py-4 rounded-sm shadow-sm hover:scale-105 active:scale-95 transition-all"
+                className="block md:inline-block text-center bg-[#2D2D2D] text-white hover:bg-[#C5A059] font-sans font-medium text-xs tracking-[0.1em] sm:tracking-[0.2em] uppercase px-6 sm:px-8 py-3.5 sm:py-4 rounded-sm shadow-sm hover:scale-105 active:scale-95 transition-all"
               >
                 MULAI BUAT GRATIS
               </a>
@@ -275,7 +275,7 @@ export default function TemplateShowcase() {
             <div className="lg:w-[320px] bg-[#FAF9F6] border-r border-[#E5E2D9] p-6 flex flex-col justify-between overflow-y-auto">
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-[10px] uppercase font-semibold tracking-widest text-[#C5A059] px-2.5 py-0.5 bg-[#C5A059]/10 rounded-full font-sans">
+                  <span className="text-xs uppercase font-semibold tracking-wide text-[#C5A059] px-2.5 py-0.5 bg-[#C5A059]/10 rounded-full font-sans">
                     PRATINJAU UNDANGAN
                   </span>
                   <button
@@ -285,15 +285,15 @@ export default function TemplateShowcase() {
                     ✕
                   </button>
                 </div>
-                
-                <h3 className="font-display font-bold text-zinc-950 text-lg uppercase tracking-wider">{selectedTemplate.name}</h3>
-                <p className="text-[10px] font-mono tracking-wider opacity-60 mt-1">{selectedTemplate.code}</p>
+
+                <h3 className="font-display font-bold text-zinc-950 text-lg leading-[1.3] uppercase tracking-wide">{selectedTemplate.name}</h3>
+                <p className="text-xs font-mono tracking-wide opacity-60 mt-1">{selectedTemplate.code}</p>
 
                 <div className="h-px bg-zinc-200 my-4" />
 
                 {/* Edit Guest Name Input */}
                 <div className="space-y-2 mb-6">
-                  <label className="block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
+                  <label className="block text-xs font-bold tracking-wide text-zinc-500 uppercase">
                     TULIS NAMA TAMU
                   </label>
                   <input
@@ -303,12 +303,12 @@ export default function TemplateShowcase() {
                     className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs text-zinc-800 font-sans focus:outline-none focus:ring-1 focus:ring-zinc-900"
                     placeholder="Masukkan nama tamu..."
                   />
-                  <p className="text-[9px] text-zinc-400 italic">Kolom ini mengubah nama tamu secara langsung pada templat utama.</p>
+                  <p className="text-xs text-zinc-400 italic leading-[1.5]">Kolom ini mengubah nama tamu secara langsung pada templat utama.</p>
                 </div>
 
                 {/* Color theme selectors */}
                 <div className="space-y-2 mb-6">
-                  <label className="block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
+                  <label className="block text-xs font-bold tracking-wide text-zinc-500 uppercase">
                     PILIH SKEMA WARNA
                   </label>
                   <div className="flex gap-2">
@@ -329,12 +329,12 @@ export default function TemplateShowcase() {
 
                 {/* Simulation controls */}
                 <div className="space-y-3 mb-6">
-                  <label className="block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
+                  <label className="block text-xs font-bold tracking-wide text-zinc-500 uppercase">
                     AUDIO PERNIKAHAN
                   </label>
                   <button
                     onClick={() => setIsMusicPlaying(!isMusicPlaying)}
-                    className={`w-full flex items-center justify-center gap-2 py-2 px-3 border rounded-lg text-xs font-medium tracking-[0.15em] uppercase transition-all ${
+                    className={`w-full flex items-center justify-center gap-2 py-2 px-3 border rounded-lg text-xs font-medium tracking-[0.1em] uppercase transition-all ${
                       isMusicPlaying
                         ? 'bg-[#C5A059] text-white border-[#C5A059]'
                         : 'bg-white border-[#E5E2D9] text-[#2D2D2D] hover:bg-[#FAF9F6]'
@@ -347,13 +347,13 @@ export default function TemplateShowcase() {
 
                 {/* Layout simulation switch */}
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
+                  <label className="block text-xs font-bold tracking-wide text-zinc-500 uppercase">
                     SIMULASI LAYAR
                   </label>
                   <div className="grid grid-cols-2 gap-1.5 p-1 bg-zinc-200/60 rounded-lg">
                     <button
                       onClick={() => setPreviewDevice('mobile')}
-                      className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[10px] font-bold tracking-wider uppercase transition-all ${
+                      className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold tracking-wide uppercase transition-all ${
                         previewDevice === 'mobile' ? 'bg-white text-zinc-950 shadow-sm' : 'text-zinc-600 hover:text-zinc-950'
                       }`}
                     >
@@ -362,7 +362,7 @@ export default function TemplateShowcase() {
                     </button>
                     <button
                       onClick={() => setPreviewDevice('desktop')}
-                      className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[10px] font-bold tracking-wider uppercase transition-all ${
+                      className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold tracking-wide uppercase transition-all ${
                         previewDevice === 'desktop' ? 'bg-white text-zinc-950 shadow-sm' : 'text-zinc-600 hover:text-zinc-950'
                       }`}
                     >
@@ -382,7 +382,7 @@ export default function TemplateShowcase() {
                     setOrderTemplate(temp);
                     setShowOrderModal(true);
                   }}
-                  className="w-full bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-sans font-medium text-[10px] tracking-[0.2em] uppercase py-3 rounded-sm transition-all shadow-md cursor-pointer"
+                  className="w-full bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-sans font-medium text-xs tracking-[0.12em] uppercase py-3 rounded-sm transition-all shadow-md cursor-pointer"
                 >
                   GUNAKAN TEMPLAT INI
                 </button>
@@ -404,7 +404,7 @@ export default function TemplateShowcase() {
               <div
                 className={`transition-all duration-500 ease-out flex items-center justify-center ${
                   previewDevice === 'mobile'
-                    ? 'w-[320px] h-[550px] rounded-[40px] border-[8px] border-zinc-900 shadow-2xl relative bg-white overflow-hidden'
+                    ? 'w-[min(320px,85vw)] h-[min(550px,70vh)] rounded-[40px] border-[8px] border-zinc-900 shadow-2xl relative bg-white overflow-hidden'
                     : 'w-full h-full max-h-[500px] rounded-2xl border border-zinc-200 shadow-xl bg-white overflow-hidden'
                 }`}
               >
@@ -523,26 +523,26 @@ export default function TemplateShowcase() {
               <form onSubmit={submitOrder} className="space-y-4">
                 <div className="text-center mb-6">
                   <Heart className="w-8 h-8 text-[#C5A059] mx-auto mb-2" />
-                  <h3 className="font-serif text-lg text-zinc-900 uppercase tracking-widest">
+                  <h3 className="font-serif text-lg leading-[1.3] text-zinc-900 uppercase tracking-wide">
                     Ajukan Kustomisasi Desain
                   </h3>
-                  <p className="text-xs text-zinc-500 mt-1">
+                  <p className="text-xs text-zinc-500 mt-1 leading-[1.5]">
                     Pesan sesi desain yang dipersonalisasi untuk {orderTemplate.name}.
                   </p>
                 </div>
 
                 <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200/60 text-xs flex gap-2 items-center">
-                  <div className={`w-8 h-10 rounded ${orderTemplate.bgColor} flex items-center justify-center text-white text-[9px] font-bold`}>
+                  <div className={`w-8 h-10 rounded ${orderTemplate.bgColor} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
                     12
                   </div>
                   <div>
                     <h5 className="font-bold text-zinc-800">Paket Desain {orderTemplate.name}</h5>
-                    <p className="text-zinc-500 text-[10px] uppercase font-mono">{orderTemplate.code}</p>
+                    <p className="text-zinc-500 text-xs uppercase font-mono">{orderTemplate.code}</p>
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase block">
+                  <label className="text-xs font-bold tracking-wide text-zinc-500 uppercase block">
                     Nama Lengkap Anda
                   </label>
                   <input
@@ -556,7 +556,7 @@ export default function TemplateShowcase() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase block">
+                  <label className="text-xs font-bold tracking-wide text-zinc-500 uppercase block">
                     Email atau Nomor WhatsApp
                   </label>
                   <input
@@ -572,10 +572,10 @@ export default function TemplateShowcase() {
                 <div className="pt-3">
                   <button
                     type="submit"
-                    className="w-full bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-sans font-medium text-xs tracking-[0.2em] uppercase py-3.5 rounded-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-sans font-medium text-xs tracking-[0.1em] sm:tracking-[0.2em] uppercase py-3.5 rounded-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <MessageCircle className="w-4 h-4" />
-                    KIRIM RINCIAN PESANAN
+                    <MessageCircle className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-center">KIRIM RINCIAN PESANAN</span>
                   </button>
                 </div>
               </form>
@@ -584,14 +584,14 @@ export default function TemplateShowcase() {
                 <div className="w-16 h-16 bg-[#FAF9F6] text-[#C5A059] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#E5E2D9] shadow-inner font-serif text-2xl font-bold">
                   ✓
                 </div>
-                <h4 className="font-serif text-xl text-[#2D2D2D] uppercase tracking-widest leading-none">
+                <h4 className="font-serif text-xl leading-[1.3] text-[#2D2D2D] uppercase tracking-wide">
                   Pengiriman Berhasil
                 </h4>
-                <p className="text-xs text-[#6B6B6B] max-w-xs mx-auto leading-relaxed">
+                <p className="text-xs text-[#6B6B6B] max-w-xs mx-auto leading-[1.5]">
                   Terima kasih, <strong>{customerName}</strong>! Tim layanan desainer kami telah menerima permintaan untuk <strong>{orderTemplate.name}</strong> dan akan segera menghubungi Anda melalui <strong>{guestContact}</strong> untuk mendesain tata letak impian Anda.
                 </p>
-                <div className="flex justify-center items-center gap-2 text-[10px] text-zinc-400 mt-4 animate-pulse uppercase tracking-widest font-medium">
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#C5A059]" />
+                <div className="flex justify-center items-center gap-2 text-xs text-zinc-400 mt-4 animate-pulse uppercase tracking-wide font-medium text-center">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#C5A059] flex-shrink-0" />
                   Kembali dalam sekejap...
                 </div>
               </div>

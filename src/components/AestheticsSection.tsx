@@ -73,30 +73,30 @@ export default function AestheticsSection() {
 
   return (
     <section className="py-24 bg-white border-t border-zinc-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
           <div>
-            <p className="font-serif italic text-zinc-500 text-lg mb-2">Temukan karakter visual Anda</p>
-            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-zinc-950 tracking-tight leading-tight">
+            <p className="font-serif italic text-zinc-500 text-base sm:text-lg mb-2">Temukan karakter visual Anda</p>
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-zinc-950 tracking-tight leading-[1.2]">
               Pilih undangan berdasarkan gaya estetika
             </h2>
           </div>
 
-          <div>
+          <div className="w-full md:w-auto">
             <button
               onClick={startQuiz}
-              className="inline-flex items-center gap-2.5 bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-sans font-medium text-xs tracking-[0.2em] uppercase px-7 py-4 rounded-full transition-all cursor-pointer shadow-md"
+              className="w-full md:w-auto inline-flex items-center justify-center gap-2.5 bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-sans font-medium text-xs tracking-[0.12em] sm:tracking-[0.2em] uppercase px-6 sm:px-7 py-3.5 sm:py-4 rounded-full transition-all cursor-pointer shadow-md text-center"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#C5A059] animate-pulse" />
+              <Sparkles className="w-3.5 h-3.5 text-[#C5A059] animate-pulse flex-shrink-0" />
               TEMUKAN ESTETIKA ANDA
             </button>
           </div>
         </div>
 
         {/* Aesthetics grid cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {aesthetics.map((style) => (
             <div
               key={style.name}
@@ -114,14 +114,14 @@ export default function AestheticsSection() {
               </div>
 
               {/* Text Body */}
-              <div className="p-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-serif italic text-base text-[#1A1A1A] tracking-wide">
+              <div className="p-5 sm:p-6">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-serif italic text-base text-[#1A1A1A] tracking-wide leading-[1.3]">
                     {style.name}
                   </h3>
-                  <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-1.5 transition-transform" />
+                  <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-1.5 transition-transform flex-shrink-0" />
                 </div>
-                <p className="mt-2 text-[#6B6B6B] text-xs tracking-wide leading-relaxed font-sans">
+                <p className="mt-2 text-[#6B6B6B] text-[0.9375rem] tracking-wide leading-[1.6] font-sans">
                   {style.description}
                 </p>
               </div>
@@ -159,13 +159,13 @@ export default function AestheticsSection() {
             {quizStep === 1 && (
               <div className="space-y-6 animate-fade-in text-left">
                 <div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-[#C5A059] px-2.5 py-1 bg-[#C5A059]/10 rounded-full">
+                  <span className="text-xs uppercase font-bold tracking-wide text-[#C5A059] px-2.5 py-1 bg-[#C5A059]/10 rounded-full">
                     PERTANYAAN 1 DARI 3
                   </span>
-                  <h3 className="font-serif text-xl sm:text-2xl text-zinc-950 mt-3 tracking-wide leading-snug font-normal">
+                  <h3 className="font-serif text-xl sm:text-2xl text-zinc-950 mt-3 tracking-wide leading-[1.3] font-normal">
                     Di mana upacara pernikahan Anda akan diselenggarakan?
                   </h3>
-                  <p className="text-zinc-500 text-xs tracking-wide mt-1 font-sans">
+                  <p className="text-zinc-500 text-xs tracking-wide mt-1.5 font-sans leading-[1.5]">
                     Ini membantu kami memahami keselarasan ruang & gaya estetika Anda.
                   </p>
                 </div>
@@ -180,7 +180,7 @@ export default function AestheticsSection() {
                     <button
                       key={opt.key}
                       onClick={() => selectAnswer('venue', opt.key)}
-                      className="w-full text-left p-4 rounded-full border border-[#E5E2D9] hover:border-[#C5A059] hover:bg-[#FAF9F6] font-sans text-xs sm:text-sm font-medium tracking-wide text-zinc-700 hover:text-zinc-950 transition-all active:scale-[0.99] cursor-pointer"
+                      className="w-full text-left p-4 rounded-2xl border border-[#E5E2D9] hover:border-[#C5A059] hover:bg-[#FAF9F6] font-sans text-[0.9375rem] font-medium tracking-wide leading-[1.6] text-zinc-700 hover:text-zinc-950 transition-all active:scale-[0.99] cursor-pointer"
                     >
                       {opt.title}
                     </button>
@@ -193,13 +193,13 @@ export default function AestheticsSection() {
             {quizStep === 2 && (
               <div className="space-y-6 animate-fade-in text-left">
                 <div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-[#C5A059] px-2.5 py-1 bg-[#C5A059]/10 rounded-full">
+                  <span className="text-xs uppercase font-bold tracking-wide text-[#C5A059] px-2.5 py-1 bg-[#C5A059]/10 rounded-full">
                     PERTANYAAN 2 DARI 3
                   </span>
-                  <h3 className="font-serif text-xl sm:text-2xl text-zinc-950 mt-3 tracking-wide leading-snug font-normal">
+                  <h3 className="font-serif text-xl sm:text-2xl text-zinc-950 mt-3 tracking-wide leading-[1.3] font-normal">
                     Kata sifat mana yang paling menggambarkan suasana impian Anda?
                   </h3>
-                  <p className="text-zinc-500 text-xs tracking-wide mt-1 font-sans">
+                  <p className="text-zinc-500 text-xs tracking-wide mt-1.5 font-sans leading-[1.5]">
                     Suasana hati apa yang ingin langsung dirasakan oleh para tamu?
                   </p>
                 </div>
@@ -214,7 +214,7 @@ export default function AestheticsSection() {
                     <button
                       key={opt.key}
                       onClick={() => selectAnswer('vibe', opt.key)}
-                      className="w-full text-left p-4 rounded-full border border-[#E5E2D9] hover:border-[#C5A059] hover:bg-[#FAF9F6] font-sans text-xs sm:text-sm font-medium tracking-wide text-zinc-700 hover:text-zinc-950 transition-all active:scale-[0.99] cursor-pointer"
+                      className="w-full text-left p-4 rounded-2xl border border-[#E5E2D9] hover:border-[#C5A059] hover:bg-[#FAF9F6] font-sans text-[0.9375rem] font-medium tracking-wide leading-[1.6] text-zinc-700 hover:text-zinc-950 transition-all active:scale-[0.99] cursor-pointer"
                     >
                       {opt.title}
                     </button>
@@ -227,13 +227,13 @@ export default function AestheticsSection() {
             {quizStep === 3 && (
               <div className="space-y-6 animate-fade-in text-left">
                 <div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-[#C5A059] px-2.5 py-1 bg-[#C5A059]/10 rounded-full">
+                  <span className="text-xs uppercase font-bold tracking-wide text-[#C5A059] px-2.5 py-1 bg-[#C5A059]/10 rounded-full">
                     PERTANYAAN 3 DARI 3
                   </span>
-                  <h3 className="font-serif text-xl sm:text-2xl text-zinc-950 mt-3 tracking-wide leading-snug font-normal">
+                  <h3 className="font-serif text-xl sm:text-2xl text-zinc-950 mt-3 tracking-wide leading-[1.3] font-normal">
                     Apa jenis tata letak tipografi yang Anda sukai?
                   </h3>
-                  <p className="text-zinc-500 text-xs tracking-wide mt-1 font-sans">
+                  <p className="text-zinc-500 text-xs tracking-wide mt-1.5 font-sans leading-[1.5]">
                     Bentuk huruf menentukan keanggunan pesan korespondensi pernikahan.
                   </p>
                 </div>
@@ -248,7 +248,7 @@ export default function AestheticsSection() {
                     <button
                       key={opt.key}
                       onClick={() => selectAnswer('type', opt.key)}
-                      className="w-full text-left p-4 rounded-full border border-[#E5E2D9] hover:border-[#C5A059] hover:bg-[#FAF9F6] font-sans text-xs sm:text-sm font-medium tracking-wide text-zinc-700 hover:text-zinc-950 transition-all active:scale-[0.99] cursor-pointer"
+                      className="w-full text-left p-4 rounded-2xl border border-[#E5E2D9] hover:border-[#C5A059] hover:bg-[#FAF9F6] font-sans text-[0.9375rem] font-medium tracking-wide leading-[1.6] text-zinc-700 hover:text-zinc-950 transition-all active:scale-[0.99] cursor-pointer"
                     >
                       {opt.title}
                     </button>
@@ -264,10 +264,10 @@ export default function AestheticsSection() {
                   <div className="w-12 h-12 bg-[#FAF9F6] text-[#C5A059] rounded-full flex items-center justify-center mx-auto border border-[#E5E2D9] shadow-inner mb-3">
                     <Heart className="w-5 h-5 fill-[#C5A059] text-[#C5A059]" />
                   </div>
-                  <h3 className="font-serif text-xl sm:text-2xl text-zinc-950 tracking-wide font-normal">
+                  <h3 className="font-serif text-xl sm:text-2xl leading-[1.3] text-zinc-950 tracking-wide font-normal">
                     Kami menemukan templat yang sempurna untuk Anda
                   </h3>
-                  <p className="text-zinc-500 text-xs tracking-wide mt-1 font-sans max-w-sm mx-auto">
+                  <p className="text-zinc-500 text-xs tracking-wide mt-1.5 font-sans leading-[1.5] max-w-sm mx-auto">
                     Berdasarkan tipe tempat impian dan suasana perayaan pernikahan Anda, kami sangat merekomendasikan:
                   </p>
                 </div>
@@ -303,14 +303,14 @@ export default function AestheticsSection() {
                       const element = document.getElementById('invitations');
                       if (element) element.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="w-full bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-sans font-medium text-xs tracking-[0.2em] uppercase py-3.5 rounded-full transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-sans font-medium text-xs tracking-[0.12em] sm:tracking-[0.2em] uppercase py-3.5 rounded-full transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer text-center"
                   >
                     LIHAT DI HALAMAN UTAMA
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 flex-shrink-0" />
                   </button>
                   <button
                     onClick={() => setQuizStep(1)}
-                    className="text-zinc-500 hover:text-zinc-800 font-sans font-medium text-[10px] tracking-[0.2em] uppercase transition-colors"
+                    className="text-zinc-500 hover:text-zinc-800 font-sans font-medium text-xs tracking-[0.12em] sm:tracking-[0.2em] uppercase transition-colors"
                   >
                     ULANGI KUIS
                   </button>

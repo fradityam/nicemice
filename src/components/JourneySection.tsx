@@ -22,24 +22,24 @@ export default function JourneySection() {
 
   return (
     <section className="py-24 bg-[#FAF9F6] border-t border-zinc-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
           <div className="max-w-xl">
-            <p className="font-serif italic text-zinc-500 text-lg mb-2">Langkah indah yang berkesan</p>
-            <h2 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#2D2D2D] tracking-tight leading-none">
+            <p className="font-serif italic text-zinc-500 text-base sm:text-lg mb-2">Langkah indah yang berkesan</p>
+            <h2 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#2D2D2D] tracking-tight leading-[1.2]">
               Hadir untuk setiap langkah perjalanan Anda
             </h2>
-            <p className="mt-4 text-zinc-500 text-sm tracking-wide leading-relaxed font-sans">
+            <p className="mt-4 text-zinc-500 text-[0.9375rem] sm:text-sm tracking-wide leading-[1.6] font-sans">
               Dari hari pertama mencari inspirasi, hingga log RSVP terakhir beberapa minggu sebelum janji suci Anda. Centang tugas di bawah untuk memvisualisasikan linimasa Anda.
             </p>
           </div>
 
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-full md:w-auto">
             <a
               href="#planning-guide"
-              className="inline-block bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-sans font-bold text-xs tracking-widest uppercase px-6 py-4 rounded-sm transition-colors cursor-pointer"
+              className="block md:inline-block text-center bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-sans font-bold text-xs tracking-tight sm:tracking-widest uppercase px-6 py-3.5 sm:py-4 rounded-sm transition-colors cursor-pointer leading-[1.4]"
             >
               UNDUH PANDUAN PERENCANAAN TERBAIK KAMI
             </a>
@@ -50,7 +50,7 @@ export default function JourneySection() {
         <div className="relative">
           <div
             ref={carouselRef}
-            className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-none scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0"
+            className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-none scroll-smooth -mx-6 px-6 lg:mx-0 lg:px-0"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {JOURNEY_STEPS.map((step, stepId) => (
@@ -65,12 +65,12 @@ export default function JourneySection() {
 
                 <div>
                   {/* Timeline Badge */}
-                  <span className="inline-block font-mono text-[10px] font-bold tracking-[0.25em] text-[#C5A059] mb-4 bg-amber-50 px-3 py-1 rounded-sm">
+                  <span className="inline-block font-mono text-xs font-bold tracking-[0.15em] sm:tracking-[0.25em] text-[#C5A059] mb-4 bg-amber-50 px-3 py-1 rounded-sm leading-[1.5]">
                     {step.timeline}
                   </span>
 
                   {/* Title */}
-                  <h3 className="font-display font-semibold text-lg text-zinc-950 tracking-wide mb-6 leading-snug">
+                  <h3 className="font-display font-semibold text-lg text-zinc-950 tracking-wide mb-6 leading-[1.3]">
                     {step.title}
                   </h3>
 
@@ -95,7 +95,7 @@ export default function JourneySection() {
                             {isComplete && <Check className="w-3 h-3" />}
                           </div>
                           <span
-                            className={`text-xs tracking-wide leading-relaxed font-sans transition-colors ${
+                            className={`text-[0.9375rem] tracking-wide leading-[1.6] font-sans transition-colors ${
                               isComplete
                                 ? 'text-zinc-400 line-through'
                                 : 'text-zinc-600 group-hover:text-zinc-900'
@@ -110,7 +110,7 @@ export default function JourneySection() {
                 </div>
 
                 {/* completion count footer helper */}
-                <div className="mt-8 pt-4 border-t border-zinc-100 flex items-center justify-between text-[10px] font-mono tracking-widest text-zinc-400 font-bold uppercase">
+                <div className="mt-8 pt-4 border-t border-zinc-100 flex items-center justify-between gap-2 text-xs font-mono tracking-tight sm:tracking-widest text-zinc-400 font-bold uppercase">
                   <span>KEMAJUAN</span>
                   <span>
                     {step.checklist.filter((_, idx) => completedTasks[`${stepId}-${idx}`]).length} /{' '}

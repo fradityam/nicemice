@@ -13,28 +13,28 @@ export default function Header() {
   ];
 
   return (
-    <header className="relative border-b border-[#E5E2D9] bg-[#FAF9F6] font-sans tracking-widest text-[10px] sm:text-xs z-50">
+    <header className="relative border-b border-[#E5E2D9] bg-[#FAF9F6] font-sans tracking-wide sm:tracking-widest text-xs z-50">
       {/* Top tiny sub-header bar */}
-      <div className="flex justify-between items-center px-4 py-2 text-[10px] text-zinc-500 border-b border-[#E5E2D9] font-sans font-medium">
-        <div className="flex gap-4 items-center">
-          <div className="flex items-center gap-1.5">
+      <div className="flex justify-between items-center px-6 lg:px-8 py-2 text-xs text-zinc-500 border-b border-[#E5E2D9] font-sans font-medium overflow-hidden">
+        <div className="flex gap-2 sm:gap-4 items-center min-w-0">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <div className="w-5 h-5 bg-[#C5A059] rounded-full flex items-center justify-center">
               <span className="text-white font-serif text-[11px] italic">n</span>
             </div>
             <span className="text-zinc-800 font-bold hover:opacity-80 cursor-pointer">nicemice</span>
           </div>
-          <span className="text-zinc-300">|</span>
-          <span className="hover:text-zinc-900 transition-colors cursor-pointer">CARATS & CAKE</span>
-          <span className="text-zinc-300">|</span>
-          <span className="hover:text-zinc-900 transition-colors cursor-pointer text-[#C5A059]">CHERRY ✨</span>
+          <span className="hidden sm:inline text-zinc-300">|</span>
+          <span className="hidden sm:inline hover:text-zinc-900 transition-colors cursor-pointer truncate">CARATS & CAKE</span>
+          <span className="hidden sm:inline text-zinc-300">|</span>
+          <span className="hidden sm:inline hover:text-zinc-900 transition-colors cursor-pointer text-[#C5A059] truncate">CHERRY ✨</span>
         </div>
-        <div className="hidden sm:block">
+        <div className="hidden lg:block flex-shrink-0">
           <span className="text-[#C5A059] font-semibold tracking-widest">● MINIMALISME YANG BERSIH DAN ANGGUN</span>
         </div>
       </div>
 
       {/* Main navigation header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
@@ -89,18 +89,18 @@ export default function Header() {
               <a
                 key={link.label}
                 href={link.href}
-                className="block px-3 py-3 rounded-md text-sm font-medium text-[#6B6B6B] hover:text-[#1A1A1A] hover:bg-zinc-100/50 tracking-widest"
+                className="block px-3 py-3 rounded-md text-sm font-medium text-[#6B6B6B] hover:text-[#1A1A1A] hover:bg-zinc-100/50 tracking-wide leading-[1.5]"
                 onClick={() => setIsOpen(false)}
               >
                 {link.label}
               </a>
             ))}
             <div className="border-t border-[#E5E2D9] pt-4 pb-2 px-3 flex flex-col gap-3">
-              <button className="text-left py-2 text-xs font-semibold text-[#6B6B6B] hover:text-[#1A1A1A] tracking-widest">
+              <button className="text-left py-2 text-xs font-semibold text-[#6B6B6B] hover:text-[#1A1A1A] tracking-wide">
                 MASUK ATAU DAFTAR
               </button>
-              <button className="w-full bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-medium text-xs tracking-widest px-4 py-3 rounded-full transition-all flex items-center justify-center gap-2">
-                BUAT UNDANGAN <ArrowRight className="w-4 h-4" />
+              <button className="w-full bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-medium text-xs tracking-wide px-4 py-3 rounded-full transition-all flex items-center justify-center gap-2">
+                BUAT UNDANGAN <ArrowRight className="w-4 h-4 flex-shrink-0" />
               </button>
             </div>
           </div>

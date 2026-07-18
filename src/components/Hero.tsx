@@ -16,17 +16,17 @@ export default function Hero() {
 
   return (
     <section className="relative pt-16 pb-20 bg-gradient-to-b from-white to-[#FAF9F6]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
         {/* Subtle Pre-heading */}
         <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 bg-zinc-50 border border-zinc-100/80 rounded-full">
           <span className="w-1.5 h-1.5 rounded-full bg-[#C5A059] animate-pulse"></span>
-          <p className="font-serif italic text-zinc-600 text-sm tracking-wide">
+          <p className="font-serif italic text-zinc-600 text-xs sm:text-sm tracking-wide">
             Website & Undangan Pernikahan Modern
           </p>
         </div>
 
         {/* Major Headline */}
-        <h1 className="max-w-4xl mx-auto font-sans font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-[-0.03em] text-zinc-950 leading-[1.05] mb-8">
+        <h1 className="max-w-4xl mx-auto font-sans font-extrabold text-4xl leading-[1.15] sm:text-5xl sm:leading-[1.08] md:text-6xl lg:text-7xl lg:leading-[1.05] tracking-[-0.02em] sm:tracking-[-0.03em] text-zinc-950 mb-8">
           Undangan Pernikahan <span className="font-serif italic font-normal text-zinc-800">Estetik</span> yang Dirancang Khusus <br className="hidden sm:inline" />
           untuk <span className="underline decoration-[#C5A059] decoration-wavy decoration-3 underline-offset-8">Hari Istimewa Anda</span>.
         </h1>
@@ -35,10 +35,10 @@ export default function Hero() {
         <div className="mb-14">
           <a
             href="#invitations"
-            className="inline-flex items-center gap-3 bg-[#C5A059] hover:bg-[#b08c4a] text-white font-sans font-bold text-xs sm:text-sm tracking-widest uppercase px-8 py-4 rounded-sm border border-[#C5A059]/10 shadow-lg shadow-amber-900/10 transition-all duration-300 hover:scale-105 active:scale-95 group"
+            className="inline-flex items-center gap-3 bg-[#C5A059] hover:bg-[#b08c4a] text-white font-sans font-bold text-xs sm:text-sm tracking-wide sm:tracking-widest uppercase px-6 sm:px-8 py-3.5 sm:py-4 rounded-sm border border-[#C5A059]/10 shadow-lg shadow-amber-900/10 transition-all duration-300 hover:scale-105 active:scale-95 group whitespace-normal text-center"
           >
             Lihat Template
-            <ArrowRight className="w-4 h-4 text-zinc-900 group-hover:translate-x-1.5 transition-transform" />
+            <ArrowRight className="w-4 h-4 text-zinc-900 group-hover:translate-x-1.5 transition-transform flex-shrink-0" />
           </a>
         </div>
 
@@ -60,8 +60,8 @@ export default function Hero() {
             </div>
 
             {/* Micro tag overlay */}
-            <div className="absolute top-8 left-8 bg-zinc-900/90 backdrop-blur-md text-white py-1.5 px-3.5 rounded-full text-[10px] tracking-widest font-sans font-medium flex items-center gap-2">
-              <Sparkles className="w-3 h-3 text-[#C5A059]" />
+            <div className="absolute top-4 left-4 sm:top-8 sm:left-8 max-w-[calc(100%-2rem)] bg-zinc-900/90 backdrop-blur-md text-white py-1.5 px-3 sm:px-3.5 rounded-full sm:rounded-full text-[11px] sm:text-xs tracking-tight sm:tracking-widest font-sans font-medium flex items-center gap-2 leading-[1.5]">
+              <Sparkles className="w-3 h-3 text-[#C5A059] flex-shrink-0" />
               TEMPLAT ADIBUSANA NO. 20
             </div>
           </div>
@@ -77,7 +77,7 @@ export default function Hero() {
             <p className="font-serif italic text-lg sm:text-xl text-zinc-700 leading-relaxed">
               "{HERO_TESTIMONIALS[currentIdx].quote}"
             </p>
-            <p className="mt-4 font-sans tracking-[0.2em] font-medium text-[10px] sm:text-xs text-zinc-400 uppercase">
+            <p className="mt-4 font-sans tracking-[0.1em] sm:tracking-[0.2em] font-medium text-xs text-zinc-400 uppercase leading-[1.5]">
               OLEH_{HERO_TESTIMONIALS[currentIdx].author} — {HERO_TESTIMONIALS[currentIdx].location}
             </p>
           </div>
@@ -116,7 +116,7 @@ export default function Hero() {
         </div>
 
         {/* Editorial Subtext */}
-        <p className="mt-16 text-zinc-400 font-sans tracking-[0.14em] text-[10px] sm:text-xs uppercase font-medium max-w-lg mx-auto leading-relaxed">
+        <p className="mt-16 text-zinc-400 font-sans tracking-[0.08em] sm:tracking-[0.14em] text-xs uppercase font-medium max-w-lg mx-auto leading-[1.5] px-2 sm:px-0">
           Temukan dan sesuaikan undangan berkualitas premium yang unik untuk setiap babak hari istimewa Anda.
         </p>
       </div>
