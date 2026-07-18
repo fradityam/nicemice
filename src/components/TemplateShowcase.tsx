@@ -4,6 +4,13 @@ import { Eye, MessageCircle, RefreshCw, Smartphone, Monitor, Disc, Check, Heart,
 import { TEMPLATES } from '../data';
 import { Template } from '../types';
 
+const CUSTOM_TEMPLATE_ROUTES: Record<string, string> = {
+  'tema-cherry': '/template/cherry',
+  'tema-sage': '/template/sage',
+  'tema-batik': '/template/batik',
+  'tema-noir': '/template/noir',
+};
+
 export default function TemplateShowcase() {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'minimalist' | 'floral' | 'modern' | 'vintage'>('all');
@@ -208,7 +215,10 @@ export default function TemplateShowcase() {
                 {/* Indonesian/mockup matching buttons: Contoh and Pesan */}
                 <div className="grid grid-cols-2 gap-3 mt-6 border-t border-[#E5E2D9] pt-4">
                   <button
-                    onClick={() => tpl.id === 'tema-cherry' ? navigate('/template/cherry') : openPreview(tpl)}
+                    onClick={() => {
+                      const route = CUSTOM_TEMPLATE_ROUTES[tpl.id];
+                      route ? navigate(route) : openPreview(tpl);
+                    }}
                     className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#FAF9F6] hover:bg-[#E5E2D9]/40 border border-[#E5E2D9] text-[#2D2D2D] rounded-sm font-sans font-medium text-[10px] tracking-widest uppercase transition-all active:scale-95 cursor-pointer"
                   >
                     <Eye className="w-3.5 h-3.5 text-[#C5A059]" />

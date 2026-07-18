@@ -125,27 +125,27 @@ interface Wish {
 }
 
 const SEED_WISHES: Wish[] = [
-  { id: 1, name: 'Nadia & Farrel', attendance: 'Hadir', message: 'Selamat menempuh hidup baru Rose & Jack! Semoga selalu bahagia ya 💕' },
+  { id: 1, name: 'Nadia & Farrel', attendance: 'Hadir', message: 'Selamat menempuh hidup baru Ratu & Fadil! Semoga selalu bahagia ya 💕' },
   { id: 2, name: 'Bayu Saputra', attendance: 'Hadir', message: 'Kalian pasangan paling serasi. Ditunggu resepsinya!' },
 ];
 
 const LOVE_STORY = [
-  { year: '2019', title: 'Pertama Bertemu', text: 'Rose & Jack bertemu tanpa sengaja di sebuah acara komunitas dan mengobrol sampai lupa waktu.' },
+  { year: '2019', title: 'Pertama Bertemu', text: 'Ratu & Fadil bertemu tanpa sengaja di sebuah acara komunitas dan mengobrol sampai lupa waktu.' },
   { year: '2021', title: 'Mulai Dekat', text: 'Dari teman ngobrol jadi teman perjalanan — banyak road trip kecil yang mempererat mereka berdua.' },
-  { year: '2024', title: 'Melamar', text: 'Jack melamar Rose di tempat pertama mereka mengobrol, lengkap dengan mobil kesayangan berpita.' },
-  { year: '2027', title: 'Menikah', text: 'Dan kini, saatnya Rose & Jack memulai babak baru sebagai suami istri.' },
+  { year: '2024', title: 'Melamar', text: 'Fadil melamar Ratu di tempat pertama mereka mengobrol, lengkap dengan mobil kesayangan berpita.' },
+  { year: '2027', title: 'Menikah', text: 'Dan kini, saatnya Ratu & Fadil memulai babak baru sebagai suami istri.' },
 ];
 
 const GALLERY_LABELS = ['Momen 1', 'Momen 2', 'Momen 3', 'Momen 4', 'Momen 5', 'Momen 6'];
 
 const BANK_ACCOUNTS = [
-  { bank: 'Bank BCA', number: '123456789', holder: 'Rose Malina' },
-  { bank: 'Bank Mandiri', number: '123456789', holder: 'Rose Malina' },
+  { bank: 'Bank BCA', number: '123456789', holder: 'Ratu' },
+  { bank: 'Bank Mandiri', number: '123456789', holder: 'Ratu' },
 ];
 
 export default function CherryTemplate() {
   const [searchParams] = useSearchParams();
-  const guestName = searchParams.get('to') || 'Abigail M';
+  const guestName = searchParams.get('to') || 'Leo Messi';
 
   const [isOpened, setIsOpened] = useState(false);
   const countdown = useCountdown(EVENT_DATE);
@@ -215,7 +215,7 @@ export default function CherryTemplate() {
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-8 py-10 gap-4">
             <CarWithBow className="w-32 h-auto" />
             <h1 className="text-2xl leading-snug" style={typewriter}>
-              Rose &amp; Jack
+              Ratu &amp; Fadil
               <br />
               said &quot;I do!&quot;
             </h1>
@@ -247,7 +247,7 @@ export default function CherryTemplate() {
         {/* Polaroid photos */}
         <section className="flex justify-center gap-4 flex-wrap pt-4">
           {[
-            { rotate: '-rotate-6', label: 'Rose & Jack' },
+            { rotate: '-rotate-6', label: 'Ratu & Fadil' },
             { rotate: 'rotate-3', label: 'Our Story' },
             { rotate: '-rotate-2', label: 'Forever' },
           ].map((p) => (
@@ -285,14 +285,14 @@ export default function CherryTemplate() {
         {/* Bride & Groom */}
         <section className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-6 items-center">
           <div className="text-center space-y-3">
-            <PlaceholderPhoto label="Rose" className="w-28 h-28 rounded-full mx-auto border-4 border-white shadow-md" />
+            <PlaceholderPhoto label="Ratu" className="w-28 h-28 rounded-full mx-auto border-4 border-white shadow-md" />
             <h3 className="text-xl" style={typewriter}>
-              Rose Malina
+              Ratu
             </h3>
             <p className="text-xs opacity-70 leading-relaxed">
               Putri dari
               <br />
-              Bpk. Robert Malina &amp; Ibu Diana Malina
+              Bpk. Kayo &amp; Ibu Dewi Sudiar
             </p>
           </div>
 
@@ -301,14 +301,14 @@ export default function CherryTemplate() {
           </div>
 
           <div className="text-center space-y-3">
-            <PlaceholderPhoto label="Jack" className="w-28 h-28 rounded-full mx-auto border-4 border-white shadow-md" />
+            <PlaceholderPhoto label="Fadil" className="w-28 h-28 rounded-full mx-auto border-4 border-white shadow-md" />
             <h3 className="text-xl" style={typewriter}>
-              Jack Paro
+              Fadil
             </h3>
             <p className="text-xs opacity-70 leading-relaxed">
               Putra dari
               <br />
-              Bpk. Anton Paro &amp; Ibu Ella Paro
+              Bpk. Soelistiyono &amp; Ibu Sekar Mayangsari
             </p>
           </div>
         </section>
@@ -529,7 +529,7 @@ export default function CherryTemplate() {
             memberikan doa restu.
           </p>
           <h3 className="text-2xl" style={typewriter}>
-            Rose &amp; Jack
+            Ratu &amp; Fadil
           </h3>
           <div className="pt-8 text-[10px] tracking-widest uppercase opacity-40">
             Dibuat dengan{' '}

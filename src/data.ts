@@ -2,152 +2,6 @@ import { Template, Testimonial, BlogPost, JourneyStep } from './types';
 
 export const TEMPLATES: Template[] = [
   {
-    id: 'tema-20',
-    name: 'TEMA 20',
-    subtitle: 'Editorial klasik dengan nuansa arang pekat dan kisi-kisi seni garis yang terstruktur.',
-    code: 'KODE TEMA 20 DESAIN AESTHETIC DAN GAK PASARAN',
-    category: 'minimalist',
-    bgColor: 'bg-zinc-900',
-    textColor: 'text-zinc-100',
-    borderColor: 'border-zinc-700',
-    previewType: 'card',
-    details: {
-      husband: 'FADIL',
-      wife: 'RATU',
-      date: 'Sabtu, 14 November 2026',
-      location: 'Paviliun Kaca, Jakarta',
-      quote: 'Dan petualangan terbesar kami pun dimulai.',
-      accentColor: '#FFFFFF'
-    }
-  },
-  {
-    id: 'tema-19',
-    name: 'TEMA 19',
-    subtitle: 'Tata letak kisi tipografi modern dengan spasi huruf ultra-modern.',
-    code: 'KODE TEMA 19 DESAIN AESTHETIC DAN GAK PASARAN',
-    category: 'modern',
-    bgColor: 'bg-zinc-950',
-    textColor: 'text-[#EAE6DF]',
-    previewType: 'grid',
-    details: {
-      husband: 'FADIL',
-      wife: 'RATU',
-      date: '12.11.26',
-      location: 'Taman Amaryllis',
-      quote: 'Dua jiwa, satu melodi yang indah.',
-      accentColor: '#D4AF37'
-    }
-  },
-  {
-    id: 'tema-18',
-    name: 'TEMA 18',
-    subtitle: 'Teks pengumuman melingkar yang halus dengan aksen tengah yang anggun.',
-    code: 'KODE TEMA 18 DESAIN AESTHETIC DAN GAK PASARAN',
-    category: 'modern',
-    bgColor: 'bg-[#FDFBF7]',
-    textColor: 'text-zinc-800',
-    borderColor: 'border-amber-100',
-    previewType: 'circular',
-    details: {
-      husband: 'Fadil',
-      wife: 'Ratu',
-      date: 'Sabtu, 12 November 2026',
-      location: 'Alila Villas Uhuru, Bali',
-      quote: 'UNTUK SALING MEMILIKI DAN MENJAGA',
-      accentColor: '#8C7A5B'
-    }
-  },
-  {
-    id: 'tema-17',
-    name: 'TEMA 17',
-    subtitle: 'Kanvas persik hangat yang lembut dengan garis-garis organik mengalir yang elegan.',
-    code: 'KODE TEMA 17 DESAIN AESTHETIC DAN GAK PASARAN',
-    category: 'minimalist',
-    bgColor: 'bg-[#FCF4EE]',
-    textColor: 'text-[#825F4C]',
-    previewType: 'card',
-    details: {
-      husband: 'Fadil',
-      wife: 'Ratu',
-      date: '12 . 11 . 26',
-      location: 'Bumi Sampireun, Jakarta',
-      quote: 'Cinta hidup dalam kesederhanaan detail.',
-      accentColor: '#BD8A70'
-    }
-  },
-  {
-    id: 'tema-16',
-    name: 'TEMA 16',
-    subtitle: 'Desain bingkai lengkung arsitektur yang elegan dipadukan dengan garis minimalis bernuansa krem muda.',
-    code: 'KODE TEMA 16 DESAIN AESTHETIC DAN GAK PASARAN',
-    category: 'vintage',
-    bgColor: 'bg-[#F5F2EB]',
-    textColor: 'text-zinc-800',
-    previewType: 'floral-panel',
-    details: {
-      husband: 'Fadil',
-      wife: 'Ratu',
-      date: 'Sabtu, 12 November 2026',
-      location: 'Kempinski Ballroom Hotel',
-      quote: 'Kami mengundang Anda untuk berbagi kebahagiaan bersama kami.',
-      accentColor: '#A89F91'
-    }
-  },
-  {
-    id: 'tema-15',
-    name: 'TEMA 15',
-    subtitle: 'Bingkai ornamen antik dengan ilustrasi cat air bunga romantis.',
-    code: 'KODE TEMA 15 DESAIN AESTHETIC DAN GAK PASARAN',
-    category: 'floral',
-    bgColor: 'bg-[#EDF2EB]',
-    textColor: 'text-[#2D4A22]',
-    previewType: 'floral-panel',
-    details: {
-      husband: 'Fadil',
-      wife: 'Ratu',
-      date: '12.11.22',
-      location: 'Taman Mini Indonesia Indah',
-      quote: 'Awal dari kebersamaan selamanya.',
-      accentColor: '#7D9E71'
-    }
-  },
-  {
-    id: 'tema-14',
-    name: 'TEMA 14',
-    subtitle: 'Desain sampul album piringan hitam modern untuk pencinta musik.',
-    code: 'KODE TEMA 14 DESAIN AESTHETIC DAN GAK PASARAN',
-    category: 'modern',
-    bgColor: 'bg-[#E3ECE6]',
-    textColor: 'text-[#3E5146]',
-    previewType: 'record',
-    details: {
-      husband: 'Fadil',
-      wife: 'Ratu',
-      date: 'Sabtu, 12 November 2026',
-      location: 'Sunset Bay Resort, Lombok',
-      quote: 'Kisah cinta kami, terus berputar.',
-      accentColor: '#A3B899'
-    }
-  },
-  {
-    id: 'tema-13',
-    name: 'TEMA 13',
-    subtitle: 'Latar belakang merah tua yang megah dengan huruf bernuansa emas yang canggih.',
-    code: 'KODE TEMA 13 DESAIN AESTHETIC DAN GAK PASARAN',
-    category: 'vintage',
-    bgColor: 'bg-[#4B0F15]',
-    textColor: 'text-[#F3E5D8]',
-    previewType: 'card',
-    details: {
-      husband: 'FADIL',
-      wife: 'RATU',
-      date: '12 . 11 . 2026',
-      location: 'Gedung Warisan Kerajaan',
-      quote: 'Dalam cinta, kita dipersatukan.',
-      accentColor: '#D4AF37'
-    }
-  },
-  {
     id: 'tema-cherry',
     name: 'TEMA CHERRY',
     subtitle: 'Undangan bergaya ilustrasi hangat dengan nuansa pink lembut dan tipografi playful.',
@@ -157,12 +11,66 @@ export const TEMPLATES: Template[] = [
     textColor: 'text-[#3D1F1F]',
     previewType: 'card',
     details: {
-      husband: 'Jack Paro',
-      wife: 'Rose Malina',
+      husband: 'Fadil',
+      wife: 'Ratu',
       date: '01 Agustus 2027',
       location: 'Gedung Serbaguna ABC, Kota Bogor',
       quote: 'Cinta itu bukan mencari yang sempurna, tapi menikmati perjalanan bersama orang yang tepat.',
       accentColor: '#C1440E'
+    }
+  },
+  {
+    id: 'tema-sage',
+    name: 'TEMA SAGE',
+    subtitle: 'Editorial modern minimalis dengan nuansa hijau sage, aksen emas, dan tipografi berspasi lebar.',
+    code: 'KODE TEMA SAGE DESAIN AESTHETIC DAN GAK PASARAN',
+    category: 'modern',
+    bgColor: 'bg-[#B2C5B0]',
+    textColor: 'text-[#2D2D2D]',
+    previewType: 'card',
+    details: {
+      husband: 'Fadil',
+      wife: 'Ratu',
+      date: '14 Februari 2027',
+      location: 'The Hall Kemang, Jakarta Selatan',
+      quote: 'Kebahagiaan sejati bukan tentang kemewahan, tapi tentang menemukan ketenangan bersama orang yang tepat.',
+      accentColor: '#C9A84C'
+    }
+  },
+  {
+    id: 'tema-batik',
+    name: 'TEMA BATIK',
+    subtitle: 'Nuansa pernikahan Jawa tradisional dengan eksekusi modern dan motif batik kawung yang elegan.',
+    code: 'KODE TEMA BATIK DESAIN AESTHETIC DAN GAK PASARAN',
+    category: 'vintage',
+    bgColor: 'bg-[#FDF6E3]',
+    textColor: 'text-[#3D2B1F]',
+    previewType: 'card',
+    details: {
+      husband: 'Fadil',
+      wife: 'Ratu',
+      date: '10 Oktober 2026',
+      location: 'Pendopo Agung Ndalem, Yogyakarta',
+      quote: 'Dan di antara tanda-tanda kekuasaan-Nya, diciptakan-Nya pasangan untukmu agar kamu merasa tenteram bersamanya.',
+      accentColor: '#D4AF37'
+    }
+  },
+  {
+    id: 'tema-noir',
+    name: 'TEMA NOIR',
+    subtitle: 'Kemewahan gaya gala malam dengan nuansa navy gelap, aksen emas, dan tipografi elegan.',
+    code: 'KODE TEMA NOIR DESAIN AESTHETIC DAN GAK PASARAN',
+    category: 'modern',
+    bgColor: 'bg-[#0A1628]',
+    textColor: 'text-white',
+    previewType: 'card',
+    details: {
+      husband: 'Fadil',
+      wife: 'Ratu',
+      date: '31 Desember 2026',
+      location: 'Grand Ballroom, Hotel Mulia Senayan, Jakarta',
+      quote: 'Cinta sejati adalah menemukan keindahan dalam kesederhanaan, bahkan di tengah gemerlapnya dunia.',
+      accentColor: '#D4AF37'
     }
   }
 ];
