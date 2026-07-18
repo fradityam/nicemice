@@ -261,7 +261,7 @@ export const BLOG_POSTS: BlogPost[] = [
     id: 'blog-1',
     title: 'Mendesain Alur RSVP Digital untuk Kebahagiaan Tamu yang Maksimal',
     excerpt: 'Panduan pasti untuk menyusun urutan tanggapan digital elegan yang membuat tamu bersemangat dan mengumpulkan preferensi makanan akurat dengan mudah.',
-    imageUrl: '/src/assets/images/blog_rsvp_guide_1782005743604.jpg',
+    imageUrl: new URL('../assets/images/blog_rsvp_guide_1782005743604.jpg', import.meta.url).href,
     date: '18 Juni 2026',
     readTime: 'Baca 5 mnt'
   },
@@ -269,7 +269,7 @@ export const BLOG_POSTS: BlogPost[] = [
     id: 'blog-2',
     title: 'Aturan Baru Penulisan Kata Undangan Pernikahan Modern',
     excerpt: 'Dari permintaan kado santai hingga dinamika keluarga terpadu, berikut adalah cara mengomunikasikan detail penting dengan keanggunan, kejelasan, dan kehangatan.',
-    imageUrl: '/src/assets/images/blog_wording_rules_1782005760022.jpg',
+    imageUrl: new URL('../assets/images/blog_wording_rules_1782005760022.jpg', import.meta.url).href,
     date: '20 Mei 2026',
     readTime: 'Baca 7 mnt'
   },
@@ -277,7 +277,7 @@ export const BLOG_POSTS: BlogPost[] = [
     id: 'blog-3',
     title: '10 Palet Warna Elegan yang Sempurna untuk Pernikahan Minimalis',
     excerpt: 'Temukan warna putih gading, nuansa batu organik netral, dan sentuhan sepia halus yang menciptakan kesan gaya editorial mode papan atas secara instan.',
-    imageUrl: '/src/assets/images/blog_color_palettes_1782005773928.jpg',
+    imageUrl: new URL('../assets/images/blog_color_palettes_1782005773928.jpg', import.meta.url).href,
     date: '12 April 2026',
     readTime: 'Baca 4 mnt'
   }
