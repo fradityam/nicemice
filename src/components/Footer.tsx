@@ -1,9 +1,36 @@
 import React, { useState } from 'react';
-import { Mail, ArrowRight, Instagram, Pin, Twitter, Check } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Mail, Instagram, Pin, Twitter, Check } from 'lucide-react';
+
+const footerLinks = [
+  {
+    title: 'PRODUK & LAYANAN',
+    links: [
+      { label: 'Katalog Tema Siap Pakai', href: '/#templates' },
+      { label: 'Fitur & Integrasi', href: '/#fitur' },
+      { label: 'Harga & Paket', href: '/harga' },
+    ],
+  },
+  {
+    title: 'BANTUAN',
+    links: [
+      { label: 'FAQ', href: '/faq' },
+      { label: 'Hubungi Kami', href: '#' },
+    ],
+  },
+  {
+    title: 'INSPIRASI',
+    links: [
+      { label: 'Blog & Jurnal', href: '/blog' },
+      { label: 'Cerita Pasangan', href: '/testimoni' },
+    ],
+  },
+];
 
 export default function Footer() {
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const { pathname } = useLocation();
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,38 +41,6 @@ export default function Footer() {
       setIsSubscribed(false);
     }, 4000);
   };
-
-  const footerLinks = [
-    {
-      title: 'PRODUK',
-      links: [
-        { label: 'Website Pernikahan', href: '#websites' },
-        { label: 'Undangan Digital', href: '#invitations' },
-        { label: 'Daftar Hadiah Pernikahan', href: '#registry' },
-        { label: 'Kelola RSVP Tamu', href: '#guestmanager' },
-      ],
-    },
-    {
-      title: 'INSPIRASI',
-      links: [
-        { label: 'Blog Jurnal Desain', href: '#journal' },
-        { label: 'Kisah Nyata Pernikahan', href: '#realweddings' },
-        { label: 'Pilihan Sampel Warna', href: '#swatches' },
-        { label: 'Seniman Independen', href: '#artists' },
-        { label: 'Katalog Lookbook', href: '#lookbook' },
-      ],
-    },
-    {
-      title: 'SUMBER DAYA',
-      links: [
-        { label: 'Aturan Penulisan Undangan', href: '#wording' },
-        { label: 'Panduan Teknis', href: '#planners' },
-        { label: 'Koleksi Fon Premium', href: '#fonts' },
-        { label: 'FAQ / Dukungan Langsung', href: '#support' },
-        { label: 'Tingkatan Harga', href: '#pricing' },
-      ],
-    },
-  ];
 
   return (
     <footer className="bg-zinc-950 text-[#FAF9F6] pt-20 pb-12 font-sans overflow-hidden">
@@ -85,16 +80,26 @@ export default function Footer() {
                 {group.title}
               </h4>
               <ul className="space-y-3">
-                {group.links.map((link) => (
-                  <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-zinc-400 hover:text-[#C5A059] text-xs transition-colors tracking-wide leading-[1.5] block"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
+                {group.links.map((link) => {
+                  const isRoute = link.href.startsWith('/') && !link.href.includes('#');
+                  const isActive = isRoute && pathname === link.href;
+                  const linkClassName = `text-xs transition-colors tracking-wide leading-[1.5] block ${
+                    isActive ? 'text-[#C5A059] font-medium' : 'text-zinc-400 hover:text-[#C5A059]'
+                  }`;
+                  return (
+                    <li key={link.label}>
+                      {isRoute ? (
+                        <Link to={link.href} className={linkClassName}>
+                          {link.label}
+                        </Link>
+                      ) : (
+                        <a href={link.href} className={linkClassName}>
+                          {link.label}
+                        </a>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}

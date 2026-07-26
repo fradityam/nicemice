@@ -34,7 +34,7 @@ export default function Hero() {
         {/* CTA Button */}
         <div className="mb-14">
           <a
-            href="#invitations"
+            href="#templates"
             className="inline-flex items-center gap-3 bg-[#C5A059] hover:bg-[#b08c4a] text-white font-sans font-bold text-xs sm:text-sm tracking-wide sm:tracking-widest uppercase px-6 sm:px-8 py-3.5 sm:py-4 rounded-sm border border-[#C5A059]/10 shadow-lg shadow-amber-900/10 transition-all duration-300 hover:scale-105 active:scale-95 group whitespace-normal text-center"
           >
             Lihat Template

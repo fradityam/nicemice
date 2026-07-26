@@ -6,6 +6,7 @@ import CherryTemplate from './components/templates/CherryTemplate.tsx';
 import SageTemplate from './components/templates/SageTemplate.tsx';
 import BatikTemplate from './components/templates/BatikTemplate.tsx';
 import NoirTemplate from './components/templates/NoirTemplate.tsx';
+import ComingSoonPage from './components/ComingSoonPage.tsx';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -17,6 +18,10 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/template/sage" element={<SageTemplate />} />
         <Route path="/template/batik" element={<BatikTemplate />} />
         <Route path="/template/noir" element={<NoirTemplate />} />
+        <Route path="/harga" element={<ComingSoonPage title="Harga & Paket" />} />
+        <Route path="/faq" element={<ComingSoonPage title="FAQ" />} />
+        <Route path="/blog" element={<ComingSoonPage title="Blog & Jurnal" />} />
+        <Route path="/testimoni" element={<ComingSoonPage title="Cerita Pasangan" />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, MessageCircle, RefreshCw, Smartphone, Monitor, Disc, Check, Heart, Mail } from 'lucide-react';
 import { TEMPLATES } from '../data';
 import { Template } from '../types';
+import cherryThumbnail from '../assets/images/cherry/Cherry-template-thumbnail.png';
 
 const CUSTOM_TEMPLATE_ROUTES: Record<string, string> = {
   'tema-cherry': '/template/cherry',
@@ -13,7 +14,7 @@ const CUSTOM_TEMPLATE_ROUTES: Record<string, string> = {
 
 export default function TemplateShowcase() {
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'minimalist' | 'floral' | 'modern' | 'vintage'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'floral' | 'modern' | 'vintage'>('all');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [guestName, setGuestName] = useState('John Doe & Partner');
   const [activeAccColor, setActiveAccColor] = useState('#D4AF37');
@@ -136,7 +137,7 @@ export default function TemplateShowcase() {
   };
 
   return (
-    <section id="invitations" className="py-24 bg-[#FAF9F6]">
+    <section id="templates" className="py-24 bg-[#FAF9F6]">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
 
         {/* Headings */}
@@ -153,10 +154,9 @@ export default function TemplateShowcase() {
 
         {/* Category Filters */}
         <div className="flex flex-wrap justify-center items-center gap-2 mb-12">
-          {(['all', 'minimalist', 'floral', 'modern', 'vintage'] as const).map((category) => {
+          {(['all', 'floral', 'modern', 'vintage'] as const).map((category) => {
             const categoryLabels: Record<string, string> = {
               all: 'SEMUA TEMA',
-              minimalist: 'MINIMALIS',
               floral: 'FLORAL',
               modern: 'MODERN',
               vintage: 'KLASIK',
@@ -189,7 +189,15 @@ export default function TemplateShowcase() {
                 <div
                   className={`aspect-[3/4] w-full rounded-xl overflow-hidden shadow-sm border border-zinc-950/5 relative transition-transform duration-300 group-hover:scale-[1.02] ${tpl.bgColor} ${tpl.textColor}`}
                 >
-                  {renderCardTheme(tpl)}
+                  {tpl.id === 'tema-cherry' ? (
+                    <img
+                      src={cherryThumbnail}
+                      alt={tpl.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    renderCardTheme(tpl)
+                  )}
                 </div>
               </div>
 

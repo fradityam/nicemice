@@ -300,7 +300,7 @@ export default function AestheticsSection() {
                     onClick={() => {
                       setShowQuiz(false);
                       // Trigger preview on parent showcase
-                      const element = document.getElementById('invitations');
+                      const element = document.getElementById('templates');
                       if (element) element.scrollIntoView({ behavior: 'smooth' });
                     }}
                     className="w-full bg-[#2D2D2D] hover:bg-[#C5A059] text-white font-sans font-medium text-xs tracking-[0.12em] sm:tracking-[0.2em] uppercase py-3.5 rounded-full transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer text-center"
