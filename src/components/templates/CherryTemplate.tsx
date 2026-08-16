@@ -18,25 +18,9 @@ const LOCATION_NAME = 'Gedung Serbaguna ABC';
 const LOCATION_ADDRESS = 'Jl. Cempaka No. 18, Kota Bogor, Jawa Barat';
 const MAPS_QUERY = encodeURIComponent(`${LOCATION_NAME}, ${LOCATION_ADDRESS}`);
 
-// 1.png (1366x1000) bakes the wavy cream card on Canva's pink export background — and that
-// pink (#FFD6DA) is a different shade from the page's own pink (#FFB3C6), so it always shows
-// up as a mismatched rectangle no matter how tightly it's cropped. The actual fix isn't a
-// tighter crop: below the card, "Kepada Yth."/the guest name/the button were always sitting
-// directly on plain pink by design (not on the cream card), so they don't need to be part of
-// the image at all. The image is cropped to just the wavy card (pixel-measured bounding box:
-// x:[472,877], y:[25,642] of the 1366x1000 export) and the text/button below it are rendered
-// as real HTML directly on the page's true pink background, so there's no PNG pink left to
-// clash with anything.
-const COVER_CARD_CROP = { minX: 472, maxX: 877, minY: 25, maxY: 642, imgW: 1366, imgH: 1000 };
-const COVER_CARD_W = COVER_CARD_CROP.maxX - COVER_CARD_CROP.minX;
-const COVER_CARD_H = COVER_CARD_CROP.maxY - COVER_CARD_CROP.minY;
-const COVER_CARD_IMG_STYLE: React.CSSProperties = {
-  position: 'absolute',
-  width: `${(COVER_CARD_CROP.imgW / COVER_CARD_W) * 100}%`,
-  left: `${-(COVER_CARD_CROP.minX / COVER_CARD_W) * 100}%`,
-  top: `${-(COVER_CARD_CROP.minY / COVER_CARD_H) * 100}%`,
-  maxWidth: 'none',
-};
+// 1.png is now just the wavy card illustration on a transparent background (no baked-in
+// pink export canvas to crop away), so it can render at its natural aspect ratio instead of
+// the old pixel-measured crop.
 
 function useCountdown(target: Date) {
   const [now, setNow] = useState(() => new Date());
@@ -146,14 +130,11 @@ export default function CherryTemplate() {
         }`}
         style={{ backgroundColor: PINK }}
       >
-        {/* Cropped to just the wavy card (see COVER_CARD_CROP above) so it floats directly
-            on the page's own pink instead of the PNG's slightly-off pink export background. */}
-        <div
-          className="relative w-full max-w-[320px] mx-auto overflow-hidden shadow-sm"
-          style={{ aspectRatio: `${COVER_CARD_W} / ${COVER_CARD_H}` }}
-        >
-          <img src={coverImg} alt="Rose & Jack said I do! - 30 Juni 2027" style={COVER_CARD_IMG_STYLE} />
-        </div>
+        <img
+          src={coverImg}
+          alt="Rose & Jack said I do! - 30 Juni 2027"
+          className="w-full max-w-[380px] h-auto object-contain mx-auto"
+        />
 
         <div className="text-center">
           <p className="text-sm" style={{ color: TERRACOTTA, fontFamily: "'Lora', serif" }}>
@@ -177,7 +158,7 @@ export default function CherryTemplate() {
       <div className="max-w-[480px] mx-auto" style={{ backgroundColor: PINK }}>
         <FullBleedImage src={section1Img} alt="Polaroid pasangan dan kutipan cinta" imageHeight={1800} />
         <FullBleedImage src={section2Img} alt="Pembukaan dan mempelai" imageHeight={2400} />
-        <FullBleedImage src={section3Img} alt="Detail acara pernikahan" imageHeight={2800} />
+        <FullBleedImage src={section3Img} alt="Detail acara pernikahan" imageHeight={1027} />
 
         {/* Countdown - React (live) */}
         <section style={{ backgroundColor: CREAM }} className="px-6 py-12 text-center">

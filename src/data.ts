@@ -7,7 +7,7 @@ export const TEMPLATES: Template[] = [
     subtitle: 'Undangan bergaya ilustrasi hangat dengan nuansa pink lembut dan tipografi playful.',
     code: 'KODE TEMA CHERRY DESAIN AESTHETIC DAN GAK PASARAN',
     category: 'floral',
-    bgColor: 'bg-[#FDE8E8]',
+    bgColor: 'bg-[#4f3038]',
     textColor: 'text-[#3D1F1F]',
     previewType: 'card',
     details: {
@@ -71,6 +71,24 @@ export const TEMPLATES: Template[] = [
       location: 'Grand Ballroom, Hotel Mulia Senayan, Jakarta',
       quote: 'Cinta sejati adalah menemukan keindahan dalam kesederhanaan, bahkan di tengah gemerlapnya dunia.',
       accentColor: '#D4AF37'
+    }
+  },
+  {
+    id: 'tema-indigo',
+    name: 'TEMA INDIGO',
+    subtitle: 'Gaya bold dan playful dengan nuansa navy gelap, aksen oranye cerah, dan tipografi tebal.',
+    code: 'KODE TEMA INDIGO DESAIN AESTHETIC DAN GAK PASARAN',
+    category: 'modern',
+    bgColor: 'bg-[#0D1B4B]',
+    textColor: 'text-white',
+    previewType: 'card',
+    details: {
+      husband: 'Fadil',
+      wife: 'Ratu',
+      date: '08 Januari 2027',
+      location: 'Gedung Serbaguna ABC, Kota Bogor',
+      quote: 'Dua hati yang bersatu, memulai babak baru penuh warna.',
+      accentColor: '#FF5C00'
     }
   }
 ];

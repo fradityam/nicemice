@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node __indigo-check.mjs)",
+      "Bash(node __countdown-check.mjs)"
+    ]
+  }
+}

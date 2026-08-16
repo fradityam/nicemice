@@ -4,13 +4,41 @@ import { Eye, MessageCircle, RefreshCw, Smartphone, Monitor, Disc, Check, Heart,
 import { TEMPLATES } from '../data';
 import { Template } from '../types';
 import cherryThumbnail from '../assets/images/cherry/Cherry-template-thumbnail.png';
+import indigoThumbnail from '../assets/images/Indigo/indigo-cover.png';
 
 const CUSTOM_TEMPLATE_ROUTES: Record<string, string> = {
   'tema-cherry': '/template/cherry',
   'tema-sage': '/template/sage',
   'tema-batik': '/template/batik',
   'tema-noir': '/template/noir',
+  'tema-indigo': '/template/indigo',
 };
+
+// indigo-cover.png (1122x1402) has a "Page 1 / Page 2 / Page 3" design-tool page-switcher
+// baked into its top strip (Figma/Canva export artifact). Trim just that strip (y:0-80,
+// pixel-measured) then contain-fit the rest inside the 3:4 card on navy background, so the
+// full illustration is visible with nothing cropped except the artifact.
+const INDIGO_THUMB_W = 1122;
+const INDIGO_THUMB_H = 1402;
+const INDIGO_THUMB_CROP_TOP = 80;
+const INDIGO_THUMB_CROP_H = INDIGO_THUMB_H - INDIGO_THUMB_CROP_TOP;
+const INDIGO_THUMBNAIL_WRAPPER_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  left: 0,
+  top: '50%',
+  transform: 'translateY(-50%)',
+  width: '100%',
+  aspectRatio: `${INDIGO_THUMB_W} / ${INDIGO_THUMB_CROP_H}`,
+  overflow: 'hidden',
+};
+const INDIGO_THUMBNAIL_IMG_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  left: 0,
+  width: '100%',
+  height: `${(INDIGO_THUMB_H / INDIGO_THUMB_CROP_H) * 100}%`,
+  top: `${-(INDIGO_THUMB_CROP_TOP / INDIGO_THUMB_CROP_H) * 100}%`,
+};
+
 
 export default function TemplateShowcase() {
   const navigate = useNavigate();
@@ -195,6 +223,10 @@ export default function TemplateShowcase() {
                       alt={tpl.name}
                       className="w-full h-full object-cover"
                     />
+                  ) : tpl.id === 'tema-indigo' ? (
+                    <div style={INDIGO_THUMBNAIL_WRAPPER_STYLE}>
+                      <img src={indigoThumbnail} alt={tpl.name} style={INDIGO_THUMBNAIL_IMG_STYLE} />
+                    </div>
                   ) : (
                     renderCardTheme(tpl)
                   )}
