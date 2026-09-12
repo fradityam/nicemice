@@ -27,12 +27,12 @@ export default function Hero() {
 
         {/* Major Headline */}
         <h1 className="max-w-4xl mx-auto font-sans font-extrabold text-[2.625rem] leading-[1.15] sm:text-[3.375rem] sm:leading-[1.08] md:text-[4.125rem] lg:text-[5.25rem] lg:leading-[1.05] tracking-[-0.02em] sm:tracking-[-0.03em] text-zinc-950 mb-6">
-          Mulai <span className="whitespace-nowrap underline decoration-[#C5A059] decoration-wavy decoration-3 underline-offset-8">Sekuel Terbaik</span>, Rayakan Bahagia Bersama.
+          Mulai <span className="whitespace-nowrap underline decoration-[#C5A059] decoration-wavy decoration-3 underline-offset-8">Sekuel Hidup Terbaik</span>, Rayakan Bahagia Bersama.
         </h1>
 
         {/* Subheadline */}
         <p className="max-w-2xl mx-auto text-zinc-500 text-base sm:text-lg tracking-wide leading-[1.6] font-sans mb-8">
-          Pilih template undangan bertemakan film favorit, ukir cerita cintamu, dan sebar ke seluruh dunia!
+          Pilih template undangan pernikahan bertemakan film favorit, ukir cerita cintamu, dan sebar ke seluruh dunia!
         </p>
 
         {/* CTA Button */}
