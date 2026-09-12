@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, MessageCircle, RefreshCw, Smartphone, Monitor, Disc, Check, Heart, Mail } from 'lucide-react';
 import { TEMPLATES } from '../data';
 import { Template } from '../types';
-import cherryThumbnail from '../assets/images/cherry/Cherry-template-thumbnail.png';
+import cherryThumbnail from '../assets/images/cherry/1.png';
 import indigoThumbnail from '../assets/images/Indigo/indigo-cover.png';
 
 const CUSTOM_TEMPLATE_ROUTES: Record<string, string> = {
@@ -37,6 +37,29 @@ const INDIGO_THUMBNAIL_IMG_STYLE: React.CSSProperties = {
   width: '100%',
   height: `${(INDIGO_THUMB_H / INDIGO_THUMB_CROP_H) * 100}%`,
   top: `${-(INDIGO_THUMB_CROP_TOP / INDIGO_THUMB_CROP_H) * 100}%`,
+};
+
+// 1.png (498x627) is just the wavy card illustration on a transparent background, scaled down
+// and centered on both axes so the pink bgColor shows an even margin — pixel-measured to match
+// Indigo's own breathing room. Width (89%, unchanged from the last pass) and height (87%) are
+// set independently rather than via a locked aspect-ratio, so the top/bottom margin can be
+// trimmed without touching the left/right margin at all — this stretches the artwork by ~6%
+// vertically, small enough to be imperceptible on simple line art at thumbnail size.
+const CHERRY_THUMBNAIL_WRAPPER_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  left: '50%',
+  top: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '89%',
+  height: '87%',
+  overflow: 'hidden',
+};
+const CHERRY_THUMBNAIL_IMG_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  left: 0,
+  top: 0,
+  width: '100%',
+  height: '100%',
 };
 
 
@@ -218,11 +241,9 @@ export default function TemplateShowcase() {
                   className={`aspect-[3/4] w-full rounded-xl overflow-hidden shadow-sm border border-zinc-950/5 relative transition-transform duration-300 group-hover:scale-[1.02] ${tpl.bgColor} ${tpl.textColor}`}
                 >
                   {tpl.id === 'tema-cherry' ? (
-                    <img
-                      src={cherryThumbnail}
-                      alt={tpl.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <div style={CHERRY_THUMBNAIL_WRAPPER_STYLE}>
+                      <img src={cherryThumbnail} alt={tpl.name} style={CHERRY_THUMBNAIL_IMG_STYLE} />
+                    </div>
                   ) : tpl.id === 'tema-indigo' ? (
                     <div style={INDIGO_THUMBNAIL_WRAPPER_STYLE}>
                       <img src={indigoThumbnail} alt={tpl.name} style={INDIGO_THUMBNAIL_IMG_STYLE} />

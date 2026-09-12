@@ -26,10 +26,14 @@ export default function Hero() {
         </div>
 
         {/* Major Headline */}
-        <h1 className="max-w-4xl mx-auto font-sans font-extrabold text-4xl leading-[1.15] sm:text-5xl sm:leading-[1.08] md:text-6xl lg:text-7xl lg:leading-[1.05] tracking-[-0.02em] sm:tracking-[-0.03em] text-zinc-950 mb-8">
-          Undangan Pernikahan <span className="font-serif italic font-normal text-zinc-800">Estetik</span> yang Dirancang Khusus <br className="hidden sm:inline" />
-          untuk <span className="underline decoration-[#C5A059] decoration-wavy decoration-3 underline-offset-8">Hari Istimewa Anda</span>.
+        <h1 className="max-w-4xl mx-auto font-sans font-extrabold text-4xl leading-[1.15] sm:text-5xl sm:leading-[1.08] md:text-6xl lg:text-7xl lg:leading-[1.05] tracking-[-0.02em] sm:tracking-[-0.03em] text-zinc-950 mb-6">
+          Mulai <span className="underline decoration-[#C5A059] decoration-wavy decoration-3 underline-offset-8">Sekuel Terbaik</span>, Rayakan Bahagia Bersama.
         </h1>
+
+        {/* Subheadline */}
+        <p className="max-w-2xl mx-auto text-zinc-500 text-base sm:text-lg tracking-wide leading-[1.6] font-sans mb-8">
+          Pilih template undangan bertemakan film favorit, ukir cerita cintamu, dan sebar ke seluruh dunia!
+        </p>
 
         {/* CTA Button */}
         <div className="mb-14">

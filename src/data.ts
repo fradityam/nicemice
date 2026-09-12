@@ -7,7 +7,7 @@ export const TEMPLATES: Template[] = [
     subtitle: 'Undangan bergaya ilustrasi hangat dengan nuansa pink lembut dan tipografi playful.',
     code: 'KODE TEMA CHERRY DESAIN AESTHETIC DAN GAK PASARAN',
     category: 'floral',
-    bgColor: 'bg-[#4f3038]',
+    bgColor: 'bg-[#FFB3C6]',
     textColor: 'text-[#3D1F1F]',
     previewType: 'card',
     details: {
