@@ -96,24 +96,24 @@ export const TEMPLATES: Template[] = [
 export const HERO_TESTIMONIALS: Testimonial[] = [
   {
     id: 'ht1',
-    quote: "Saya menggunakan nicemice untuk situs pernikahan saya. Sangat modern dan bernuansa editorial, tidak seperti platform lainnya! Sangat suka!",
-    author: "THE_J",
-    role: "Pengantin Wanita",
-    location: "Bandung, Jawa Barat"
+    quote: "Akhirnya bisa nemuin undangan digital yang sesuai dengan tema film favorit saya & istri 😍 Thanks banget Nicemice atas kerja keras & pelayanan top tier-nya!",
+    author: "Rizwan R",
+    role: "Pengantin Pria",
+    location: "Bandung"
   },
   {
     id: 'ht2',
-    quote: "Antarmuka RSVP tamu sangat memukau. Kami menerima banyak pujian dari teman-teman tentang betapa bersih dan mudahnya proses tersebut.",
-    author: "CLARA & MARC",
+    quote: "Undangan kami selesai hanya dalam waktu 2 hari, dan kami enggak lagi perlu repot-repot follow up tamu undangan satu per satu terus mencatat kehadiran mereka semua secara manual di Excel. Fitur RSVP-nya sangat membantu dalam hal ini!",
+    author: "Karl & Livia",
     role: "Pengantin Pria",
-    location: "Jakarta, DKI Jakarta"
+    location: "Jakarta"
   },
   {
     id: 'ht3',
-    quote: "Tidak ada platform lain yang memberi kontrol tipografi editorial setinggi ini. Tata letak kami terasa sangat berkelas, bukan seperti templat biasa.",
-    author: "ELIZABETH_V",
+    quote: "Simpel dan sat set! Banyak tamu yang kagum sama digital invitationnya 😀",
+    author: "Chrysti",
     role: "Pengantin Wanita",
-    location: "Surabaya, Jawa Timur"
+    location: "Surabaya"
   }
 ];
 

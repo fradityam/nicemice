@@ -27,7 +27,7 @@ export default function Hero() {
 
         {/* Major Headline */}
         <h1 className="max-w-4xl mx-auto font-sans font-extrabold text-[2.8rem] leading-[1.1] sm:text-[3.375rem] sm:leading-[1.08] md:text-[4.125rem] lg:text-[5.25rem] lg:leading-[1.05] tracking-[-0.02em] sm:tracking-[-0.03em] text-zinc-950 mb-6">
-          Mulai <span className="whitespace-normal sm:whitespace-nowrap underline decoration-[#C5A059] decoration-wavy decoration-3 underline-offset-8">Sekuel Hidup Terbaik</span>, Rayakan Bahagia Bersama.
+          Mulai <span className="whitespace-normal sm:whitespace-nowrap underline decoration-[#C5A059] decoration-wavy decoration-3 underline-offset-8"><span className="font-serif italic font-normal">Sekuel Hidup</span> Terbaik</span>, Rayakan Bahagia Bersama.
         </h1>
 
         {/* Subheadline */}
@@ -121,7 +121,7 @@ export default function Hero() {
 
         {/* Editorial Subtext */}
         <p className="mt-16 text-zinc-400 font-sans tracking-[0.08em] sm:tracking-[0.14em] text-xs uppercase font-medium max-w-lg mx-auto leading-[1.5] px-2 sm:px-0">
-          Temukan dan sesuaikan undangan berkualitas premium yang unik untuk setiap babak hari istimewa Anda.
+          SETIAP KISAH CINTA ADALAH KARYA SASTRA. PILIH TEMA DAN TUTURKAN CERITAMU KEPADA DUNIA.
         </p>
       </div>
     </section>
