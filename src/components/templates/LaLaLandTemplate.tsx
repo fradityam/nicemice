@@ -1,0 +1,158 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+
+import coverBg from '../../assets/images/lalaland/figma/cover-bg.webp';
+import LaLaLandContent from './LaLaLandContent';
+import { weddingDateId } from './lalalandWeddingDate';
+
+const NAVY = '#081a51';
+const COVER_W = 375;
+const COVER_H = 667;
+const MAX_COLUMN_W = 430;
+const textShadow = '0px 4px 4px rgba(0,0,0,0.25)';
+
+// Figma's rgba(144,105,165,0) → #081a51 gradient, interpolated the way Figma does it
+// (non-premultiplied, so the purple tint carries through the middle). A plain CSS
+// gradient interpolates premultiplied and comes out noticeably darker mid-way.
+const coverGradient = `linear-gradient(to bottom, ${Array.from({ length: 11 }, (_, i) => {
+  const t = i / 10;
+  const c = (a: number, b: number) => Math.round(a + (b - a) * t);
+  return `rgba(${c(144, 8)},${c(105, 26)},${c(165, 81)},${t}) ${t * 100}%`;
+}).join(', ')})`;
+
+// Figma "Cover" frame (375 × 667), laid out at its native coordinates and scaled to the
+// column width — or to the viewport height if that's the tighter fit, so the button is
+// never cut off. It is pinned to the top; on screens taller than the frame, the space
+// below continues the frame's own navy (#081a51), which the bottom gradient fades into.
+function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [viewport, setViewport] = useState({ w: COVER_W, h: COVER_H });
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setViewport({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const scale = Math.min(Math.min(viewport.w, MAX_COLUMN_W) / COVER_W, viewport.h / COVER_H);
+
+  return (
+    <div ref={ref} className="absolute inset-0 overflow-hidden">
+      <div
+        className="absolute left-1/2 top-0 overflow-hidden bg-[#081a51]"
+        style={{
+          width: COVER_W,
+          height: COVER_H,
+          transform: `translateX(-50%) scale(${scale})`,
+          transformOrigin: '50% 0',
+        }}
+      >
+        <img
+          src={coverBg}
+          alt=""
+          className="absolute max-w-none object-cover"
+          style={{ left: -1, top: -1, width: 376, height: 668 }}
+        />
+        <div className="absolute left-0 top-[360px] h-[307px] w-[375px]" style={{ backgroundImage: coverGradient }} />
+
+        <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[20px] text-center text-white top-[117px] whitespace-nowrap">
+          Meet Me Under the Stars
+        </p>
+        <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[16px] text-center text-white top-[144px] whitespace-nowrap">
+          {weddingDateId}
+        </p>
+
+        <h1 className="font-['Fasthand'] leading-[normal] text-center text-white">
+          <span className="-translate-x-1/2 absolute left-1/2 text-[80px] top-[163px] w-[331px]">Sebastian</span>
+          <span className="-translate-x-1/2 absolute left-[calc(50%-12.5px)] text-[50px] top-[251px] w-[42px]">&amp;</span>
+          <span className="-translate-x-1/2 absolute left-[calc(50%+0.5px)] text-[80px] top-[285px] w-[146px]">Mia</span>
+        </h1>
+
+        <p
+          className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-1/2 text-[20px] text-center text-white top-[452px] whitespace-nowrap"
+          style={{ textShadow }}
+        >
+          Kepada
+        </p>
+        <p
+          className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[30px] text-center text-white top-[481px] whitespace-nowrap"
+          style={{ textShadow }}
+        >
+          Emma &amp; Ryan
+        </p>
+
+        <button
+          type="button"
+          onClick={onOpen}
+          className="absolute left-[95px] top-[522px] h-[34px] w-[185px] rounded-[20px] bg-[#f9de1f] cursor-pointer"
+        >
+          <span className="-translate-x-1/2 absolute left-[96px] top-[5px] font-['Pompiere'] leading-[normal] text-[20px] text-[#181065] text-center whitespace-nowrap">
+            BUKA UNDANGAN
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function LaLaLandTemplate() {
+  const [isOpened, setIsOpened] = useState(false);
+
+  // The site sets `scroll-behavior: smooth` on <html>, so every scroll here must be
+  // explicitly instant — otherwise the reset animates visibly from wherever the browser
+  // restored the page (e.g. Cerita Kami) up to the top.
+  useLayoutEffect(() => {
+    const prev = history.scrollRestoration;
+    history.scrollRestoration = 'manual';
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    return () => {
+      history.scrollRestoration = prev;
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = isOpened ? '' : 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpened]);
+
+  const open = () => {
+    // Reset before the cover starts fading, so the first content revealed is Quotes.
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    setIsOpened(true);
+  };
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: NAVY }}>
+      {/* Back to site link */}
+      <Link
+        to="/"
+        className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        nicemice
+      </Link>
+
+      {/* ============ COVER ============ */}
+      <div
+        className={`fixed inset-0 z-50 transition-opacity duration-500 ease-in-out ${
+          isOpened ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        style={{ backgroundColor: NAVY }}
+      >
+        <LaLaLandCover onOpen={open} />
+      </div>
+
+      {/* ============ FULL INVITATION ============ */}
+      <div className="max-w-[430px] mx-auto">
+        <LaLaLandContent />
+      </div>
+    </div>
+  );
+}

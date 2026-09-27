@@ -7,6 +7,7 @@ import SageTemplate from './components/templates/SageTemplate.tsx';
 import BatikTemplate from './components/templates/BatikTemplate.tsx';
 import NoirTemplate from './components/templates/NoirTemplate.tsx';
 import IndigoTemplate from './components/templates/IndigoTemplate.tsx';
+import LaLaLandTemplate from './components/templates/LaLaLandTemplate.tsx';
 import ComingSoonPage from './components/ComingSoonPage.tsx';
 import './index.css';
 
@@ -20,6 +21,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/template/batik" element={<BatikTemplate />} />
         <Route path="/template/noir" element={<NoirTemplate />} />
         <Route path="/template/indigo" element={<IndigoTemplate />} />
+        <Route path="/template/lalaland" element={<LaLaLandTemplate />} />
         <Route path="/harga" element={<ComingSoonPage title="Harga & Paket" />} />
         <Route path="/faq" element={<ComingSoonPage title="FAQ" />} />
         <Route path="/blog" element={<ComingSoonPage title="Blog & Jurnal" />} />
