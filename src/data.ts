@@ -2,6 +2,24 @@ import { Template, Testimonial, BlogPost, JourneyStep } from './types';
 
 export const TEMPLATES: Template[] = [
   {
+    id: 'tema-lalaland',
+    name: 'TEMA LA LA LAND',
+    subtitle: 'Terinspirasi dari La La Land, dengan langit malam berbintang, lampu jalan kota, dan nuansa romantis ala film musikal.',
+    code: 'KODE TEMA LA LA LAND DESAIN AESTHETIC DAN GAK PASARAN',
+    category: 'film',
+    bgColor: 'bg-[#081A51]',
+    textColor: 'text-white',
+    previewType: 'card',
+    details: {
+      husband: 'Sebastian',
+      wife: 'Mia',
+      date: '23 Agustus 2026',
+      location: 'Gedung Serbaguna ABC, Kota Bogor',
+      quote: "Here's to the ones who dream, foolish as they may seem.",
+      accentColor: '#F9DE1F'
+    }
+  },
+  {
     id: 'tema-cherry',
     name: 'TEMA CHERRY',
     subtitle: 'Undangan bergaya ilustrasi hangat dengan nuansa pink lembut dan tipografi playful.',

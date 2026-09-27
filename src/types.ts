@@ -3,7 +3,7 @@ export interface Template {
   name: string;
   subtitle: string;
   code: string;
-  category: 'minimalist' | 'floral' | 'modern' | 'vintage';
+  category: 'film' | 'minimalist' | 'floral' | 'modern' | 'vintage';
   bgColor: string;
   textColor: string;
   borderColor?: string;

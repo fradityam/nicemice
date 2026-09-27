@@ -5,8 +5,10 @@ import { TEMPLATES } from '../data';
 import { Template } from '../types';
 import cherryThumbnail from '../assets/images/cherry/1.png';
 import indigoThumbnail from '../assets/images/Indigo/indigo-cover.png';
+import lalalandThumbnail from '../assets/images/lalaland/lalaland-thumbnail.webp';
 
 const CUSTOM_TEMPLATE_ROUTES: Record<string, string> = {
+  'tema-lalaland': '/template/lalaland',
   'tema-cherry': '/template/cherry',
   'tema-sage': '/template/sage',
   'tema-batik': '/template/batik',
@@ -65,7 +67,7 @@ const CHERRY_THUMBNAIL_IMG_STYLE: React.CSSProperties = {
 
 export default function TemplateShowcase() {
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'floral' | 'modern' | 'vintage'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'film' | 'floral' | 'modern' | 'vintage'>('all');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [guestName, setGuestName] = useState('John Doe & Partner');
   const [activeAccColor, setActiveAccColor] = useState('#D4AF37');
@@ -205,9 +207,10 @@ export default function TemplateShowcase() {
 
         {/* Category Filters */}
         <div className="flex flex-wrap justify-center items-center gap-2 mb-12">
-          {(['all', 'floral', 'modern', 'vintage'] as const).map((category) => {
+          {(['all', 'film', 'floral', 'modern', 'vintage'] as const).map((category) => {
             const categoryLabels: Record<string, string> = {
               all: 'SEMUA TEMA',
+              film: 'FILM',
               floral: 'FLORAL',
               modern: 'MODERN',
               vintage: 'KLASIK',
@@ -240,7 +243,9 @@ export default function TemplateShowcase() {
                 <div
                   className={`aspect-[3/4] w-full rounded-xl overflow-hidden shadow-sm border border-zinc-950/5 relative transition-transform duration-300 group-hover:scale-[1.02] ${tpl.bgColor} ${tpl.textColor}`}
                 >
-                  {tpl.id === 'tema-cherry' ? (
+                  {tpl.id === 'tema-lalaland' ? (
+                    <img src={lalalandThumbnail} alt={tpl.name} className="absolute inset-0 h-full w-full object-cover" />
+                  ) : tpl.id === 'tema-cherry' ? (
                     <div style={CHERRY_THUMBNAIL_WRAPPER_STYLE}>
                       <img src={cherryThumbnail} alt={tpl.name} style={CHERRY_THUMBNAIL_IMG_STYLE} />
                     </div>
