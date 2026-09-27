@@ -5,6 +5,10 @@ import { ArrowLeft } from 'lucide-react';
 import coverBg from '../../assets/images/lalaland/figma/cover-bg.webp';
 import LaLaLandContent, { INTRO } from './LaLaLandContent';
 import { weddingDateId } from './lalalandWeddingDate';
+import { MusicToggle, useBackgroundMusic } from './lalalandMusic';
+
+// The couple's song. Swap this file (in public/) to give each couple their own music.
+const MUSIC_SRC = `${import.meta.env.BASE_URL}lalaland-music.m4a`;
 
 const NAVY = '#081a51';
 const COVER_W = 375;
@@ -134,8 +138,12 @@ export default function LaLaLandTemplate() {
     return () => clearTimeout(t);
   }, [phase, reducedMotion]);
 
+  const music = useBackgroundMusic(MUSIC_SRC);
+
   const open = () => {
     if (phase !== 'cover') return;
+    // Must run inside the click: the gesture is what lets the browser start audio.
+    music.start();
     // Reset before the cover starts fading, so the first content revealed is Quotes.
     window.scrollTo({ top: 0, behavior: 'instant' });
     setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -183,6 +191,8 @@ export default function LaLaLandTemplate() {
       <div className="relative max-w-[430px] mx-auto">
         <LaLaLandContent intro={{ revealed: phase !== 'cover', reducedMotion }} />
       </div>
+
+      {phase !== 'cover' && <MusicToggle playing={music.playing} onToggle={music.toggle} />}
     </div>
   );
 }
