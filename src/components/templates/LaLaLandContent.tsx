@@ -55,6 +55,19 @@ function quotesIntroStyle({ revealed, reducedMotion }: IntroState): CSSPropertie
   return { opacity: 1, transform: 'translateY(0)', transition: `opacity ${t}, transform ${t}` };
 }
 
+// Figma render bounds (Content-frame px) of each starfield's COLOR_DODGE group.
+const FLARES = [
+  { file: 'flare-665.webp', top: 687.3, w: 369.7, h: 446.16 },
+  { file: 'flare-1165.webp', top: 1187.3, w: 375, h: 446.16 },
+  { file: 'flare-2245.webp', top: 2267.3, w: 375, h: 446.16 },
+  { file: 'flare-3195.webp', top: 3224.03, w: 203.62, h: 580.9 },
+];
+const BG_ILLUSTRATIONS = [
+  { file: 'piano-1.webp', top: 2756, h: 448 },
+  { file: 'piano-2.webp', top: 3767, h: 683 },
+  { file: 'bg-pool.webp', top: 1692, h: 573 },
+];
+
 // Paper rip vector: node box is 398.887 × 33.13; the exported SVG adds 1% on each side
 // and 24.15% below for the drop shadow.
 function PaperRip({ y }: { y: number }) {
@@ -317,12 +330,27 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
 
   return (
     <div ref={wrapRef} className="relative w-full overflow-hidden" style={{ aspectRatio: `${FRAME_W} / ${FRAME_H}` }}>
-      <div
-        className="absolute left-0 top-0 origin-top-left"
-        style={{ width: FRAME_W, height: FRAME_H, transform: `scale(${scale})` }}
-      >
-        {/* ===== BG (Figma frame "BG", rendered as one continuous image) ===== */}
+      {/* Scaled with `zoom`, not `transform`: a transform would isolate this canvas, and the
+          colour-dodge flares below must blend with the viewport-fixed gradient behind it. */}
+      <div className="absolute left-0 top-0" style={{ width: FRAME_W, height: FRAME_H, zoom: scale }}>
+        {/* ===== BG (Figma group "BG") =====
+            The sky itself is the Content frame's gradient, drawn as a viewport-fixed layer by
+            the template; these layers are transparent wherever that sky shows through.
+            Order follows Figma: Piano BG + plain stars, then each starfield's COLOR_DODGE flare
+            group, then the opaque piano / pool illustrations on top. */}
         <img alt="" src={A('content-bg.webp')} className="absolute left-0 top-0 block max-w-none" style={{ width: 375, height: 4450 }} />
+        {FLARES.map((f) => (
+          <img
+            key={f.file}
+            alt=""
+            src={A(f.file)}
+            className="absolute block max-w-none"
+            style={{ left: 0, top: f.top, width: f.w, height: f.h, mixBlendMode: 'color-dodge' }}
+          />
+        ))}
+        {BG_ILLUSTRATIONS.map((b) => (
+          <img key={b.file} alt="" src={A(b.file)} className="absolute left-0 block max-w-none" style={{ top: b.top, width: 375, height: b.h }} />
+        ))}
 
         {/* ===== First meet ===== */}
         <div className="absolute overflow-hidden" style={{ left: -1, top: 4450, width: 378, height: 191 }}>

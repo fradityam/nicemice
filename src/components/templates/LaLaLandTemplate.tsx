@@ -11,6 +11,8 @@ const COVER_W = 375;
 const COVER_H = 667;
 const MAX_COLUMN_W = 430;
 const textShadow = '0px 4px 4px rgba(0,0,0,0.25)';
+// Figma Content frame fill (top → bottom).
+const SKY_GRADIENT = 'linear-gradient(to bottom, #000433 0%, #181065 50%, #672dc1 100%)';
 
 // Figma's rgba(144,105,165,0) → #081a51 gradient, interpolated the way Figma does it
 // (non-premultiplied, so the purple tint carries through the middle). A plain CSS
@@ -168,7 +170,17 @@ export default function LaLaLandTemplate() {
       )}
 
       {/* ============ FULL INVITATION ============ */}
-      <div className="max-w-[430px] mx-auto">
+      {/* The Content frame's fill, fixed to the screen as in the Figma prototype: every
+          screen runs navy → violet while the stars and sections scroll over it. A fixed
+          element (not background-attachment: fixed, which iOS Safari ignores), limited to
+          the invitation column and sized to the large viewport so it doesn't stretch as the
+          mobile toolbar collapses. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 top-0 mx-auto h-lvh w-full max-w-[430px]"
+        style={{ backgroundImage: SKY_GRADIENT }}
+      />
+      <div className="relative max-w-[430px] mx-auto">
         <LaLaLandContent intro={{ revealed: phase !== 'cover', reducedMotion }} />
       </div>
     </div>
