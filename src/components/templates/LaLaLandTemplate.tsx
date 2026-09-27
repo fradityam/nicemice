@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 import coverBg from '../../assets/images/lalaland/figma/cover-bg.webp';
-import LaLaLandContent from './LaLaLandContent';
+import LaLaLandContent, { INTRO } from './LaLaLandContent';
 import { weddingDateId } from './lalalandWeddingDate';
 
 const NAVY = '#081a51';
@@ -100,8 +100,11 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
   );
 }
 
+type Phase = 'cover' | 'opening' | 'open';
+
 export default function LaLaLandTemplate() {
-  const [isOpened, setIsOpened] = useState(false);
+  const [phase, setPhase] = useState<Phase>('cover');
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   // The site sets `scroll-behavior: smooth` on <html>, so every scroll here must be
   // explicitly instant — otherwise the reset animates visibly from wherever the browser
@@ -115,18 +118,29 @@ export default function LaLaLandTemplate() {
     };
   }, []);
 
+  // Scrolling stays locked through the transition and unlocks once it has finished.
   useEffect(() => {
-    document.body.style.overflow = isOpened ? '' : 'hidden';
+    document.body.style.overflow = phase === 'open' ? '' : 'hidden';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpened]);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== 'opening') return;
+    const t = setTimeout(() => setPhase('open'), reducedMotion ? INTRO.REDUCED_FADE_MS : INTRO.TOTAL_MS);
+    return () => clearTimeout(t);
+  }, [phase, reducedMotion]);
 
   const open = () => {
+    if (phase !== 'cover') return;
     // Reset before the cover starts fading, so the first content revealed is Quotes.
     window.scrollTo({ top: 0, behavior: 'instant' });
-    setIsOpened(true);
+    setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    setPhase('opening');
   };
+
+  const coverFadeMs = reducedMotion ? INTRO.REDUCED_FADE_MS : INTRO.COVER_FADE_MS;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: NAVY }}>
@@ -140,18 +154,22 @@ export default function LaLaLandTemplate() {
       </Link>
 
       {/* ============ COVER ============ */}
-      <div
-        className={`fixed inset-0 z-50 transition-opacity duration-500 ease-in-out ${
-          isOpened ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-        style={{ backgroundColor: NAVY }}
-      >
-        <LaLaLandCover onOpen={open} />
-      </div>
+      {phase !== 'open' && (
+        <div
+          className={`fixed inset-0 z-50 ${phase === 'opening' ? 'pointer-events-none' : ''}`}
+          style={{
+            backgroundColor: NAVY,
+            opacity: phase === 'cover' ? 1 : 0,
+            transition: `opacity ${coverFadeMs}ms ${INTRO.EASE_OUT}`,
+          }}
+        >
+          <LaLaLandCover onOpen={open} />
+        </div>
+      )}
 
       {/* ============ FULL INVITATION ============ */}
       <div className="max-w-[430px] mx-auto">
-        <LaLaLandContent />
+        <LaLaLandContent intro={{ revealed: phase !== 'cover', reducedMotion }} />
       </div>
     </div>
   );

@@ -32,6 +32,29 @@ const mask = (file: string, position: string, size: string): CSSProperties => {
   };
 };
 
+// Cover → content transition. The cover fades out over COVER_FADE_MS while the Quotes
+// card, starting QUOTES_DELAY_MS later, fades in and rises QUOTES_RISE_PX into place.
+export const INTRO = {
+  EASE_OUT: 'cubic-bezier(0.33, 1, 0.68, 1)',
+  COVER_FADE_MS: 1100,
+  QUOTES_DELAY_MS: 150,
+  QUOTES_MS: 1000,
+  QUOTES_RISE_PX: 32,
+  REDUCED_FADE_MS: 300,
+  get TOTAL_MS() {
+    return Math.max(this.COVER_FADE_MS, this.QUOTES_DELAY_MS + this.QUOTES_MS);
+  },
+};
+
+export type IntroState = { revealed: boolean; reducedMotion: boolean };
+
+function quotesIntroStyle({ revealed, reducedMotion }: IntroState): CSSProperties {
+  if (reducedMotion) return {};
+  if (!revealed) return { opacity: 0, transform: `translateY(${INTRO.QUOTES_RISE_PX}px)` };
+  const t = `${INTRO.QUOTES_MS}ms ${INTRO.EASE_OUT} ${INTRO.QUOTES_DELAY_MS}ms`;
+  return { opacity: 1, transform: 'translateY(0)', transition: `opacity ${t}, transform ${t}` };
+}
+
 // Paper rip vector: node box is 398.887 × 33.13; the exported SVG adds 1% on each side
 // and 24.15% below for the drop shadow.
 function PaperRip({ y }: { y: number }) {
@@ -277,7 +300,8 @@ const fieldLabel = "-translate-y-1/2 absolute flex flex-col font-['Pompiere'] ju
 const fieldBox = "absolute left-[37px] w-[302px] bg-white border border-[#fade20] border-solid rounded-[10px]";
 const fieldText = "font-['Pompiere'] text-[16px] leading-[20px] tracking-[-0.272px] text-black placeholder:text-[rgba(0,0,0,0.2)] outline-none";
 
-export default function LaLaLandContent() {
+export default function LaLaLandContent({ intro }: { intro: IntroState }) {
+  const introStyle = quotesIntroStyle(intro);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [attendance, setAttendance] = useState('hadir');
@@ -623,27 +647,39 @@ export default function LaLaLandContent() {
         />
 
         {/* ===== Quotes ===== */}
-        <div className="absolute inset-[0.88%_9.22%_88.71%_9.22%] mix-blend-multiply">
+        {/* The multiply texture animates on its own so it keeps blending with the
+            background; the rest of the card animates as one group so the pattern layer
+            under the photo never shows through a half-faded photo. The group's layers use
+            the pixel values their Figma % insets resolve to within the 375 × 4641 frame. */}
+        <div className="absolute inset-[0.88%_9.22%_88.71%_9.22%] mix-blend-multiply" style={introStyle}>
           <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('fa428.svg')} />
         </div>
-        <div className="absolute inset-[1.21%_13.78%_89.22%_14.25%]">
-          <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('2af26.svg')} />
+        <div className="absolute left-0 top-0 h-[560px] w-[375px]" style={introStyle}>
+          <div className="absolute" style={{ left: 53.4375, top: 56.1561, width: 269.8875, height: 444.1437 }}>
+            <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('2af26.svg')} />
+          </div>
+          <div
+            className="absolute"
+            style={{ left: 62.4375, top: 73.3278, width: 251.8875, height: 252.0063, ...mask('372a1.svg', '7.871px -0.447px', '236.147px 251.888px') }}
+          >
+            <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('9ecb6.svg')} />
+          </div>
+          <div
+            className="absolute"
+            style={{ left: 46.275, top: -1.3923, width: 266.0625, height: 472.4538, ...mask('372a1.svg', '24.054px 74.392px', '236.147px 251.888px') }}
+          >
+            <img alt="Sebastian & Mia di bioskop" className="absolute left-0 top-0 max-w-none size-full" src={A('8d654.webp')} />
+          </div>
+          <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[26px] left-1/2 text-[22px] text-[#000433] text-center top-[357px] w-max whitespace-nowrap">
+            Here's to the ones who dream,
+            <br />
+            foolish as they may seem. Here's
+            <br />
+            to the hearts that ache. Here's to
+            <br />
+            the mess we make.
+          </p>
         </div>
-        <div className="absolute inset-[1.58%_16.18%_92.99%_16.65%]" style={mask('372a1.svg', '7.871px -0.447px', '236.147px 251.888px')}>
-          <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('9ecb6.svg')} />
-        </div>
-        <div className="absolute inset-[-0.03%_16.71%_89.85%_12.34%]" style={mask('372a1.svg', '24.054px 74.392px', '236.147px 251.888px')}>
-          <img alt="Sebastian & Mia di bioskop" className="absolute left-0 top-0 max-w-none size-full" src={A('8d654.webp')} />
-        </div>
-        <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[26px] left-1/2 text-[22px] text-[#000433] text-center top-[357px] w-max whitespace-nowrap">
-          Here's to the ones who dream,
-          <br />
-          foolish as they may seem. Here's
-          <br />
-          to the hearts that ache. Here's to
-          <br />
-          the mess we make.
-        </p>
 
         {/* ===== Top-most layers ===== */}
         <div className="absolute" style={{ left: -45, top: 2595, width: 132, height: 159 }}>
