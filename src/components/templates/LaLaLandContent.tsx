@@ -136,6 +136,137 @@ function CountdownNumbers() {
   );
 }
 
+const PREWED_SLIDES = [
+  { file: '498fb.webp' },
+  { file: '1a1e9-lg.webp', thumb: '1a1e9.webp', left: 30, w: 70 },
+  { file: '6e588-lg.webp', thumb: '6e588.webp', left: 112, w: 69 },
+  { file: '200d5-lg.webp', thumb: '200d5.webp', left: 194, w: 69 },
+  { file: '5b958-lg.webp', thumb: '5b958.webp', left: 275, w: 70 },
+];
+const SLIDE_COUNT = PREWED_SLIDES.length;
+const AUTOPLAY_MS = 4000;
+const FADE_MS = 800;
+const SWIPE_MIN_PX = 40;
+
+function SlideImage({ index }: { index: number }) {
+  const alt = `Foto pre-wedding Sebastian & Mia (${index + 1} dari ${SLIDE_COUNT})`;
+  // Slide 1 keeps Figma's own crop of the hero photo; the others fill the frame.
+  const className =
+    index === 0
+      ? 'absolute h-[114.03%] left-[-2.27%] max-w-none top-[-14.03%] w-[103.02%]'
+      : 'absolute inset-0 size-full max-w-none object-cover';
+  return <img alt={alt} src={A(PREWED_SLIDES[index].file)} className={className} draggable={false} />;
+}
+
+function FadeInLayer({ animate, children }: { animate: boolean; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (animate) ref.current?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FADE_MS, easing: 'ease-in-out' });
+  }, [animate]);
+  return (
+    <div ref={ref} className="absolute inset-0">
+      {children}
+    </div>
+  );
+}
+
+function PrewedGallery() {
+  const frameRef = useRef<HTMLDivElement>(null);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  // `prev` stays fully opaque underneath while `active` fades in on top, so the crossfade
+  // never dips to the background. `tick` bumps on every navigation to restart autoplay.
+  const [slides, setSlides] = useState({ active: 0, prev: 0, fadeId: 0, tick: 0 });
+  const [inView, setInView] = useState(false);
+  const [pageVisible, setPageVisible] = useState(() => !document.hidden);
+
+  const show = (target: (current: number) => number) =>
+    setSlides((s) => {
+      const next = (((target(s.active)) % SLIDE_COUNT) + SLIDE_COUNT) % SLIDE_COUNT;
+      return next === s.active
+        ? { ...s, tick: s.tick + 1 }
+        : { active: next, prev: s.active, fadeId: s.fadeId + 1, tick: s.tick + 1 };
+    });
+
+  useEffect(() => {
+    for (const s of PREWED_SLIDES) {
+      const img = new Image();
+      img.src = A(s.file);
+      img.decode().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = frameRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting));
+    io.observe(el);
+    const onVisibility = () => setPageVisible(!document.hidden);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      io.disconnect();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!inView || !pageVisible) return;
+    const t = setTimeout(() => show((a) => a + 1), AUTOPLAY_MS);
+    return () => clearTimeout(t);
+  }, [slides.tick, inView, pageVisible]);
+
+  return (
+    <>
+      <div
+        ref={frameRef}
+        role="region"
+        aria-roledescription="carousel"
+        aria-label="Galeri foto pre-wedding"
+        className="-translate-x-1/2 absolute h-[403px] left-1/2 rounded-[20px] top-[1737px] w-[315px] overflow-hidden touch-pan-y select-none"
+        onPointerDown={(e) => (swipeStart.current = { x: e.clientX, y: e.clientY })}
+        onPointerCancel={() => (swipeStart.current = null)}
+        onPointerUp={(e) => {
+          const start = swipeStart.current;
+          swipeStart.current = null;
+          if (!start) return;
+          const dx = e.clientX - start.x;
+          const dy = e.clientY - start.y;
+          if (Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy)) show((a) => a + (dx < 0 ? 1 : -1));
+        }}
+      >
+        {slides.prev !== slides.active && (
+          <div key={`prev-${slides.prev}`} className="absolute inset-0" aria-hidden="true">
+            <SlideImage index={slides.prev} />
+          </div>
+        )}
+        <FadeInLayer key={slides.fadeId} animate={slides.fadeId > 0}>
+          <SlideImage index={slides.active} />
+        </FadeInLayer>
+      </div>
+
+      {PREWED_SLIDES.map((s, i) =>
+        s.thumb ? (
+          <button
+            key={s.thumb}
+            type="button"
+            aria-label={`Tampilkan foto ${i + 1} dari ${SLIDE_COUNT}`}
+            aria-current={slides.active === i}
+            onClick={() => show(() => i)}
+            className="absolute top-[2159px] h-[70px] overflow-hidden rounded-[10px] cursor-pointer"
+            style={{ left: s.left, width: s.w }}
+          >
+            <img alt="" src={A(s.thumb)} className="absolute inset-0 size-full max-w-none object-cover" draggable={false} />
+            <span
+              className={`pointer-events-none absolute inset-0 rounded-[10px] border-[1.5px] border-[#FFFF00] transition-opacity duration-300 ${
+                slides.active === i ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          </button>
+        ) : null,
+      )}
+    </>
+  );
+}
+
 const ATTENDANCE = [
   { value: 'hadir', label: 'Akan Hadir', top: 3404 },
   { value: 'mungkin', label: 'Mungkin Hadir', top: 3447 },
@@ -417,23 +548,7 @@ export default function LaLaLandContent() {
         </p>
 
         {/* ===== Prewed ===== */}
-        <div className="-translate-x-1/2 absolute h-[403px] left-1/2 rounded-[20px] top-[1737px] w-[315px] overflow-hidden">
-          <img alt="Foto pre-wedding Sebastian & Mia" className="absolute h-[114.03%] left-[-2.27%] max-w-none top-[-14.03%] w-[103.02%]" src={A('498fb.webp')} />
-        </div>
-        {[
-          { left: 30, w: 70, file: '1a1e9.webp' },
-          { left: 112, w: 69, file: '6e588.webp' },
-          { left: 194, w: 69, file: '200d5.webp' },
-          { left: 275, w: 70, file: '5b958.webp' },
-        ].map((p) => (
-          <img
-            key={p.file}
-            alt=""
-            src={A(p.file)}
-            className="absolute max-w-none object-cover rounded-[10px] top-[2159px] h-[70px]"
-            style={{ left: p.left, width: p.w }}
-          />
-        ))}
+        <PrewedGallery />
 
         {/* ===== Bride ===== */}
         <div className="absolute flex inset-[27.9%_21.99%_65.99%_18.79%] items-center justify-center" style={{ containerType: 'size' }}>
