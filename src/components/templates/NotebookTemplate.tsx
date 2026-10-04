@@ -8,9 +8,9 @@ import NotebookContent, { INTRO } from './NotebookContent';
 import { weddingDateCover } from './notebookWeddingDate';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 
-// The couple's song, served from public/. No file yet, so no player is shown; set this to
-// e.g. `${import.meta.env.BASE_URL}notebook-music.m4a` once the song is added.
-const MUSIC_SRC: string | null = null;
+// The couple's song, served from public/. Swap the file to give each couple their own
+// music; set to null to hide the player.
+const MUSIC_SRC: string | null = `${import.meta.env.BASE_URL}notebook-music.mp3`;
 
 const PAGE_BG = '#fefffa';
 const COVER_W = 375;
