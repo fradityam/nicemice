@@ -6,9 +6,17 @@ import { Template } from '../types';
 import cherryThumbnail from '../assets/images/cherry/1.png';
 import indigoThumbnail from '../assets/images/Indigo/indigo-cover.png';
 import lalalandThumbnail from '../assets/images/lalaland/lalaland-thumbnail.webp';
+import notebookThumbnail from '../assets/images/notebook/notebook-thumbnail.webp';
+
+// Templates whose catalog card shows a screenshot of their real cover.
+const COVER_THUMBNAILS: Record<string, string> = {
+  'tema-lalaland': lalalandThumbnail,
+  'tema-notebook': notebookThumbnail,
+};
 
 const CUSTOM_TEMPLATE_ROUTES: Record<string, string> = {
   'tema-lalaland': '/template/lalaland',
+  'tema-notebook': '/template/notebook',
   'tema-cherry': '/template/cherry',
   'tema-sage': '/template/sage',
   'tema-batik': '/template/batik',
@@ -243,8 +251,8 @@ export default function TemplateShowcase() {
                 <div
                   className={`aspect-[3/4] w-full rounded-xl overflow-hidden shadow-sm border border-zinc-950/5 relative transition-transform duration-300 group-hover:scale-[1.02] ${tpl.bgColor} ${tpl.textColor}`}
                 >
-                  {tpl.id === 'tema-lalaland' ? (
-                    <img src={lalalandThumbnail} alt={tpl.name} className="absolute inset-0 h-full w-full object-cover" />
+                  {COVER_THUMBNAILS[tpl.id] ? (
+                    <img src={COVER_THUMBNAILS[tpl.id]} alt={tpl.name} className="absolute inset-0 h-full w-full object-cover" />
                   ) : tpl.id === 'tema-cherry' ? (
                     <div style={CHERRY_THUMBNAIL_WRAPPER_STYLE}>
                       <img src={cherryThumbnail} alt={tpl.name} style={CHERRY_THUMBNAIL_IMG_STYLE} />

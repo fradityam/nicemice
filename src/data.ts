@@ -20,6 +20,24 @@ export const TEMPLATES: Template[] = [
     }
   },
   {
+    id: 'tema-notebook',
+    name: 'TEMA THE NOTEBOOK',
+    subtitle: 'Terinspirasi dari The Notebook, dengan lukisan danau, surat cinta bersegel lilin, dan nuansa taman yang hangat dan romantis.',
+    code: 'KODE TEMA THE NOTEBOOK DESAIN AESTHETIC DAN GAK PASARAN',
+    category: 'film',
+    bgColor: 'bg-[#FEFFFA]',
+    textColor: 'text-[#324532]',
+    previewType: 'card',
+    details: {
+      husband: 'Noah',
+      wife: 'Allie',
+      date: '14 Februari 2027',
+      location: 'Masjid Istiqlal Jakarta',
+      quote: 'I want all of you, forever, everyday. You and me... everyday.',
+      accentColor: '#ABA935'
+    }
+  },
+  {
     id: 'tema-cherry',
     name: 'TEMA CHERRY',
     subtitle: 'Undangan bergaya ilustrasi hangat dengan nuansa pink lembut dan tipografi playful.',
