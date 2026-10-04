@@ -9,7 +9,7 @@ const RESUME_FADE_MS = 600;
  * fades in, pauses while the tab is hidden / the screen is locked, and resumes on return
  * only if the guest hadn't paused it themselves.
  */
-export function useBackgroundMusic(src: string) {
+export function useBackgroundMusic(src: string | null) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeTimer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   // What the guest wants. Pauses we make because the page went hidden don't change it.
@@ -34,6 +34,7 @@ export function useBackgroundMusic(src: string) {
   }, [stopFade]);
 
   useEffect(() => {
+    if (!src) return;
     const audio = new Audio();
     audio.loop = true;
     audio.preload = 'none';
@@ -116,7 +117,17 @@ export function useBackgroundMusic(src: string) {
 }
 
 /** Floating play/pause control, bottom-right of the invitation column. */
-export function MusicToggle({ playing, onToggle }: { playing: boolean; onToggle: () => void }) {
+export function MusicToggle({
+  playing,
+  onToggle,
+  background = '#081a51',
+  iconColor = '#FFFF00',
+}: {
+  playing: boolean;
+  onToggle: () => void;
+  background?: string;
+  iconColor?: string;
+}) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-[430px]">
       <button
@@ -124,12 +135,13 @@ export function MusicToggle({ playing, onToggle }: { playing: boolean; onToggle:
         onClick={onToggle}
         aria-label={playing ? 'Jeda musik' : 'Putar musik'}
         aria-pressed={playing}
-        className="pointer-events-auto absolute right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] flex size-11 cursor-pointer items-center justify-center rounded-full bg-[#081a51] shadow-[0_2px_10px_rgba(0,0,0,0.35)] ring-1 ring-[#FFFF00]/40"
+        className="pointer-events-auto absolute right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] flex size-11 cursor-pointer items-center justify-center rounded-full"
+        style={{ backgroundColor: background, boxShadow: `0 2px 10px rgba(0,0,0,0.35), 0 0 0 1px ${iconColor}66` }}
       >
         <Music
           aria-hidden="true"
-          className={`size-5 text-[#FFFF00] motion-safe:animate-spin transition-opacity ${playing ? 'opacity-100' : 'opacity-60'}`}
-          style={{ animationDuration: '6s', animationPlayState: playing ? 'running' : 'paused' }}
+          className={`size-5 motion-safe:animate-spin transition-opacity ${playing ? 'opacity-100' : 'opacity-60'}`}
+          style={{ color: iconColor, animationDuration: '6s', animationPlayState: playing ? 'running' : 'paused' }}
         />
       </button>
     </div>

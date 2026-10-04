@@ -111,12 +111,13 @@ function SalinButton({ top, label, text }: { top: number; label: string; text: s
     <>
       <div className="absolute bg-[#efecec] border border-[#accadd] border-solid h-[22px] left-[156px] rounded-[20px] w-[64px]" style={{ top }} />
       <div
-        className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] font-normal justify-center leading-[0] left-[195.5px] text-[10px] text-[#081a51] text-center tracking-[-0.17px] whitespace-nowrap"
-        style={{ top: top + 11.5 }}
+        className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] font-normal justify-center leading-[0] text-[10px] text-[#081a51] text-center tracking-[-0.17px] whitespace-nowrap"
+        style={{ top: top + 11.5, left: copied ? 188 : 195.5 }}
       >
         <p className="leading-[15px]">{copied ? 'TERSALIN' : 'SALIN'}</p>
       </div>
-      <img alt="" src={A('8ae9e.svg')} className="absolute block max-w-none" style={{ left: 166.01, top: top + 4.33, width: 10.99, height: 13.47 }} />
+      {/* "TERSALIN" is wider than the label slot, so it replaces the icon and centres. */}
+      {!copied && <img alt="" src={A('8ae9e.svg')} className="absolute block max-w-none" style={{ left: 166.01, top: top + 4.33, width: 10.99, height: 13.47 }} />}
       <button
         type="button"
         aria-label={label}

@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import coverBg from '../../assets/images/lalaland/figma/cover-bg.webp';
 import LaLaLandContent, { INTRO } from './LaLaLandContent';
 import { weddingDateId } from './lalalandWeddingDate';
-import { MusicToggle, useBackgroundMusic } from './lalalandMusic';
+import { MusicToggle, useBackgroundMusic } from './templateMusic';
 
 // The couple's song. Swap this file (in public/) to give each couple their own music.
 const MUSIC_SRC = `${import.meta.env.BASE_URL}lalaland-music.m4a`;
