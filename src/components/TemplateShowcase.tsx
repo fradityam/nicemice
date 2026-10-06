@@ -273,7 +273,9 @@ export default function TemplateShowcase() {
               {/* Card descriptions & actions */}
               <div className="p-5 flex-1 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                  {/* In the narrow 4-column layout (1024–1279px) longer names wrap to two lines, so
+                      the row keeps room for two there. */}
+                  <div className="flex items-center justify-between gap-2 mb-1.5 lg:max-xl:min-h-8">
                     <span className="font-sans tracking-wide sm:tracking-widest font-bold text-xs text-zinc-950">
                       {tpl.name}
                     </span>
@@ -281,10 +283,12 @@ export default function TemplateShowcase() {
                       {tpl.category}
                     </span>
                   </div>
-                  <p className="text-xs font-sans text-zinc-400 uppercase tracking-wide sm:tracking-widest font-medium mb-3 line-clamp-1 block">
+                  {/* Fixed heights (3 lines, then 2) so the description, divider and buttons line
+                      up across every card in a row, however the text wraps. */}
+                  <p className="text-xs font-sans text-zinc-400 uppercase tracking-wide sm:tracking-widest font-medium mb-3 leading-4 h-12 line-clamp-3">
                     {tpl.code}
                   </p>
-                  <p className="text-zinc-500 text-xs tracking-wide line-clamp-2 leading-[1.5]">
+                  <p className="text-zinc-500 text-xs tracking-wide line-clamp-2 leading-[1.5] h-[3em]">
                     {tpl.subtitle}
                   </p>
                 </div>
