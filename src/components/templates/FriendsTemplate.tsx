@@ -12,9 +12,9 @@ import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import './friends.css';
 import { STAGE_BG } from './templateStage';
 
-// The couple's song, served from public/. No song for this template yet, so the player is
-// hidden; set a file name here to turn it on.
-const MUSIC_SRC: string | null = null;
+// The couple's song, served from public/. Swap the file to give each couple their own
+// music; set to null to hide the player.
+const MUSIC_SRC: string | null = `${import.meta.env.BASE_URL}friends-music.mp3`;
 
 const PURPLE = '#a07eb9';
 const COVER_W = 375;
