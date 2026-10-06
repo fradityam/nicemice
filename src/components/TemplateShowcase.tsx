@@ -7,16 +7,19 @@ import cherryThumbnail from '../assets/images/cherry/1.png';
 import indigoThumbnail from '../assets/images/Indigo/indigo-cover.png';
 import lalalandThumbnail from '../assets/images/lalaland/lalaland-thumbnail.webp';
 import notebookThumbnail from '../assets/images/notebook/notebook-thumbnail.webp';
+import friendsThumbnail from '../assets/images/friends/friends-thumbnail.webp';
 
 // Templates whose catalog card shows a screenshot of their real cover.
 const COVER_THUMBNAILS: Record<string, string> = {
   'tema-lalaland': lalalandThumbnail,
   'tema-notebook': notebookThumbnail,
+  'tema-friends': friendsThumbnail,
 };
 
 const CUSTOM_TEMPLATE_ROUTES: Record<string, string> = {
   'tema-lalaland': '/template/lalaland',
   'tema-notebook': '/template/notebook',
+  'tema-friends': '/template/friends',
   'tema-cherry': '/template/cherry',
   'tema-sage': '/template/sage',
   'tema-batik': '/template/batik',
