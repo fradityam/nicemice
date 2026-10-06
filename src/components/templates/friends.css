@@ -1,0 +1,32 @@
+/* Fonts of the Friends template. Fraunces comes from Google Fonts (index.html); its Figma
+   variants ("Fraunces 72pt", "72pt Soft", "72pt SuperSoft") are axis settings of the one
+   variable font. */
+@font-face {
+  font-family: 'Gabriel Weiss Friends';
+  src: url('../../assets/fonts/gabriel-weiss-friends.woff') format('woff');
+  font-display: block;
+}
+
+.ff-friends {
+  font-family: 'Gabriel Weiss Friends', 'Comic Sans MS', cursive;
+  font-weight: 400;
+}
+.ff-f72,
+.ff-f72-soft,
+.ff-f72-supersoft,
+.ff-fraunces {
+  font-family: 'Fraunces', Georgia, serif;
+}
+.ff-f72 {
+  font-variation-settings: 'opsz' 72, 'SOFT' 0, 'WONK' 0;
+}
+.ff-f72-soft {
+  font-variation-settings: 'opsz' 72, 'SOFT' 50, 'WONK' 0;
+}
+.ff-f72-supersoft {
+  font-variation-settings: 'opsz' 72, 'SOFT' 100, 'WONK' 0;
+}
+/* Plain "Fraunces" in Figma: automatic optical size, with the WONK alternates on. */
+.ff-fraunces {
+  font-variation-settings: 'SOFT' 0, 'WONK' 1;
+}
