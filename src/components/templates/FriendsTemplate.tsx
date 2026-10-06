@@ -15,7 +15,6 @@ import './friends.css';
 // hidden; set a file name here to turn it on.
 const MUSIC_SRC: string | null = null;
 
-const PAGE_BG = '#fefffa';
 const PURPLE = '#a07eb9';
 const COVER_W = 375;
 const COVER_H = 667;
@@ -136,15 +135,15 @@ function FriendsCover({ phase, reducedMotion, onPeek, onOpen }: { phase: Phase; 
       role={atDoor ? 'button' : undefined}
       tabIndex={atDoor ? 0 : undefined}
       aria-label={atDoor ? 'Look through the peephole' : undefined}
-      onClick={atDoor ? onPeek : undefined}
       onKeyDown={(e) => {
         if (atDoor && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
           onPeek();
         }
       }}
-      className={`absolute inset-0 overflow-hidden outline-none ${atDoor ? 'cursor-pointer' : ''}`}
-      style={{ backgroundColor: PURPLE }}
+      // The cover stays in the invitation's phone-width column; on wide screens the purple
+      // overlay around it is the door too, and taps there are handled by the overlay.
+      className={`absolute inset-y-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 overflow-hidden outline-none ${atDoor ? 'cursor-pointer' : ''}`}
     >
       <div
         className="absolute left-1/2"
@@ -256,7 +255,8 @@ export default function FriendsTemplate() {
   const coverT = `${coverFadeMs}ms ${INTRO.EASE_OUT}`;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: PAGE_BG }}>
+    // Purple outside the column on wide screens; on phones the column covers it.
+    <div className="min-h-screen" style={{ backgroundColor: PURPLE }}>
       <Link
         to="/"
         className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
@@ -267,8 +267,10 @@ export default function FriendsTemplate() {
 
       {phase !== 'open' && (
         <div
-          className={`fixed inset-0 z-50 ${leaving ? 'pointer-events-none' : ''}`}
+          className={`fixed inset-0 z-50 ${leaving ? 'pointer-events-none' : ''} ${phase === 'door' ? 'cursor-pointer' : ''}`}
+          onClick={peek}
           style={{
+            backgroundColor: PURPLE,
             opacity: leaving ? 0 : 1,
             transform: leaving && !reducedMotion ? `translateY(-${INTRO.COVER_RISE_PX}px)` : 'none',
             transition: `opacity ${coverT}, transform ${coverT}`,
