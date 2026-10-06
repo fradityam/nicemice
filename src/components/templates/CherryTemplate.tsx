@@ -8,6 +8,7 @@ import section2Img from '../../assets/images/cherry/page2_section_2.png';
 import section3Img from '../../assets/images/cherry/page2_section_3.png';
 import section5Img from '../../assets/images/cherry/page2_section_5 - cropped.png';
 import section7Img from '../../assets/images/cherry/page2_section_7.png';
+import { STAGE_BG } from './templateStage';
 
 const PINK = '#FFB3C6';
 const CREAM = '#FAF7F0';
@@ -113,7 +114,7 @@ export default function CherryTemplate() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: PINK }}>
+    <div className="min-h-screen" style={{ backgroundColor: STAGE_BG }}>
       {/* Back to site link */}
       <Link
         to="/"
@@ -125,7 +126,7 @@ export default function CherryTemplate() {
 
       {/* ============ COVER ============ */}
       <div
-        className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 overflow-y-auto px-6 py-10 transition-all duration-700 ease-in-out ${
+        className={`fixed inset-0 z-50 mx-auto max-w-[480px] flex flex-col items-center justify-center gap-8 overflow-y-auto px-6 py-10 transition-all duration-700 ease-in-out ${
           isOpened ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
         }`}
         style={{ backgroundColor: PINK }}

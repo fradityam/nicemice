@@ -10,6 +10,7 @@ import buttonRivets from '../../assets/images/friends/button-rivets.svg';
 import FriendsContent, { INTRO } from './FriendsContent';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import './friends.css';
+import { STAGE_BG } from './templateStage';
 
 // The couple's song, served from public/. No song for this template yet, so the player is
 // hidden; set a file name here to turn it on.
@@ -141,9 +142,10 @@ function FriendsCover({ phase, reducedMotion, onPeek, onOpen }: { phase: Phase; 
           onPeek();
         }
       }}
-      // The cover stays in the invitation's phone-width column; on wide screens the purple
-      // overlay around it is the door too, and taps there are handled by the overlay.
+      // The cover stays in the invitation's phone-width column, on the dark stage on wide
+      // screens. Taps anywhere (stage included) are handled by the overlay.
       className={`absolute inset-y-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 overflow-hidden outline-none ${atDoor ? 'cursor-pointer' : ''}`}
+      style={{ backgroundColor: PURPLE }}
     >
       <div
         className="absolute left-1/2"
@@ -255,8 +257,7 @@ export default function FriendsTemplate() {
   const coverT = `${coverFadeMs}ms ${INTRO.EASE_OUT}`;
 
   return (
-    // Purple outside the column on wide screens; on phones the column covers it.
-    <div className="min-h-screen" style={{ backgroundColor: PURPLE }}>
+    <div className="min-h-screen" style={{ backgroundColor: STAGE_BG }}>
       <Link
         to="/"
         className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
@@ -270,7 +271,7 @@ export default function FriendsTemplate() {
           className={`fixed inset-0 z-50 ${leaving ? 'pointer-events-none' : ''} ${phase === 'door' ? 'cursor-pointer' : ''}`}
           onClick={peek}
           style={{
-            backgroundColor: PURPLE,
+            backgroundColor: STAGE_BG,
             opacity: leaving ? 0 : 1,
             transform: leaving && !reducedMotion ? `translateY(-${INTRO.COVER_RISE_PX}px)` : 'none',
             transition: `opacity ${coverT}, transform ${coverT}`,

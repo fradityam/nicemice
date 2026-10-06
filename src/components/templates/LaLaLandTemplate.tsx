@@ -6,6 +6,7 @@ import coverBg from '../../assets/images/lalaland/figma/cover-bg.webp';
 import LaLaLandContent, { INTRO } from './LaLaLandContent';
 import { weddingDateId } from './lalalandWeddingDate';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
+import { STAGE_BG } from './templateStage';
 
 // The couple's song. Swap this file (in public/) to give each couple their own music.
 const MUSIC_SRC = `${import.meta.env.BASE_URL}lalaland-music.m4a`;
@@ -153,7 +154,9 @@ export default function LaLaLandTemplate() {
   const coverFadeMs = reducedMotion ? INTRO.REDUCED_FADE_MS : INTRO.COVER_FADE_MS;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: NAVY }}>
+    <div className="relative min-h-screen" style={{ backgroundColor: STAGE_BG }}>
+      {/* The invitation column's navy, under the fixed sky, for anything the sky doesn't reach. */}
+      <div aria-hidden="true" className="absolute inset-y-0 inset-x-0 mx-auto w-full max-w-[430px]" style={{ backgroundColor: NAVY }} />
       {/* Back to site link */}
       <Link
         to="/"
@@ -168,12 +171,15 @@ export default function LaLaLandTemplate() {
         <div
           className={`fixed inset-0 z-50 ${phase === 'opening' ? 'pointer-events-none' : ''}`}
           style={{
-            backgroundColor: NAVY,
+            backgroundColor: STAGE_BG,
             opacity: phase === 'cover' ? 1 : 0,
             transition: `opacity ${coverFadeMs}ms ${INTRO.EASE_OUT}`,
           }}
         >
-          <LaLaLandCover onOpen={open} />
+          {/* The cover keeps to the invitation column; the stage shows around it on desktop. */}
+          <div className="absolute inset-0 mx-auto max-w-[430px]" style={{ backgroundColor: NAVY }}>
+            <LaLaLandCover onOpen={open} />
+          </div>
         </div>
       )}
 

@@ -9,6 +9,7 @@ import {
   Copy,
   MapPin,
 } from 'lucide-react';
+import { STAGE_BG } from './templateStage';
 
 const EVENT_DATE = new Date('2027-02-14T08:00:00+07:00');
 const LOCATION_NAME = 'The Hall Kemang';
@@ -135,7 +136,7 @@ export default function SageTemplate() {
   };
 
   return (
-    <div className="min-h-screen bg-[#B2C5B0] text-[#2D2D2D]" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen text-[#2D2D2D]" style={{ backgroundColor: STAGE_BG, fontFamily: "'Inter', sans-serif" }}>
       {/* Back to site link */}
       <Link
         to="/"
@@ -147,7 +148,7 @@ export default function SageTemplate() {
 
       {/* ============ COVER ============ */}
       <div
-        className={`fixed inset-0 z-50 flex flex-col items-center justify-center px-6 bg-[#B2C5B0] transition-all duration-700 ease-in-out ${
+        className={`fixed inset-0 z-50 mx-auto max-w-lg flex flex-col items-center justify-center px-6 bg-[#B2C5B0] transition-all duration-700 ease-in-out ${
           isOpened ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
         }`}
       >
@@ -187,7 +188,7 @@ export default function SageTemplate() {
       </div>
 
       {/* ============ FULL INVITATION ============ */}
-      <div className="max-w-lg mx-auto px-5 sm:px-8 pt-24 pb-16 space-y-14">
+      <div className="min-h-screen max-w-lg mx-auto px-5 sm:px-8 pt-24 pb-16 space-y-14 bg-[#B2C5B0]">
         {/* Photos */}
         <section className="grid grid-cols-2 gap-3 pt-4">
           <PlaceholderPhoto label="Ratu & Fadil" className="aspect-[3/4] border" />

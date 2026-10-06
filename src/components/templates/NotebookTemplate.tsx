@@ -7,6 +7,7 @@ import coverArrow from '../../assets/images/notebook/arrow.svg';
 import NotebookContent, { INTRO } from './NotebookContent';
 import { weddingDateCover } from './notebookWeddingDate';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
+import { STAGE_BG } from './templateStage';
 
 // The couple's song, served from public/. Swap the file to give each couple their own
 // music; set to null to hide the player.
@@ -169,7 +170,7 @@ export default function NotebookTemplate() {
   const coverFadeMs = reducedMotion ? INTRO.REDUCED_FADE_MS : INTRO.COVER_FADE_MS;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: PAGE_BG }}>
+    <div className="min-h-screen" style={{ backgroundColor: STAGE_BG }}>
       <Link
         to="/"
         className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
@@ -181,9 +182,12 @@ export default function NotebookTemplate() {
       {phase !== 'open' && (
         <div
           className={`fixed inset-0 z-50 ${phase === 'opening' ? 'pointer-events-none' : ''}`}
-          style={{ backgroundColor: PAGE_BG, opacity: phase === 'cover' ? 1 : 0, transition: `opacity ${coverFadeMs}ms ${INTRO.EASE_OUT}` }}
+          style={{ backgroundColor: STAGE_BG, opacity: phase === 'cover' ? 1 : 0, transition: `opacity ${coverFadeMs}ms ${INTRO.EASE_OUT}` }}
         >
-          <NotebookCover onOpen={open} />
+          {/* The cover keeps to the invitation column; the stage shows around it on desktop. */}
+          <div className="absolute inset-0 mx-auto max-w-[430px]" style={{ backgroundColor: PAGE_BG }}>
+            <NotebookCover onOpen={open} />
+          </div>
         </div>
       )}
 

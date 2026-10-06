@@ -9,6 +9,7 @@ import {
   Copy,
   MapPin,
 } from 'lucide-react';
+import { STAGE_BG } from './templateStage';
 
 const EVENT_DATE = new Date('2026-10-10T08:00:00+07:00');
 const LOCATION_NAME = 'Pendopo Agung Ndalem';
@@ -159,7 +160,7 @@ export default function BatikTemplate() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDF6E3] text-[#3D2B1F]" style={{ fontFamily: "'Crimson Text', serif" }}>
+    <div className="min-h-screen text-[#3D2B1F]" style={{ backgroundColor: STAGE_BG, fontFamily: "'Crimson Text', serif" }}>
       {/* Back to site link */}
       <Link
         to="/"
@@ -171,7 +172,7 @@ export default function BatikTemplate() {
 
       {/* ============ COVER ============ */}
       <div
-        className={`fixed inset-0 z-50 flex flex-col items-center justify-center px-6 bg-[#FDF6E3] transition-all duration-700 ease-in-out overflow-hidden ${
+        className={`fixed inset-0 z-50 mx-auto max-w-lg flex flex-col items-center justify-center px-6 bg-[#FDF6E3] transition-all duration-700 ease-in-out overflow-hidden ${
           isOpened ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
         }`}
       >
@@ -211,7 +212,7 @@ export default function BatikTemplate() {
       </div>
 
       {/* ============ FULL INVITATION ============ */}
-      <div className="max-w-lg mx-auto px-5 sm:px-8 pt-24 pb-16 space-y-14">
+      <div className="min-h-screen max-w-lg mx-auto px-5 sm:px-8 pt-24 pb-16 space-y-14 bg-[#FDF6E3]">
         {/* Photos */}
         <section className="grid grid-cols-2 gap-3 pt-4">
           <PlaceholderPhoto label="Ratu & Fadil" className="aspect-[3/4] rounded-t-full" />

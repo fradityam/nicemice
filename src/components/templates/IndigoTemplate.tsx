@@ -28,6 +28,7 @@ import album5 from '../../assets/images/Indigo/WhatsApp Image 2026-08-16 at 12.2
 import album6 from '../../assets/images/Indigo/WhatsApp Image 2026-08-16 at 12.29.22 PM-f.jpeg';
 import album7 from '../../assets/images/Indigo/WhatsApp Image 2026-08-16 at 12.29.23 PM-h.jpeg';
 import album8 from '../../assets/images/Indigo/WhatsApp Image 2026-08-16 at 12.29.23 PM-i.jpeg';
+import { STAGE_BG } from './templateStage';
 
 const NAVY = '#0D1B4B';
 const CARD_NAVY = '#1A2A6C';
@@ -195,7 +196,7 @@ export default function IndigoTemplate() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: NAVY, ...body }}>
+    <div className="min-h-screen" style={{ backgroundColor: STAGE_BG, ...body }}>
       {/* Back to site link */}
       <Link
         to="/"
@@ -207,7 +208,7 @@ export default function IndigoTemplate() {
 
       {/* ============ COVER ============ */}
       <div
-        className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 overflow-y-auto px-6 py-10 transition-all duration-700 ease-in-out ${
+        className={`fixed inset-0 z-50 mx-auto max-w-[480px] flex flex-col items-center justify-center gap-6 overflow-y-auto px-6 py-10 transition-all duration-700 ease-in-out ${
           isOpened ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
         }`}
         style={{ backgroundColor: NAVY }}
