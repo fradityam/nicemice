@@ -9,7 +9,7 @@ import {
   Copy,
   MapPin,
 } from 'lucide-react';
-import { STAGE_BG } from './templateStage';
+import { FitToHeight, STAGE_BG } from './templateStage';
 
 const EVENT_DATE = new Date('2026-10-10T08:00:00+07:00');
 const LOCATION_NAME = 'Pendopo Agung Ndalem';
@@ -182,33 +182,35 @@ export default function BatikTemplate() {
           Save The Date
         </p>
 
-        {/* Ornate double-border card */}
-        <div className="relative z-10 w-full max-w-[320px] p-1.5 border border-[#D4AF37]">
-          <div className="relative border border-[#8B4513]/60 bg-[#FFFDF7] px-8 py-12 text-center flex flex-col items-center gap-5">
-            <CornerFlourish className="absolute top-2 left-2 w-8 h-8" />
-            <CornerFlourish className="absolute bottom-2 right-2 w-8 h-8 rotate-180" />
+        <FitToHeight className="flex flex-col items-center" wrapperClassName="relative z-10" reserve={64}>
+          {/* Ornate double-border card */}
+          <div className="relative z-10 w-full max-w-[320px] p-1.5 border border-[#D4AF37]">
+            <div className="relative border border-[#8B4513]/60 bg-[#FFFDF7] px-8 py-12 text-center flex flex-col items-center gap-5">
+              <CornerFlourish className="absolute top-2 left-2 w-8 h-8" />
+              <CornerFlourish className="absolute bottom-2 right-2 w-8 h-8 rotate-180" />
 
-            <h1 className="text-3xl italic leading-snug" style={display}>
-              Ratu &amp; Fadil
-            </h1>
-            <BatikDivider className="w-32" />
-            <p className="text-sm tracking-[0.2em] uppercase text-[#8B4513]">10 Oktober 2026</p>
+              <h1 className="text-3xl italic leading-snug" style={display}>
+                Ratu &amp; Fadil
+              </h1>
+              <BatikDivider className="w-32" />
+              <p className="text-sm tracking-[0.2em] uppercase text-[#8B4513]">10 Oktober 2026</p>
+            </div>
           </div>
-        </div>
 
-        <div className="relative z-10 mt-8 text-center">
-          <p className="text-xs tracking-[0.25em] uppercase opacity-60 mb-1">Kepada Yth.</p>
-          <p className="text-lg font-semibold italic" style={display}>
-            {guestName}
-          </p>
-        </div>
+          <div className="relative z-10 mt-8 text-center">
+            <p className="text-xs tracking-[0.25em] uppercase opacity-60 mb-1">Kepada Yth.</p>
+            <p className="text-lg font-semibold italic" style={display}>
+              {guestName}
+            </p>
+          </div>
 
-        <button
-          onClick={() => setIsOpened(true)}
-          className="relative z-10 mt-8 bg-[#8B4513] hover:bg-[#6e360f] text-[#FDF6E3] text-xs tracking-[0.2em] uppercase font-semibold px-8 py-4 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 border border-[#D4AF37]"
-        >
-          Buka Undangan
-        </button>
+          <button
+            onClick={() => setIsOpened(true)}
+            className="relative z-10 mt-8 bg-[#8B4513] hover:bg-[#6e360f] text-[#FDF6E3] text-xs tracking-[0.2em] uppercase font-semibold px-8 py-4 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 border border-[#D4AF37]"
+          >
+            Buka Undangan
+          </button>
+        </FitToHeight>
       </div>
 
       {/* ============ FULL INVITATION ============ */}

@@ -9,7 +9,7 @@ import {
   Copy,
   MapPin,
 } from 'lucide-react';
-import { STAGE_BG } from './templateStage';
+import { FitToHeight, STAGE_BG } from './templateStage';
 
 const EVENT_DATE = new Date('2026-12-31T16:00:00+07:00');
 const LOCATION_NAME = 'Grand Ballroom, Hotel Mulia Senayan';
@@ -173,35 +173,37 @@ export default function NoirTemplate() {
           Save The Date
         </p>
 
-        {/* Dark charcoal card with gold border + floral outline */}
-        <div className="relative w-full max-w-[320px] aspect-square">
-          <div className="absolute inset-0 rounded-full bg-[#1A1A2E] border border-[#D4AF37] shadow-[0_0_40px_rgba(212,175,55,0.15)]" />
-          <FloralOutline className="absolute inset-0 w-full h-full" />
-          <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-8 gap-4">
-            <h1 className="text-3xl sm:text-4xl leading-snug" style={display}>
-              Ratu
-              <br />
-              <span className="text-[#D4AF37] text-xl">&amp;</span>
-              <br />
-              Fadil
-            </h1>
-            <p className="text-xs tracking-[0.3em] uppercase text-[#D4AF37]">31 Desember 2026</p>
+        <FitToHeight className="flex flex-col items-center" reserve={64}>
+          {/* Dark charcoal card with gold border + floral outline */}
+          <div className="relative w-full max-w-[320px] aspect-square">
+            <div className="absolute inset-0 rounded-full bg-[#1A1A2E] border border-[#D4AF37] shadow-[0_0_40px_rgba(212,175,55,0.15)]" />
+            <FloralOutline className="absolute inset-0 w-full h-full" />
+            <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-8 gap-4">
+              <h1 className="text-3xl sm:text-4xl leading-snug" style={display}>
+                Ratu
+                <br />
+                <span className="text-[#D4AF37] text-xl">&amp;</span>
+                <br />
+                Fadil
+              </h1>
+              <p className="text-xs tracking-[0.3em] uppercase text-[#D4AF37]">31 Desember 2026</p>
+            </div>
           </div>
-        </div>
 
-        <div className="mt-10 text-center">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-white/50 mb-1">Kepada Yth.</p>
-          <p className="text-lg font-semibold" style={display}>
-            {guestName}
-          </p>
-        </div>
+          <div className="mt-10 text-center">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-white/50 mb-1">Kepada Yth.</p>
+            <p className="text-lg font-semibold" style={display}>
+              {guestName}
+            </p>
+          </div>
 
-        <button
-          onClick={() => setIsOpened(true)}
-          className="mt-8 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0A1628] text-xs tracking-[0.3em] uppercase font-semibold px-9 py-4 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
-        >
-          Buka Undangan
-        </button>
+          <button
+            onClick={() => setIsOpened(true)}
+            className="mt-8 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0A1628] text-xs tracking-[0.3em] uppercase font-semibold px-9 py-4 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95"
+          >
+            Buka Undangan
+          </button>
+        </FitToHeight>
       </div>
 
       {/* ============ FULL INVITATION ============ */}

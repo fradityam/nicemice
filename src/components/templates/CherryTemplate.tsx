@@ -8,7 +8,7 @@ import section2Img from '../../assets/images/cherry/page2_section_2.png';
 import section3Img from '../../assets/images/cherry/page2_section_3.png';
 import section5Img from '../../assets/images/cherry/page2_section_5 - cropped.png';
 import section7Img from '../../assets/images/cherry/page2_section_7.png';
-import { STAGE_BG } from './templateStage';
+import { FitToHeight, STAGE_BG } from './templateStage';
 
 const PINK = '#FFB3C6';
 const CREAM = '#FAF7F0';
@@ -131,28 +131,30 @@ export default function CherryTemplate() {
         }`}
         style={{ backgroundColor: PINK }}
       >
-        <img
-          src={coverImg}
-          alt="Rose & Jack said I do! - 30 Juni 2027"
-          className="w-full max-w-[380px] h-auto object-contain mx-auto"
-        />
+        <FitToHeight className="flex flex-col items-center gap-8">
+          <img
+            src={coverImg}
+            alt="Rose & Jack said I do! - 30 Juni 2027"
+            className="w-full max-w-[380px] h-auto object-contain mx-auto"
+          />
 
-        <div className="text-center">
-          <p className="text-sm" style={{ color: TERRACOTTA, fontFamily: "'Lora', serif" }}>
-            Kepada Yth.
-          </p>
-          <p className="mt-1 text-lg font-bold" style={{ color: '#3D1F1F', fontFamily: "'Courier Prime', monospace" }}>
-            Abigail M
-          </p>
-        </div>
+          <div className="text-center">
+            <p className="text-sm" style={{ color: TERRACOTTA, fontFamily: "'Lora', serif" }}>
+              Kepada Yth.
+            </p>
+            <p className="mt-1 text-lg font-bold" style={{ color: '#3D1F1F', fontFamily: "'Courier Prime', monospace" }}>
+              Abigail M
+            </p>
+          </div>
 
-        <button
-          onClick={() => setIsOpened(true)}
-          className="flex items-center gap-2 text-white text-sm font-bold px-8 py-3.5 rounded-sm shadow-md transition-transform hover:scale-105 active:scale-95"
-          style={{ backgroundColor: TERRACOTTA, fontFamily: "'Courier Prime', monospace" }}
-        >
-          buka undangan
-        </button>
+          <button
+            onClick={() => setIsOpened(true)}
+            className="flex items-center gap-2 text-white text-sm font-bold px-8 py-3.5 rounded-sm shadow-md transition-transform hover:scale-105 active:scale-95"
+            style={{ backgroundColor: TERRACOTTA, fontFamily: "'Courier Prime', monospace" }}
+          >
+            buka undangan
+          </button>
+        </FitToHeight>
       </div>
 
       {/* ============ FULL INVITATION ============ */}

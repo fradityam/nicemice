@@ -7,7 +7,7 @@ import coverArrow from '../../assets/images/notebook/arrow.svg';
 import NotebookContent, { INTRO } from './NotebookContent';
 import { weddingDateCover } from './notebookWeddingDate';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
-import { STAGE_BG } from './templateStage';
+import { STAGE_BG, coverTextLayout, useStageVisible } from './templateStage';
 
 // The couple's song, served from public/. Swap the file to give each couple their own
 // music; set to null to hide the player.
@@ -60,8 +60,9 @@ function NotebookCover({ onOpen }: { onOpen: () => void }) {
     return () => anim.cancel();
   }, []);
 
-  const scale = Math.min(Math.min(viewport.w, MAX_COLUMN_W) / COVER_W, viewport.h / COVER_H);
-  const columnW = COVER_W * scale;
+  const stageVisible = useStageVisible(MAX_COLUMN_W);
+  const columnW = Math.min(viewport.w, MAX_COLUMN_W);
+  const { scale, top } = coverTextLayout(columnW, viewport.h, COVER_W, COVER_H, stageVisible);
 
   return (
     <div
@@ -78,15 +79,17 @@ function NotebookCover({ onOpen }: { onOpen: () => void }) {
       }}
       className="absolute inset-0 cursor-pointer overflow-hidden outline-none"
     >
-      {/* The painting fills the column's full height: phones taller than the 375 × 667 frame
-          would otherwise show a blank band under it. The text keeps its Figma positions. */}
+      {/* The painting fills the whole column: phones taller than the 375 × 667 frame would
+          otherwise show a blank band under it, and short desktop screens bands at the sides.
+          Cropping keeps the house and the lake (about 45% down the painting) in view. The
+          text keeps its Figma positions. */}
       <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 overflow-hidden" style={{ width: columnW }}>
-        <img src={coverBg} alt="" className="absolute inset-0 size-full max-w-none object-cover object-top" />
+        <img src={coverBg} alt="" className="absolute inset-0 size-full max-w-none object-cover object-[50%_45%]" />
         <div className="absolute inset-0" style={{ backgroundImage: coverGradient }} />
       </div>
       <div
-        className="absolute left-1/2 top-0"
-        style={{ width: COVER_W, height: COVER_H, transform: `translateX(-50%) scale(${scale})`, transformOrigin: '50% 0' }}
+        className="absolute left-1/2"
+        style={{ top, width: COVER_W, height: COVER_H, transform: `translateX(-50%) scale(${scale})`, transformOrigin: '50% 0' }}
       >
 
         <div className="text-white" style={{ textShadow: coverTextShadow }}>

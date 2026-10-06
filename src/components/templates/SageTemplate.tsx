@@ -9,7 +9,7 @@ import {
   Copy,
   MapPin,
 } from 'lucide-react';
-import { STAGE_BG } from './templateStage';
+import { FitToHeight, STAGE_BG } from './templateStage';
 
 const EVENT_DATE = new Date('2027-02-14T08:00:00+07:00');
 const LOCATION_NAME = 'The Hall Kemang';
@@ -156,35 +156,37 @@ export default function SageTemplate() {
           Save The Date
         </p>
 
-        {/* Clean white card with corner brackets */}
-        <div className="relative w-full max-w-[320px] py-14 px-8">
-          <CornerBracket className="absolute -top-2 -left-2 w-8 h-8" />
-          <CornerBracket className="absolute -top-2 -right-2 w-8 h-8 rotate-90" />
-          <CornerBracket className="absolute -bottom-2 -left-2 w-8 h-8 -rotate-90" />
-          <CornerBracket className="absolute -bottom-2 -right-2 w-8 h-8 rotate-180" />
+        <FitToHeight className="flex flex-col items-center" reserve={64}>
+          {/* Clean white card with corner brackets */}
+          <div className="relative w-full max-w-[320px] py-14 px-8">
+            <CornerBracket className="absolute -top-2 -left-2 w-8 h-8" />
+            <CornerBracket className="absolute -top-2 -right-2 w-8 h-8 rotate-90" />
+            <CornerBracket className="absolute -bottom-2 -left-2 w-8 h-8 -rotate-90" />
+            <CornerBracket className="absolute -bottom-2 -right-2 w-8 h-8 rotate-180" />
 
-          <div className="bg-white border border-[#C9A84C]/50 shadow-sm px-8 py-12 text-center flex flex-col items-center gap-5">
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.08em] uppercase" style={display}>
-              Ratu <span className="text-[#C9A84C] font-normal normal-case italic">&amp;</span> Fadil
-            </h1>
-            <GeometricDivider />
-            <p className="text-xs tracking-[0.25em] uppercase opacity-70">14 Februari 2027</p>
+            <div className="bg-white border border-[#C9A84C]/50 shadow-sm px-8 py-12 text-center flex flex-col items-center gap-5">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-[0.08em] uppercase" style={display}>
+                Ratu <span className="text-[#C9A84C] font-normal normal-case italic">&amp;</span> Fadil
+              </h1>
+              <GeometricDivider />
+              <p className="text-xs tracking-[0.25em] uppercase opacity-70">14 Februari 2027</p>
+            </div>
           </div>
-        </div>
 
-        <div className="mt-10 text-center">
-          <p className="text-[10px] tracking-[0.3em] uppercase opacity-60 mb-1">Kepada Yth.</p>
-          <p className="text-lg font-semibold" style={display}>
-            {guestName}
-          </p>
-        </div>
+          <div className="mt-10 text-center">
+            <p className="text-[10px] tracking-[0.3em] uppercase opacity-60 mb-1">Kepada Yth.</p>
+            <p className="text-lg font-semibold" style={display}>
+              {guestName}
+            </p>
+          </div>
 
-        <button
-          onClick={() => setIsOpened(true)}
-          className="mt-8 bg-[#2D2D2D] hover:bg-[#C9A84C] text-white text-[11px] tracking-[0.3em] uppercase font-medium px-9 py-4 shadow-md transition-all hover:scale-[1.02] active:scale-95"
-        >
-          Buka Undangan
-        </button>
+          <button
+            onClick={() => setIsOpened(true)}
+            className="mt-8 bg-[#2D2D2D] hover:bg-[#C9A84C] text-white text-[11px] tracking-[0.3em] uppercase font-medium px-9 py-4 shadow-md transition-all hover:scale-[1.02] active:scale-95"
+          >
+            Buka Undangan
+          </button>
+        </FitToHeight>
       </div>
 
       {/* ============ FULL INVITATION ============ */}

@@ -6,7 +6,7 @@ import coverBg from '../../assets/images/lalaland/figma/cover-bg.webp';
 import LaLaLandContent, { INTRO } from './LaLaLandContent';
 import { weddingDateId } from './lalalandWeddingDate';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
-import { STAGE_BG } from './templateStage';
+import { STAGE_BG, coverTextLayout, useStageVisible } from './templateStage';
 
 // The couple's song. Swap this file (in public/) to give each couple their own music.
 const MUSIC_SRC = `${import.meta.env.BASE_URL}lalaland-music.m4a`;
@@ -28,10 +28,13 @@ const coverGradient = `linear-gradient(to bottom, ${Array.from({ length: 11 }, (
   return `rgba(${c(144, 8)},${c(105, 26)},${c(165, 81)},${t}) ${t * 100}%`;
 }).join(', ')})`;
 
-// Figma "Cover" frame (375 × 667), laid out at its native coordinates and scaled to the
-// column width — or to the viewport height if that's the tighter fit, so the button is
-// never cut off. It is pinned to the top; on screens taller than the frame, the space
-// below continues the frame's own navy (#081a51), which the bottom gradient fades into.
+// Figma "Cover" frame (375 × 667), laid out at its native coordinates in two layers.
+// The painting always spans the full column width, pinned to the top: on short screens it
+// is cropped at the bottom (the moon and lamp stay in view); on phones taller than the frame
+// the space below continues the frame's own navy (#081a51), which the bottom gradient fades
+// into; on the desktop stage it grows to the full column height instead, cropping the left
+// side only, so the moon and the lamp on the right stay in view.
+// The text and button are scaled as large as fits without being cut off.
 function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ w: COVER_W, h: COVER_H });
@@ -46,7 +49,11 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
     return () => ro.disconnect();
   }, []);
 
-  const scale = Math.min(Math.min(viewport.w, MAX_COLUMN_W) / COVER_W, viewport.h / COVER_H);
+  const stageVisible = useStageVisible(MAX_COLUMN_W);
+  const columnW = Math.min(viewport.w, MAX_COLUMN_W);
+  const bgScale = Math.max(columnW / COVER_W, stageVisible ? viewport.h / COVER_H : 0);
+  const bgShift = (COVER_W * bgScale - columnW) / 2;
+  const text = coverTextLayout(columnW, viewport.h, COVER_W, COVER_H, stageVisible);
 
   return (
     <div ref={ref} className="absolute inset-0 overflow-hidden">
@@ -55,7 +62,8 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
         style={{
           width: COVER_W,
           height: COVER_H,
-          transform: `translateX(-50%) scale(${scale})`,
+          // Centred, then shifted left by half the overflow so the right edge meets the column's.
+          transform: `translateX(-50%) ${bgShift ? `translateX(${-bgShift}px) ` : ''}scale(${bgScale})`,
           transformOrigin: '50% 0',
         }}
       >
@@ -66,6 +74,11 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
           style={{ left: -1, top: -1, width: 376, height: 668 }}
         />
         <div className="absolute left-0 top-[360px] h-[307px] w-[375px]" style={{ backgroundImage: coverGradient }} />
+      </div>
+      <div
+        className="absolute left-1/2"
+        style={{ top: text.top, width: COVER_W, height: COVER_H, transform: `translateX(-50%) scale(${text.scale})`, transformOrigin: '50% 0' }}
+      >
 
         <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[20px] text-center text-white top-[117px] whitespace-nowrap">
           Meet Me Under the Stars

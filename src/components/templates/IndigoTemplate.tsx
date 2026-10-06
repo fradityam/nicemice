@@ -28,7 +28,7 @@ import album5 from '../../assets/images/Indigo/WhatsApp Image 2026-08-16 at 12.2
 import album6 from '../../assets/images/Indigo/WhatsApp Image 2026-08-16 at 12.29.22 PM-f.jpeg';
 import album7 from '../../assets/images/Indigo/WhatsApp Image 2026-08-16 at 12.29.23 PM-h.jpeg';
 import album8 from '../../assets/images/Indigo/WhatsApp Image 2026-08-16 at 12.29.23 PM-i.jpeg';
-import { STAGE_BG } from './templateStage';
+import { FitToHeight, STAGE_BG } from './templateStage';
 
 const NAVY = '#0D1B4B';
 const CARD_NAVY = '#1A2A6C';
@@ -213,27 +213,29 @@ export default function IndigoTemplate() {
         }`}
         style={{ backgroundColor: NAVY }}
       >
-        <div
-          className="relative w-full max-w-[380px] mx-auto overflow-hidden"
-          style={{ aspectRatio: `${COVER_IMG_W} / ${COVER_CROP_H}` }}
-        >
-          <img src={coverImg} alt="Fadil & Ratu - 08.01.2027" style={COVER_IMG_STYLE} />
-        </div>
+        <FitToHeight className="flex flex-col items-center gap-6">
+          <div
+            className="relative w-full max-w-[380px] mx-auto overflow-hidden"
+            style={{ aspectRatio: `${COVER_IMG_W} / ${COVER_CROP_H}` }}
+          >
+            <img src={coverImg} alt="Fadil & Ratu - 08.01.2027" style={COVER_IMG_STYLE} />
+          </div>
 
-        <div className="text-center">
-          <p className="text-sm" style={{ color: ORANGE }}>
-            Kepada Yth.
-          </p>
-          <p className="mt-1 text-lg font-bold text-white">Abigail M</p>
-        </div>
+          <div className="text-center">
+            <p className="text-sm" style={{ color: ORANGE }}>
+              Kepada Yth.
+            </p>
+            <p className="mt-1 text-lg font-bold text-white">Abigail M</p>
+          </div>
 
-        <button
-          onClick={() => setIsOpened(true)}
-          className="w-full max-w-[280px] text-white text-sm font-bold py-3.5 rounded-full shadow-md transition-transform hover:scale-105 active:scale-95"
-          style={{ backgroundColor: ORANGE }}
-        >
-          Buka Undangan
-        </button>
+          <button
+            onClick={() => setIsOpened(true)}
+            className="w-full max-w-[280px] text-white text-sm font-bold py-3.5 rounded-full shadow-md transition-transform hover:scale-105 active:scale-95"
+            style={{ backgroundColor: ORANGE }}
+          >
+            Buka Undangan
+          </button>
+        </FitToHeight>
       </div>
 
       {/* ============ FULL INVITATION ============ */}
