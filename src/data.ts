@@ -56,6 +56,24 @@ export const TEMPLATES: Template[] = [
     }
   },
   {
+    id: 'tema-crazy-little-thing',
+    name: 'TEMA CRAZY LITTLE THING CALLED LOVE',
+    subtitle: 'Terinspirasi dari Crazy Little Thing Called Love, dengan nuansa scrapbook manis, foto polaroid, dan kisah cinta pertama yang tak terlupakan.',
+    code: 'KODE TEMA CRAZY LITTLE THING CALLED LOVE DESAIN AESTHETIC DAN GAK PASARAN',
+    category: 'film',
+    bgColor: 'bg-[#FFF4E8]',
+    textColor: 'text-[#70564B]',
+    previewType: 'card',
+    details: {
+      husband: 'Radit',
+      wife: 'Ratu',
+      date: '27 September 2026',
+      location: 'Gedung Serbaguna ABC, Kota Bogor',
+      quote: 'He is the one who made me know a little thing called love.',
+      accentColor: '#E58F9B'
+    }
+  },
+  {
     id: 'tema-cherry',
     name: 'TEMA CHERRY',
     subtitle: 'Undangan bergaya ilustrasi hangat dengan nuansa pink lembut dan tipografi playful.',

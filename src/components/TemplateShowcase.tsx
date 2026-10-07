@@ -8,18 +8,21 @@ import indigoThumbnail from '../assets/images/Indigo/indigo-cover.png';
 import lalalandThumbnail from '../assets/images/lalaland/lalaland-thumbnail.webp';
 import notebookThumbnail from '../assets/images/notebook/notebook-thumbnail.webp';
 import friendsThumbnail from '../assets/images/friends/friends-thumbnail.webp';
+import crazyLoveThumbnail from '../assets/images/crazylove/crazylove-thumbnail.webp';
 
 // Templates whose catalog card shows a screenshot of their real cover.
 const COVER_THUMBNAILS: Record<string, string> = {
   'tema-lalaland': lalalandThumbnail,
   'tema-notebook': notebookThumbnail,
   'tema-friends': friendsThumbnail,
+  'tema-crazy-little-thing': crazyLoveThumbnail,
 };
 
 const CUSTOM_TEMPLATE_ROUTES: Record<string, string> = {
   'tema-lalaland': '/template/lalaland',
   'tema-notebook': '/template/notebook',
   'tema-friends': '/template/friends',
+  'tema-crazy-little-thing': '/template/crazy-little-thing',
   'tema-cherry': '/template/cherry',
   'tema-sage': '/template/sage',
   'tema-batik': '/template/batik',
@@ -273,10 +276,12 @@ export default function TemplateShowcase() {
               {/* Card descriptions & actions */}
               <div className="p-5 flex-1 flex flex-col justify-between">
                 <div>
-                  {/* In the narrow 4-column layout (1024–1279px) longer names wrap to two lines, so
-                      the row keeps room for two there. */}
-                  <div className="flex items-center justify-between gap-2 mb-1.5 lg:max-xl:min-h-8">
-                    <span className="font-sans tracking-wide sm:tracking-widest font-bold text-xs text-zinc-950">
+                  {/* Room for the longest name (Crazy Little Thing Called Love): two lines wherever
+                      cards sit side by side, three in the narrow 4-column layout (1024–1279px), so
+                      everything below the name lines up across a row. The name starts 2px down so a
+                      one-line name stays level with the category pill. */}
+                  <div className="flex items-start justify-between gap-2 mb-1.5 sm:min-h-[34px] lg:max-xl:min-h-[50px]">
+                    <span className="mt-0.5 font-sans tracking-wide sm:tracking-widest font-bold text-xs text-zinc-950">
                       {tpl.name}
                     </span>
                     <span className="text-xs uppercase font-semibold tracking-wide sm:tracking-widest text-[#C5A059] px-2.5 py-0.5 bg-[#C5A059]/10 rounded-full font-sans whitespace-nowrap">
