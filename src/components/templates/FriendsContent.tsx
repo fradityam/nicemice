@@ -13,8 +13,8 @@ const assetUrls = import.meta.glob('../../assets/images/friends/*', {
 }) as Record<string, string>;
 const A = (file: string) => assetUrls[`../../assets/images/friends/${file}`];
 
-/** Subtle one-time reveals as sections scroll into view. Set to false to turn them all off. */
-const ENABLE_ANIMATIONS = true;
+/** Subtle one-time reveals on the cover and as sections scroll into view. Set to false to turn them all off. */
+export const ENABLE_ANIMATIONS = true;
 
 const PURPLE = '#a07eb9';
 const VENUE = 'Grant House, Jawa Barat';

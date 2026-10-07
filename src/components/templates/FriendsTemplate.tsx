@@ -7,7 +7,8 @@ import peepholeRing from '../../assets/images/friends/peephole-ring.webp';
 import peepholeView from '../../assets/images/friends/peephole-view.webp';
 import buttonPill from '../../assets/images/friends/button-pill.svg';
 import buttonRivets from '../../assets/images/friends/button-rivets.svg';
-import FriendsContent, { INTRO } from './FriendsContent';
+import FriendsContent, { ENABLE_ANIMATIONS, INTRO } from './FriendsContent';
+import { Reveal, RevealProvider, RevealSpan, useCoverReveals } from './scrollReveal';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import './friends.css';
 import { STAGE_BG } from './templateStage';
@@ -69,26 +70,29 @@ function useCoverScale() {
 
 // Figma "Cover" frames (375 × 667) at their own coordinates, scaled to fit the screen.
 // Step 1, the door: tapping anywhere zooms into the peephole. Step 2, the view through it:
-// "open invitation" opens the invitation.
+// "open invitation" opens the invitation. On load the door settles in: the yellow frame
+// fades in and grows a touch into place, the title rises line by line, then the peephole
+// starts to pulse. A tap works from the first moment.
 function FriendsCover({ phase, reducedMotion, onPeek, onOpen }: { phase: Phase; reducedMotion: boolean; onPeek: () => void; onOpen: () => void }) {
   const { ref, scale, top } = useCoverScale();
+  const { reveals, settled } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1300 });
   const pulseRef = useRef<HTMLDivElement>(null);
   const atDoor = phase === 'door';
   const zoomed = !atDoor;
 
   useEffect(() => {
     const el = pulseRef.current;
-    if (!el || !atDoor || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!el || !atDoor || !settled || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const anim = el.animate(
       [
         { transform: 'scale(1)', opacity: 0.75 },
         { transform: 'scale(2.1)', opacity: 0, offset: 0.7 },
         { transform: 'scale(2.1)', opacity: 0 },
       ],
-      { duration: 1800, iterations: Infinity, easing: 'ease-out', delay: 500 },
+      { duration: 1800, iterations: Infinity, easing: 'ease-out', delay: reveals ? 200 : 500 },
     );
     return () => anim.cancel();
-  }, [atDoor]);
+  }, [atDoor, settled, reveals]);
 
   // The zoom runs as keyframes rather than a CSS transition: interpolating scale linearly from
   // 1 to 29 looks finished a third of the way in, so the zoom factor is eased in log space.
@@ -131,6 +135,7 @@ function FriendsCover({ phase, reducedMotion, onPeek, onOpen }: { phase: Phase; 
   };
 
   return (
+    <RevealProvider value={reveals}>
     <div
       ref={ref}
       role={atDoor ? 'button' : undefined}
@@ -153,15 +158,18 @@ function FriendsCover({ phase, reducedMotion, onPeek, onOpen }: { phase: Phase; 
       >
         {/* Step 1: the door */}
         <div ref={doorRef} className="absolute inset-0" style={doorStyle}>
-          <img alt="" src={yellowFrame} className="absolute left-[49px] top-[108px] block h-[314px] w-[278px] max-w-none object-cover" />
+          {/* Grows about the peephole, so the two stay lined up. */}
+          <Reveal at={0} kind="grow" origin={[SMALL_C.x, SMALL_C.y]}>
+            <img alt="" src={yellowFrame} className="absolute left-[49px] top-[108px] block h-[314px] w-[278px] max-w-none object-cover" />
+          </Reveal>
         </div>
         <div className="absolute inset-0" style={{ opacity: atDoor ? 1 : 0, transition: fade(reducedMotion ? 0 : 200) }}>
           <h1 className="ff-friends -translate-x-1/2 -translate-y-1/2 absolute left-[188.5px] top-[523px] text-center text-[35px] leading-[42px] tracking-[-0.017em] whitespace-nowrap text-white">
-            The one with
+            <RevealSpan at={0} kind="fadeUp" delay={350}>The one with</RevealSpan>
             <br />
-            Ratu &amp; Radit
+            <RevealSpan at={0} kind="fadeUp" delay={470}>Ratu &amp; Radit</RevealSpan>
             <br />
-            Wedding
+            <RevealSpan at={0} kind="fadeUp" delay={590}>Wedding</RevealSpan>
           </h1>
         </div>
         <div
@@ -203,6 +211,7 @@ function FriendsCover({ phase, reducedMotion, onPeek, onOpen }: { phase: Phase; 
         </div>
       </div>
     </div>
+    </RevealProvider>
   );
 }
 
