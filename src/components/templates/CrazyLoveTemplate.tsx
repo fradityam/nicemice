@@ -14,9 +14,9 @@ import CrazyLoveContent, { INTRO } from './CrazyLoveContent';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import { STAGE_BG } from './templateStage';
 
-// The couple's song, served from public/. No song yet, so the player stays hidden; set this
-// to e.g. `${import.meta.env.BASE_URL}crazy-love-music.mp3` to turn it on.
-const MUSIC_SRC: string | null = null;
+// The couple's song, served from public/. Swap the file to give each couple their own
+// music; set to null to hide the player.
+const MUSIC_SRC: string | null = `${import.meta.env.BASE_URL}crazy-love-music.mp3`;
 
 const CREAM = '#fff4e8';
 const BROWN = '#70564b';
