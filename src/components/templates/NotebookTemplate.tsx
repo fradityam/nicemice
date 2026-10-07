@@ -4,7 +4,8 @@ import { ArrowLeft } from 'lucide-react';
 
 import coverBg from '../../assets/images/notebook/cover-bg.webp';
 import coverArrow from '../../assets/images/notebook/arrow.svg';
-import NotebookContent, { INTRO } from './NotebookContent';
+import NotebookContent, { ENABLE_ANIMATIONS, INTRO } from './NotebookContent';
+import { Reveal, RevealProvider, RevealSpan, useCoverReveals, useReveal } from './scrollReveal';
 import { weddingDateCover } from './notebookWeddingDate';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import { STAGE_BG, coverTextLayout, useStageVisible } from './templateStage';
@@ -27,13 +28,30 @@ const coverGradient = `linear-gradient(to left, ${Array.from({ length: 11 }, (_,
   return `rgba(${c(113, 115)},${c(120, 116)},${c(76, 95)},${(0.5 * t).toFixed(3)}) ${t * 100}%`;
 }).join(', ')})`;
 
+/** The cover painting, easing back from a tiny zoom as the cover settles in. */
+function CoverPainting() {
+  const reveal = useReveal(0, 'zoomOut');
+  return (
+    <img
+      src={coverBg}
+      alt=""
+      className="absolute inset-0 size-full max-w-none object-cover object-[50%_45%]"
+      style={reveal?.style}
+      onTransitionEnd={reveal?.onTransitionEnd}
+    />
+  );
+}
+
 // Figma "Cover" frame (375 × 667) at its own coordinates, scaled to the column width (or to
 // the viewport height when that's tighter). Tapping anywhere opens the invitation; the
-// hand-drawn arrow is the visual cue and nudges gently to invite the tap.
+// hand-drawn arrow is the visual cue and nudges gently to invite the tap. On load it settles
+// in: the greeting fades in, the names rise line by line, then the date and the arrow, which
+// starts nudging once everything is in place. A tap works from the first moment.
 function NotebookCover({ onOpen }: { onOpen: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const arrowRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ w: COVER_W, h: COVER_H });
+  const { reveals, settled } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1400 });
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -47,7 +65,7 @@ function NotebookCover({ onOpen }: { onOpen: () => void }) {
 
   useEffect(() => {
     const el = arrowRef.current;
-    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!el || !settled || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const anim = el.animate(
       [
         { transform: 'translateX(0) scale(1)' },
@@ -55,16 +73,17 @@ function NotebookCover({ onOpen }: { onOpen: () => void }) {
         { transform: 'translateX(0) scale(1)', offset: 0.7 },
         { transform: 'translateX(0) scale(1)' },
       ],
-      { duration: 1800, iterations: Infinity, easing: 'ease-in-out', delay: 600 },
+      { duration: 1800, iterations: Infinity, easing: 'ease-in-out', delay: reveals ? 200 : 600 },
     );
     return () => anim.cancel();
-  }, []);
+  }, [settled, reveals]);
 
   const stageVisible = useStageVisible(MAX_COLUMN_W);
   const columnW = Math.min(viewport.w, MAX_COLUMN_W);
   const { scale, top } = coverTextLayout(columnW, viewport.h, COVER_W, COVER_H, stageVisible);
 
   return (
+    <RevealProvider value={reveals}>
     <div
       ref={ref}
       role="button"
@@ -84,7 +103,7 @@ function NotebookCover({ onOpen }: { onOpen: () => void }) {
           Cropping keeps the house and the lake (about 45% down the painting) in view. The
           text keeps its Figma positions. */}
       <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 overflow-hidden" style={{ width: columnW }}>
-        <img src={coverBg} alt="" className="absolute inset-0 size-full max-w-none object-cover object-[50%_45%]" />
+        <CoverPainting />
         <div className="absolute inset-0" style={{ backgroundImage: coverGradient }} />
       </div>
       <div
@@ -93,23 +112,31 @@ function NotebookCover({ onOpen }: { onOpen: () => void }) {
       >
 
         <div className="text-white" style={{ textShadow: coverTextShadow }}>
-          <p className="-translate-y-1/2 absolute left-[28.14px] top-[67.16px] font-['Raleway'] text-[15px] leading-[normal] tracking-[-0.255px] whitespace-nowrap">
-            Dear
-          </p>
-          <p className="-translate-y-1/2 absolute left-[28.14px] top-[91.16px] font-['Raleway'] font-bold text-[20px] leading-[normal] tracking-[-0.34px] underline decoration-solid [text-underline-position:from-font] whitespace-nowrap">
-            Pevita Pearce
-          </p>
-          <p className="-translate-y-1/2 absolute left-[28px] top-[119.5px] font-['Raleway'] text-[15px] leading-[normal] tracking-[-0.255px] whitespace-nowrap">
-            You’re invited to the wedding of
-          </p>
+          <Reveal at={0} kind="fade">
+            <p className="-translate-y-1/2 absolute left-[28.14px] top-[67.16px] font-['Raleway'] text-[15px] leading-[normal] tracking-[-0.255px] whitespace-nowrap">
+              Dear
+            </p>
+          </Reveal>
+          <Reveal at={0} kind="fade" delay={100}>
+            <p className="-translate-y-1/2 absolute left-[28.14px] top-[91.16px] font-['Raleway'] font-bold text-[20px] leading-[normal] tracking-[-0.34px] underline decoration-solid [text-underline-position:from-font] whitespace-nowrap">
+              Pevita Pearce
+            </p>
+          </Reveal>
+          <Reveal at={0} kind="fade" delay={200}>
+            <p className="-translate-y-1/2 absolute left-[28px] top-[119.5px] font-['Raleway'] text-[15px] leading-[normal] tracking-[-0.255px] whitespace-nowrap">
+              You’re invited to the wedding of
+            </p>
+          </Reveal>
           <h1 className="font-['Yeseva_One'] font-normal text-[70px] leading-[normal] tracking-[-1.19px]">
-            <span className="-translate-y-1/2 absolute left-[30.94px] top-[266.2px] whitespace-nowrap">Noah</span>
-            <span className="-translate-y-1/2 absolute left-[30.94px] top-[342.98px] whitespace-nowrap">&amp;</span>
-            <span className="-translate-y-1/2 absolute left-[30.94px] top-[419.75px] whitespace-nowrap">Allie</span>
+            <RevealSpan at={0} kind="fadeUp" delay={350} className="-translate-y-1/2 absolute left-[30.94px] top-[266.2px] whitespace-nowrap">Noah</RevealSpan>
+            <RevealSpan at={0} kind="fadeUp" delay={450} className="-translate-y-1/2 absolute left-[30.94px] top-[342.98px] whitespace-nowrap">&amp;</RevealSpan>
+            <RevealSpan at={0} kind="fadeUp" delay={550} className="-translate-y-1/2 absolute left-[30.94px] top-[419.75px] whitespace-nowrap">Allie</RevealSpan>
           </h1>
-          <p className="-translate-y-1/2 absolute left-[28.14px] top-[479.92px] font-['Raleway'] font-bold text-[15px] leading-[normal] tracking-[-0.255px] whitespace-nowrap">
-            {weddingDateCover}
-          </p>
+          <Reveal at={0} kind="fadeUp" delay={700}>
+            <p className="-translate-y-1/2 absolute left-[28.14px] top-[479.92px] font-['Raleway'] font-bold text-[15px] leading-[normal] tracking-[-0.255px] whitespace-nowrap">
+              {weddingDateCover}
+            </p>
+          </Reveal>
         </div>
 
       </div>
@@ -120,15 +147,18 @@ function NotebookCover({ onOpen }: { onOpen: () => void }) {
         className="absolute bottom-0 left-1/2"
         style={{ width: COVER_W, height: COVER_H, transform: `translateX(-50%) scale(${scale})`, transformOrigin: '50% 100%' }}
       >
-        <div className="absolute flex h-[53.858px] items-center justify-center left-[275px] top-[595px] w-[78.65px]">
-          <div ref={arrowRef}>
-            <div className="flex-none rotate-[-11.78deg]">
-              <img alt="" src={coverArrow} className="block h-[40px] w-[72px] max-w-none" />
+        <Reveal at={0} kind="pop" origin={[314.3, 621.9]} delay={850}>
+          <div className="absolute flex h-[53.858px] items-center justify-center left-[275px] top-[595px] w-[78.65px]">
+            <div ref={arrowRef}>
+              <div className="flex-none rotate-[-11.78deg]">
+                <img alt="" src={coverArrow} className="block h-[40px] w-[72px] max-w-none" />
+              </div>
             </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </div>
+    </RevealProvider>
   );
 }
 

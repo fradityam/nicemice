@@ -28,8 +28,8 @@ const mask = (file: string, position: string, size: string): CSSProperties => {
   };
 };
 
-/** Subtle one-time reveals as sections scroll into view. Set to false to turn them all off. */
-const ENABLE_ANIMATIONS = true;
+/** Subtle one-time reveals on the cover and as sections scroll into view. Set to false to turn them all off. */
+export const ENABLE_ANIMATIONS = true;
 
 const ADDRESS =
   'Allie H., Jl. Anggrek Loka No. 24, RT 005 / RW 002 Kel. Meruya Utara, Kec. Kembangan Jakarta Barat, DKI Jakarta, 11620. No. HP: 0812-3456-7890';
