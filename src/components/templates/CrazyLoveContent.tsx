@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { WEDDING_DATE, weddingDateId } from './crazyLoveWeddingDate';
+import { Float, Reveal, RevealProvider, useScrollReveals } from './scrollReveal';
 
 // Every layer is placed at its position in the Figma "Content" frame (375 × 5958), in
 // Figma's layer order, and the whole frame is scaled to the column width.
@@ -53,121 +54,6 @@ function introStyle({ revealed, reducedMotion }: IntroState): CSSProperties {
 
 /** Subtle one-time reveals as sections scroll into view. Set to false to turn them all off. */
 const ENABLE_ANIMATIONS = true;
-
-// How far (in frame px) an element must be inside the viewport before it reveals.
-const REVEAL_OFFSET = 40;
-
-type RevealKind = 'fade' | 'fadeUp' | 'pop' | 'settle' | 'fromLeft' | 'fromRight';
-const REVEAL: Record<RevealKind, { from: (tilt: number) => string; ms: number }> = {
-  fade: { from: () => 'none', ms: 700 },
-  fadeUp: { from: () => 'translateY(12px)', ms: 700 },
-  pop: { from: () => 'scale(0.9)', ms: 500 },
-  // A polaroid being placed on the page: a touch higher, bigger and more tilted, then it settles.
-  settle: { from: (tilt) => `translateY(-8px) rotate(${tilt}deg) scale(1.03)`, ms: 800 },
-  fromLeft: { from: () => 'translateX(-16px)', ms: 700 },
-  fromRight: { from: () => 'translateX(16px)', ms: 700 },
-};
-
-/**
- * Tracks how far down the frame the viewport has reached (in frame px) and tells each
- * waiting element once it is in view. Inactive until the cover has opened.
- */
-class RevealStore {
-  active = false;
-  bottom = 0;
-  private waiting = new Map<() => void, number>();
-  watch(at: number, show: () => void) {
-    if (this.active && this.bottom >= at + REVEAL_OFFSET) {
-      show();
-      return undefined;
-    }
-    this.waiting.set(show, at);
-    return () => void this.waiting.delete(show);
-  }
-  update(bottom: number) {
-    this.bottom = bottom;
-    if (!this.active) return;
-    for (const [show, at] of this.waiting) {
-      if (bottom >= at + REVEAL_OFFSET) {
-        this.waiting.delete(show);
-        show();
-      }
-    }
-  }
-}
-const RevealContext = createContext<RevealStore | null>(null);
-
-/**
- * Reveals its children once, when frame y `at` scrolls into view. The wrapper is a
- * zero-height box at the frame origin, so the children keep their Figma coordinates and
- * nothing moves in the layout; `origin` (frame coords) is the centre for rotate / scale.
- * Renders the children untouched when animations are off.
- */
-function Reveal({ at, kind, origin, delay = 0, tilt = 3, children }: { at: number; kind: RevealKind; origin?: [number, number]; delay?: number; tilt?: number; children: ReactNode }) {
-  const store = useContext(RevealContext);
-  const [state, setState] = useState<'waiting' | 'showing' | 'done'>('waiting');
-  useEffect(() => store?.watch(at, () => setState('showing')), [store, at]);
-  if (!store) return <>{children}</>;
-  const { from, ms } = REVEAL[kind];
-  const t = `${ms}ms ${INTRO.EASE_OUT} ${delay}ms`;
-  // Once revealed the wrapper drops its styles, so nothing stays on its own compositing layer
-  // and the page renders exactly as it does without animations (text keeps its sub-pixel
-  // smoothing).
-  const style: CSSProperties =
-    state === 'done'
-      ? {}
-      : {
-          transformOrigin: origin ? `${origin[0]}px ${origin[1]}px` : undefined,
-          opacity: state === 'showing' ? 1 : 0,
-          transform: state === 'showing' ? 'none' : from(tilt),
-          transition: state === 'showing' ? `opacity ${t}, transform ${t}` : 'none',
-        };
-  return (
-    <div
-      className="absolute inset-x-0 top-0 h-0"
-      style={style}
-      onTransitionEnd={(e) => {
-        if (e.target === e.currentTarget && e.propertyName === 'opacity') setState('done');
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-/**
- * A very slow, tiny idle bob, for a couple of stickers only. `box` is the sticker's frame box
- * [x, y, w, h]: the bob runs inside a clip just around it, because Chrome assumes a running
- * transform animation may overlap everything painted after it and would otherwise move all
- * later text onto separate layers (losing its sub-pixel smoothing).
- */
-const FLOAT_PX = 3;
-function Float({ box: [x, y, w, h], delay = 0, children }: { box: [number, number, number, number]; delay?: number; children: ReactNode }) {
-  const store = useContext(RevealContext);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!store || !el) return;
-    const anim = el.animate([{ transform: 'translateY(0)' }, { transform: `translateY(-${FLOAT_PX}px)` }, { transform: 'translateY(0)' }], {
-      duration: 4800,
-      iterations: Infinity,
-      easing: 'ease-in-out',
-      delay,
-    });
-    return () => anim.cancel();
-  }, [store, delay]);
-  if (!store) return <>{children}</>;
-  // The clip leaves room for the bob above; the inner layer shifts back to the frame origin so
-  // the sticker keeps its Figma coordinates.
-  const m = FLOAT_PX + 2;
-  return (
-    <div className="absolute overflow-hidden" style={{ left: x - m, top: y - m, width: w + 2 * m, height: h + 2 * m }}>
-      <div ref={ref} className="absolute h-0 w-[375px]" style={{ left: m - x, top: m - y }}>
-        {children}
-      </div>
-    </div>
-  );
-}
 
 const fill = 'absolute inset-0 block max-w-none size-full';
 
@@ -524,11 +410,6 @@ export default function CrazyLoveContent({ intro }: { intro: IntroState }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [photo, setPhoto] = useState<number | null>(null);
-  // Decided once, before the first paint, so animated elements start hidden rather than flash.
-  const [store] = useState(() =>
-    ENABLE_ANIMATIONS && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? new RevealStore() : null,
-  );
-
   useLayoutEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
@@ -538,33 +419,10 @@ export default function CrazyLoveContent({ intro }: { intro: IntroState }) {
     return () => ro.disconnect();
   }, []);
 
-  // Reveals start once the cover has opened; from then on the viewport's bottom edge (in frame
-  // px) is passed to the store on every scroll and resize, at most once per frame.
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!store || !el || !intro.revealed) return;
-    store.active = true;
-    const measure = () => {
-      const r = el.getBoundingClientRect();
-      store.update((window.innerHeight - r.top) / (r.width / FRAME_W));
-    };
-    let raf = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(measure);
-    };
-    measure();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
-  }, [store, intro.revealed]);
+  const reveals = useScrollReveals({ enabled: ENABLE_ANIMATIONS, frameW: FRAME_W, frameH: FRAME_H, wrapRef, started: intro.revealed });
 
   return (
-    <RevealContext.Provider value={store}>
+    <RevealProvider value={reveals}>
     <div ref={wrapRef} className="relative w-full overflow-hidden" style={{ aspectRatio: `${FRAME_W} / ${FRAME_H}`, backgroundColor: CREAM }}>
       <div className="absolute left-0 top-0 overflow-hidden" style={{ width: FRAME_W, height: FRAME_H, zoom: scale }}>
         {/* ===== BG ===== */}
@@ -919,6 +777,6 @@ export default function CrazyLoveContent({ intro }: { intro: IntroState }) {
 
       {photo !== null && <Lightbox index={photo} onClose={() => setPhoto(null)} />}
     </div>
-    </RevealContext.Provider>
+    </RevealProvider>
   );
 }
