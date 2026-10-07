@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject, type TransitionEvent } from 'react';
 
 // Subtle one-time reveals as a template's sections scroll into view, shared by the templates
 // laid out in a scaled Figma frame. Each template keeps its own ENABLE_ANIMATIONS switch and
@@ -101,39 +101,52 @@ export function useScrollReveals({ enabled, frameW, frameH, wrapRef, started }: 
 const frameLayer = (store: RevealStore): CSSProperties => ({ width: store.frameW, height: store.frameH, pointerEvents: 'none' });
 const FRAME_LAYER = 'absolute left-0 top-0 *:pointer-events-auto';
 
+type RevealOptions = { origin?: [number, number]; delay?: number; tilt?: number };
+
 /**
- * Reveals its children once, when frame y `at` scrolls into view. Must sit where the frame's
- * origin is its containing block's origin. `origin` (frame coords) is the centre for rotate /
- * scale; `tilt` is the extra rotation a `settle` starts from.
+ * The reveal itself, for an element to apply to its own style: null when animations are off.
+ * `origin` (in the element's own coords) is the centre for rotate / scale; `tilt` is the extra
+ * rotation a `settle` starts from. Use Reveal instead, unless the element has to animate by
+ * itself (e.g. a blended layer, which a wrapper would isolate from what it blends with).
  */
-export function Reveal({ at, kind, origin, delay = 0, tilt = 3, children }: { at: number; kind: RevealKind; origin?: [number, number]; delay?: number; tilt?: number; children: ReactNode }) {
+export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, tilt = 3 }: RevealOptions = {}) {
   const store = useContext(RevealContext);
   const [state, setState] = useState<'waiting' | 'showing' | 'done'>('waiting');
   useEffect(() => store?.watch(at, () => setState('showing')), [store, at]);
-  if (!store) return <>{children}</>;
+  if (!store) return null;
   const { from, ms } = REVEAL[kind];
   const t = `${ms}ms ${EASE_OUT} ${delay}ms`;
-  // Once revealed the wrapper drops its animation styles, so nothing stays on its own
+  // Once revealed the element drops its animation styles, so nothing stays on its own
   // compositing layer and the page renders exactly as it does without animations (text keeps
   // its sub-pixel smoothing).
   const style: CSSProperties =
     state === 'done'
-      ? frameLayer(store)
+      ? {}
       : {
-          ...frameLayer(store),
           transformOrigin: origin ? `${origin[0]}px ${origin[1]}px` : undefined,
           opacity: state === 'showing' ? 1 : 0,
           transform: state === 'showing' ? 'none' : from(tilt),
           transition: state === 'showing' ? `opacity ${t}, transform ${t}` : 'none',
         };
+  const onTransitionEnd = (e: TransitionEvent<HTMLElement>) => {
+    if (e.target === e.currentTarget && e.propertyName === 'opacity') setState('done');
+  };
+  return { store, done: state === 'done', style, onTransitionEnd };
+}
+
+/**
+ * Reveals its children once, when frame y `at` scrolls into view. Must sit where the frame's
+ * origin is its containing block's origin; `origin` is then in frame coords.
+ */
+export function Reveal({ at, kind, children, ...options }: RevealOptions & { at: number; kind: RevealKind; children: ReactNode }) {
+  const reveal = useReveal(at, kind, options);
+  if (!reveal) return <>{children}</>;
+  // Once revealed the wrapper stops generating a box at all, so the children lay out and paint
+  // exactly as they would without it. (Even an empty frame-sized box changes how Chrome groups
+  // the page into layers over a fixed background, which shifts text anti-aliasing slightly.)
+  if (reveal.done) return <div className="contents">{children}</div>;
   return (
-    <div
-      className={FRAME_LAYER}
-      style={style}
-      onTransitionEnd={(e) => {
-        if (e.target === e.currentTarget && e.propertyName === 'opacity') setState('done');
-      }}
-    >
+    <div className={FRAME_LAYER} style={{ ...frameLayer(reveal.store), ...reveal.style }} onTransitionEnd={reveal.onTransitionEnd}>
       {children}
     </div>
   );
