@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, MessageCircle, RefreshCw, Smartphone, Monitor, Disc, Check, Heart, Mail } from 'lucide-react';
-import { TEMPLATES } from '../data';
+import { CATALOG_TEMPLATES } from '../data';
 import { Template } from '../types';
 import cherryThumbnail from '../assets/images/cherry/1.png';
 import indigoThumbnail from '../assets/images/Indigo/indigo-cover.png';
@@ -78,6 +78,9 @@ const CHERRY_THUMBNAIL_IMG_STYLE: React.CSSProperties = {
   height: '100%',
 };
 
+// Category tabs (Semua Tema / Film / Floral / Modern / Klasik). Off while every template in the
+// catalog is a film one; set to true to bring them back.
+const SHOW_CATEGORY_FILTERS = false;
 
 export default function TemplateShowcase() {
   const navigate = useNavigate();
@@ -94,10 +97,10 @@ export default function TemplateShowcase() {
   const [orderSubmitted, setOrderSubmitted] = useState(false);
   const [rsvpSuccess, setRsvpSuccess] = useState<string | null>(null);
 
-  // Filter templates
+  // Filter templates (only the ones visible in the catalog; see `visible` in data.ts)
   const filteredTemplates = selectedCategory === 'all'
-    ? TEMPLATES
-    : TEMPLATES.filter(item => item.category === selectedCategory);
+    ? CATALOG_TEMPLATES
+    : CATALOG_TEMPLATES.filter(item => item.category === selectedCategory);
 
   const openPreview = (tpl: Template) => {
     setSelectedTemplate(tpl);
@@ -220,30 +223,32 @@ export default function TemplateShowcase() {
         </div>
 
         {/* Category Filters */}
-        <div className="flex flex-wrap justify-center items-center gap-2 mb-12">
-          {(['all', 'film', 'floral', 'modern', 'vintage'] as const).map((category) => {
-            const categoryLabels: Record<string, string> = {
-              all: 'SEMUA TEMA',
-              film: 'FILM',
-              floral: 'FLORAL',
-              modern: 'MODERN',
-              vintage: 'KLASIK',
-            };
-            return (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 sm:px-5 py-2.5 rounded-full text-xs font-sans tracking-[0.1em] sm:tracking-[0.2em] uppercase font-medium transition-all duration-300 border ${
-                  selectedCategory === category
-                    ? 'bg-[#2D2D2D] border-[#2D2D2D] text-white shadow-sm'
-                    : 'bg-white border-[#E5E2D9] text-[#6B6B6B] hover:text-[#1A1A1A] hover:border-[#C5A059]'
-                }`}
-              >
-                {categoryLabels[category]}
-              </button>
-            );
-          })}
-        </div>
+        {SHOW_CATEGORY_FILTERS && (
+          <div className="flex flex-wrap justify-center items-center gap-2 mb-12">
+            {(['all', 'film', 'floral', 'modern', 'vintage'] as const).map((category) => {
+              const categoryLabels: Record<string, string> = {
+                all: 'SEMUA TEMA',
+                film: 'FILM',
+                floral: 'FLORAL',
+                modern: 'MODERN',
+                vintage: 'KLASIK',
+              };
+              return (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-4 sm:px-5 py-2.5 rounded-full text-xs font-sans tracking-[0.1em] sm:tracking-[0.2em] uppercase font-medium transition-all duration-300 border ${
+                    selectedCategory === category
+                      ? 'bg-[#2D2D2D] border-[#2D2D2D] text-white shadow-sm'
+                      : 'bg-white border-[#E5E2D9] text-[#6B6B6B] hover:text-[#1A1A1A] hover:border-[#C5A059]'
+                  }`}
+                >
+                  {categoryLabels[category]}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Grid of templates */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">

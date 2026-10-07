@@ -1,6 +1,8 @@
 export interface Template {
   id: string;
   name: string;
+  /** Shown in the homepage catalog. Hidden templates keep their /template/... page. */
+  visible: boolean;
   subtitle: string;
   code: string;
   category: 'film' | 'minimalist' | 'floral' | 'modern' | 'vintage';
