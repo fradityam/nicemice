@@ -56,8 +56,8 @@ function quotesIntroStyle({ revealed, reducedMotion }: IntroState): CSSPropertie
   return { opacity: 1, transform: 'translateY(0)', transition: `opacity ${t}, transform ${t}` };
 }
 
-/** Subtle one-time reveals as sections scroll into view. Set to false to turn them all off. */
-const ENABLE_ANIMATIONS = true;
+/** Subtle one-time reveals on the cover and as sections scroll into view. Set to false to turn them all off. */
+export const ENABLE_ANIMATIONS = true;
 
 // Figma render bounds (Content-frame px) of each starfield's COLOR_DODGE group.
 const FLARES = [

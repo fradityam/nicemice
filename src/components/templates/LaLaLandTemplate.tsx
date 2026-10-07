@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 import coverBg from '../../assets/images/lalaland/figma/cover-bg.webp';
-import LaLaLandContent, { INTRO } from './LaLaLandContent';
+import LaLaLandContent, { ENABLE_ANIMATIONS, INTRO } from './LaLaLandContent';
+import { Reveal, RevealProvider, RevealSpan, useCoverReveals } from './scrollReveal';
 import { weddingDateId } from './lalalandWeddingDate';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import { STAGE_BG, coverTextLayout, useStageVisible } from './templateStage';
@@ -35,9 +36,12 @@ const coverGradient = `linear-gradient(to bottom, ${Array.from({ length: 11 }, (
 // into; on the desktop stage it grows to the full column height instead, cropping the left
 // side only, so the moon and the lamp on the right stay in view.
 // The text and button are scaled as large as fits without being cut off.
+// On load it settles in: the painting eases back a touch, the title line drifts down, the
+// names rise one by one, then the guest's name and the button; the button works from the start.
 function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ w: COVER_W, h: COVER_H });
+  const { reveals } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1500 });
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -56,6 +60,7 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
   const text = coverTextLayout(columnW, viewport.h, COVER_W, COVER_H, stageVisible);
 
   return (
+    <RevealProvider value={reveals}>
     <div ref={ref} className="absolute inset-0 overflow-hidden">
       <div
         className="absolute left-1/2 top-0 overflow-hidden bg-[#081a51]"
@@ -67,12 +72,14 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
           transformOrigin: '50% 0',
         }}
       >
-        <img
-          src={coverBg}
-          alt=""
-          className="absolute max-w-none object-cover"
-          style={{ left: -1, top: -1, width: 376, height: 668 }}
-        />
+        <Reveal at={0} kind="zoomOut" origin={[187.5, 300]}>
+          <img
+            src={coverBg}
+            alt=""
+            className="absolute max-w-none object-cover"
+            style={{ left: -1, top: -1, width: 376, height: 668 }}
+          />
+        </Reveal>
         <div className="absolute left-0 top-[360px] h-[307px] w-[375px]" style={{ backgroundImage: coverGradient }} />
       </div>
       <div
@@ -80,43 +87,54 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
         style={{ top: text.top, width: COVER_W, height: COVER_H, transform: `translateX(-50%) scale(${text.scale})`, transformOrigin: '50% 0' }}
       >
 
-        <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[20px] text-center text-white top-[117px] whitespace-nowrap">
-          Meet Me Under the Stars
-        </p>
-        <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[16px] text-center text-white top-[144px] whitespace-nowrap">
-          {weddingDateId}
-        </p>
+        <Reveal at={0} kind="fadeDown" delay={150}>
+          <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[20px] text-center text-white top-[117px] whitespace-nowrap">
+            Meet Me Under the Stars
+          </p>
+        </Reveal>
+        <Reveal at={0} kind="fadeDown" delay={250}>
+          <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[16px] text-center text-white top-[144px] whitespace-nowrap">
+            {weddingDateId}
+          </p>
+        </Reveal>
 
         <h1 className="font-['Fasthand'] leading-[normal] text-center text-white">
-          <span className="-translate-x-1/2 absolute left-1/2 text-[80px] top-[163px] w-[331px]">Sebastian</span>
-          <span className="-translate-x-1/2 absolute left-[calc(50%-12.5px)] text-[50px] top-[251px] w-[42px]">&amp;</span>
-          <span className="-translate-x-1/2 absolute left-[calc(50%+0.5px)] text-[80px] top-[285px] w-[146px]">Mia</span>
+          <RevealSpan at={0} kind="fadeUp" delay={400} className="-translate-x-1/2 absolute left-1/2 text-[80px] top-[163px] w-[331px]">Sebastian</RevealSpan>
+          <RevealSpan at={0} kind="fadeUp" delay={480} className="-translate-x-1/2 absolute left-[calc(50%-12.5px)] text-[50px] top-[251px] w-[42px]">&amp;</RevealSpan>
+          <RevealSpan at={0} kind="fadeUp" delay={560} className="-translate-x-1/2 absolute left-[calc(50%+0.5px)] text-[80px] top-[285px] w-[146px]">Mia</RevealSpan>
         </h1>
 
-        <p
-          className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-1/2 text-[20px] text-center text-white top-[452px] whitespace-nowrap"
-          style={{ textShadow }}
-        >
-          Kepada
-        </p>
-        <p
-          className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[30px] text-center text-white top-[481px] whitespace-nowrap"
-          style={{ textShadow }}
-        >
-          Emma &amp; Ryan
-        </p>
+        <Reveal at={0} kind="fadeUp" delay={700}>
+          <p
+            className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-1/2 text-[20px] text-center text-white top-[452px] whitespace-nowrap"
+            style={{ textShadow }}
+          >
+            Kepada
+          </p>
+        </Reveal>
+        <Reveal at={0} kind="fadeUp" delay={770}>
+          <p
+            className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[30px] text-center text-white top-[481px] whitespace-nowrap"
+            style={{ textShadow }}
+          >
+            Emma &amp; Ryan
+          </p>
+        </Reveal>
 
-        <button
-          type="button"
-          onClick={onOpen}
-          className="absolute left-[95px] top-[522px] h-[34px] w-[185px] rounded-[20px] bg-[#f9de1f] cursor-pointer"
-        >
-          <span className="-translate-x-1/2 absolute left-[96px] top-[5px] font-['Pompiere'] leading-[normal] text-[20px] text-[#181065] text-center whitespace-nowrap">
-            BUKA UNDANGAN
-          </span>
-        </button>
+        <Reveal at={0} kind="fadeUp" delay={840}>
+          <button
+            type="button"
+            onClick={onOpen}
+            className="absolute left-[95px] top-[522px] h-[34px] w-[185px] rounded-[20px] bg-[#f9de1f] cursor-pointer"
+          >
+            <span className="-translate-x-1/2 absolute left-[96px] top-[5px] font-['Pompiere'] leading-[normal] text-[20px] text-[#181065] text-center whitespace-nowrap">
+              BUKA UNDANGAN
+            </span>
+          </button>
+        </Reveal>
       </div>
     </div>
+    </RevealProvider>
   );
 }
 
