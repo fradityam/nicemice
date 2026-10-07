@@ -15,6 +15,7 @@ const IndigoTemplate = lazy(() => import('./components/templates/IndigoTemplate.
 const LaLaLandTemplate = lazy(() => import('./components/templates/LaLaLandTemplate.tsx'));
 const NotebookTemplate = lazy(() => import('./components/templates/NotebookTemplate.tsx'));
 const FriendsTemplate = lazy(() => import('./components/templates/FriendsTemplate.tsx'));
+const CrazyLoveTemplate = lazy(() => import('./components/templates/CrazyLoveTemplate.tsx'));
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -30,6 +31,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/template/lalaland" element={<LaLaLandTemplate />} />
         <Route path="/template/notebook" element={<NotebookTemplate />} />
         <Route path="/template/friends" element={<FriendsTemplate />} />
+        <Route path="/template/crazy-little-thing" element={<CrazyLoveTemplate />} />
         <Route path="/harga" element={<ComingSoonPage title="Harga & Paket" />} />
         <Route path="/faq" element={<ComingSoonPage title="FAQ" />} />
         <Route path="/blog" element={<ComingSoonPage title="Blog & Jurnal" />} />
