@@ -10,7 +10,8 @@ import coverMask from '../../assets/images/crazylove/cover-mask.svg';
 import bouquet1 from '../../assets/images/crazylove/bouquet-1.webp';
 import bouquet2 from '../../assets/images/crazylove/bouquet-2.webp';
 import kids from '../../assets/images/crazylove/kids.webp';
-import CrazyLoveContent, { INTRO } from './CrazyLoveContent';
+import CrazyLoveContent, { ENABLE_ANIMATIONS, INTRO } from './CrazyLoveContent';
+import { Reveal, RevealProvider, useCoverReveals } from './scrollReveal';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import { STAGE_BG } from './templateStage';
 
@@ -61,72 +62,95 @@ function useCoverScale() {
   return { ref, scale, top: (viewport.h - COVER_H * scale) / 2 };
 }
 
-// Figma "Cover" frame (375 × 667) at its own coordinates, scaled to fit the column.
+// Figma "Cover" frame (375 × 667) at its own coordinates, scaled to fit the column. On load
+// it settles in: the card fades in, the polaroid drops onto it, the flowers and the kids pop
+// in, then the guest's name and the button rise; the button works from the start.
 function CrazyLoveCover({ onOpen }: { onOpen: () => void }) {
   const { ref, scale, top } = useCoverScale();
+  const { reveals } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1500 });
   return (
+    <RevealProvider value={reveals}>
     <div ref={ref} className="absolute inset-0 overflow-hidden" style={{ backgroundColor: CREAM }}>
       <img alt="" src={paper} className={`${fill} opacity-50`} />
       <div
         className="absolute left-1/2"
         style={{ top, width: COVER_W, height: COVER_H, transform: `translateX(-50%) scale(${scale})`, transformOrigin: '50% 0' }}
       >
-        <Rot box={[21.13, 107, 341.747, 407.257]} w={319.416} h={389.147} deg={-3.37}>
-          <img alt="" src={scallopFrame} className={fill} />
-        </Rot>
+        <Reveal at={0} kind="fade">
+          <Rot box={[21.13, 107, 341.747, 407.257]} w={319.416} h={389.147} deg={-3.37}>
+            <img alt="" src={scallopFrame} className={fill} />
+          </Rot>
+        </Reveal>
 
         {/* The polaroid, with its group drop shadow */}
         <div className="absolute inset-0" style={{ filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.25))' }}>
-          <Rot box={[60, 152.63, 264.852, 315.413]} w={243.238} h={298.053} deg={4.29}>
-            <img alt="" src={coverFrame} className={fill} />
-          </Rot>
-          <Rot box={[75.6, 168.96, 238.129, 238.129]} w={222.135} h={222.135} deg={4.29}>
-            <div
-              className="absolute inset-0"
-              style={{ maskImage: mask, WebkitMaskImage: mask, maskPosition: '2.45px 1.742px', WebkitMaskPosition: '2.45px 1.742px', maskSize: '216.109px 217.552px', WebkitMaskSize: '216.109px 217.552px', maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat' }}
-            >
-              <img alt="Ratu & Radit membaca buku di tempat tidur" src={coverPhoto} className={`${fill} rounded-[8px]`} />
-            </div>
-          </Rot>
-          <Rot box={[78, 395.53, 210.6, 66.875]} w={207.41} h={52.273} deg={4.07}>
-            <h1 className="font-['Nanum_Pen_Script'] font-normal text-center text-[#e58f9b]">
-              <span className="block text-[30px] leading-[26px]">Ratu &amp; Radit</span>
-              <span className="block text-[26px] leading-[26px]">said “I do!”</span>
-            </h1>
-          </Rot>
+          <Reveal at={0} kind="settle" origin={[192.4, 310.3]} delay={150}>
+            <Rot box={[60, 152.63, 264.852, 315.413]} w={243.238} h={298.053} deg={4.29}>
+              <img alt="" src={coverFrame} className={fill} />
+            </Rot>
+            <Rot box={[75.6, 168.96, 238.129, 238.129]} w={222.135} h={222.135} deg={4.29}>
+              <div
+                className="absolute inset-0"
+                style={{ maskImage: mask, WebkitMaskImage: mask, maskPosition: '2.45px 1.742px', WebkitMaskPosition: '2.45px 1.742px', maskSize: '216.109px 217.552px', WebkitMaskSize: '216.109px 217.552px', maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat' }}
+              >
+                <img alt="Ratu & Radit membaca buku di tempat tidur" src={coverPhoto} className={`${fill} rounded-[8px]`} />
+              </div>
+            </Rot>
+            <Rot box={[78, 395.53, 210.6, 66.875]} w={207.41} h={52.273} deg={4.07}>
+              <h1 className="font-['Nanum_Pen_Script'] font-normal text-center text-[#e58f9b]">
+                <span className="block text-[30px] leading-[26px]">Ratu &amp; Radit</span>
+                <span className="block text-[26px] leading-[26px]">said “I do!”</span>
+              </h1>
+            </Rot>
+          </Reveal>
         </div>
 
-        <Rot box={[-109, 341, 215.506, 275.268]} w={162.517} h={243.775} deg={13.66}>
-          <img alt="" src={bouquet1} className={fill} />
-        </Rot>
-        <Rot box={[267, -69, 246.773, 220.301]} w={137.311} h={205.966} deg={-119.18}>
-          <img alt="" src={bouquet1} className={fill} />
-        </Rot>
-        <Rot box={[5, 107, 117.833, 141.64]} w={80.744} h={121.116} deg={-20.36}>
-          <img alt="" src={bouquet2} className={fill} />
-        </Rot>
+        <Reveal at={0} kind="pop" origin={[0, 640]} delay={400}>
+          <Rot box={[-109, 341, 215.506, 275.268]} w={162.517} h={243.775} deg={13.66}>
+            <img alt="" src={bouquet1} className={fill} />
+          </Rot>
+        </Reveal>
+        <Reveal at={0} kind="pop" origin={[375, 0]} delay={480}>
+          <Rot box={[267, -69, 246.773, 220.301]} w={137.311} h={205.966} deg={-119.18}>
+            <img alt="" src={bouquet1} className={fill} />
+          </Rot>
+        </Reveal>
+        <Reveal at={0} kind="pop" origin={[5, 107]} delay={560}>
+          <Rot box={[5, 107, 117.833, 141.64]} w={80.744} h={121.116} deg={-20.36}>
+            <img alt="" src={bouquet2} className={fill} />
+          </Rot>
+        </Reveal>
 
-        <p className="-translate-x-1/2 absolute left-1/2 top-[519px] font-['Josefin_Slab'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
-          Dear
-        </p>
-        <p className="-translate-x-1/2 absolute left-1/2 top-[549px] font-['Josefin_Sans'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
-          Chon &amp; Nam
-        </p>
-        <button
-          type="button"
-          onClick={onOpen}
-          className="absolute left-[98px] top-[584px] h-[32px] w-[179px] cursor-pointer rounded-[17px] bg-[#a9c6d8] transition-[filter] hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#519ac8]"
-        >
-          <span className="-translate-x-1/2 absolute left-1/2 top-[3px] font-['Josefin_Sans'] text-[17px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
-            Open the Invitation
-          </span>
-        </button>
+        <Reveal at={0} kind="fadeUp" delay={650}>
+          <p className="-translate-x-1/2 absolute left-1/2 top-[519px] font-['Josefin_Slab'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
+            Dear
+          </p>
+        </Reveal>
+        <Reveal at={0} kind="fadeUp" delay={730}>
+          <p className="-translate-x-1/2 absolute left-1/2 top-[549px] font-['Josefin_Sans'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
+            Chon &amp; Nam
+          </p>
+        </Reveal>
+        <Reveal at={0} kind="fadeUp" delay={800}>
+          <button
+            type="button"
+            onClick={onOpen}
+            className="absolute left-[98px] top-[584px] h-[32px] w-[179px] cursor-pointer rounded-[17px] bg-[#a9c6d8] transition-[filter] hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#519ac8]"
+          >
+            <span className="-translate-x-1/2 absolute left-1/2 top-[3px] font-['Josefin_Sans'] text-[17px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
+              Open the Invitation
+            </span>
+          </button>
+        </Reveal>
 
-        <Rot box={[53, 35, 90.316, 83.394]} w={89.929} h={82.974} deg={-0.27}>
-          <img alt="" src={kids} className={fill} />
-        </Rot>
+        <Reveal at={0} kind="pop" origin={[98.2, 76.7]} delay={600}>
+          <Rot box={[53, 35, 90.316, 83.394]} w={89.929} h={82.974} deg={-0.27}>
+            <img alt="" src={kids} className={fill} />
+          </Rot>
+        </Reveal>
       </div>
     </div>
+    </RevealProvider>
   );
 }
 

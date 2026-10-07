@@ -1,23 +1,29 @@
 import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject, type TransitionEvent } from 'react';
 
-// Subtle one-time reveals as a template's sections scroll into view, shared by the templates
-// laid out in a scaled Figma frame. Each template keeps its own ENABLE_ANIMATIONS switch and
-// passes it to useScrollReveals; positions, origins and boxes are all in frame px.
+// Subtle one-time reveals as a template's sections scroll into view (useScrollReveals) and as
+// its cover settles on load (useCoverReveals), shared by the templates laid out in a scaled
+// Figma frame. Each template keeps its own ENABLE_ANIMATIONS switch and passes it to both;
+// positions, origins and boxes are all in frame px.
 
 const EASE_OUT = 'cubic-bezier(0.33, 1, 0.68, 1)';
 
 // How far (in frame px) an element must be inside the viewport before it reveals.
 const REVEAL_OFFSET = 40;
 
-export type RevealKind = 'fade' | 'fadeUp' | 'pop' | 'settle' | 'fromLeft' | 'fromRight';
-const REVEAL: Record<RevealKind, { from: (tilt: number) => string; ms: number }> = {
+export type RevealKind = 'fade' | 'fadeUp' | 'fadeDown' | 'pop' | 'grow' | 'settle' | 'fromLeft' | 'fromRight' | 'zoomOut';
+// `fade: false`: the element stays fully visible and only moves.
+const REVEAL: Record<RevealKind, { from: (tilt: number) => string; ms: number; fade?: false }> = {
   fade: { from: () => 'none', ms: 700 },
   fadeUp: { from: () => 'translateY(12px)', ms: 700 },
+  fadeDown: { from: () => 'translateY(-12px)', ms: 700 },
   pop: { from: () => 'scale(0.9)', ms: 500 },
+  grow: { from: () => 'scale(0.96)', ms: 700 },
   // A photo being placed on the page: a touch higher, bigger and more tilted, then it settles.
   settle: { from: (tilt) => `translateY(-8px) rotate(${tilt}deg) scale(1.03)`, ms: 800 },
   fromLeft: { from: () => 'translateX(-16px)', ms: 700 },
   fromRight: { from: () => 'translateX(16px)', ms: 700 },
+  // A cover painting settling: a very slow, tiny zoom out.
+  zoomOut: { from: () => 'scale(1.03)', ms: 1500, fade: false },
 };
 
 /**
@@ -53,7 +59,7 @@ class RevealStore {
 }
 const RevealContext = createContext<RevealStore | null>(null);
 
-/** Provides the reveals from useScrollReveals to the frame's Reveal and Float layers. */
+/** Provides the reveals from useScrollReveals / useCoverReveals to the frame's Reveal and Float layers. */
 export const RevealProvider = RevealContext.Provider;
 
 /**
@@ -95,6 +101,49 @@ export function useScrollReveals({ enabled, frameW, frameH, wrapRef, started }: 
   return store;
 }
 
+// Longest a cover waits for its images and fonts before settling in anyway.
+const COVER_WAIT_MS = 600;
+
+/**
+ * Reveals for a cover frame of `frameW` × `frameH`: every Reveal in it plays once on load, as
+ * soon as the images and fonts in `rootRef` are ready (or COVER_WAIT_MS have passed), with
+ * the sequence set by each one's delay. `settled` turns true `settleMs` after that (and
+ * straight away when there is nothing to play), for hints that should only start once the
+ * cover has settled. Null reveals when `enabled` is false or the guest prefers reduced motion.
+ */
+export function useCoverReveals({ enabled, frameW, frameH, rootRef, settleMs }: { enabled: boolean; frameW: number; frameH: number; rootRef: RefObject<HTMLElement | null>; settleMs: number }) {
+  const [store] = useState(() =>
+    enabled && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? new RevealStore(frameW, frameH) : null,
+  );
+  const [settled, setSettled] = useState(!store);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!store || !root) return;
+    let cancelled = false;
+    let raf = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const images = [...root.querySelectorAll('img')].map((img) => img.decode().catch(() => {}));
+    const ready = Promise.all([document.fonts.ready, ...images]);
+    Promise.race([ready, new Promise((r) => setTimeout(r, COVER_WAIT_MS))]).then(() => {
+      // A frame later, so the hidden starting state has been painted and the transitions run.
+      raf = requestAnimationFrame(() => {
+        if (cancelled) return;
+        store.active = true;
+        store.update(Infinity);
+        timer = setTimeout(() => setSettled(true), settleMs);
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+    };
+  }, [store, rootRef, settleMs]);
+
+  return { reveals: store, settled };
+}
+
 // A layer the size of the whole frame at its origin, so the children keep their Figma
 // coordinates (px and % alike) and nothing moves in the layout. It lets taps through to
 // whatever lies under it; its direct children take them as usual.
@@ -114,7 +163,7 @@ export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, til
   const [state, setState] = useState<'waiting' | 'showing' | 'done'>('waiting');
   useEffect(() => store?.watch(at, () => setState('showing')), [store, at]);
   if (!store) return null;
-  const { from, ms } = REVEAL[kind];
+  const { from, ms, fade = true } = REVEAL[kind];
   const t = `${ms}ms ${EASE_OUT} ${delay}ms`;
   // Once revealed the element drops its animation styles, so nothing stays on its own
   // compositing layer and the page renders exactly as it does without animations (text keeps
@@ -124,12 +173,12 @@ export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, til
       ? {}
       : {
           transformOrigin: origin ? `${origin[0]}px ${origin[1]}px` : undefined,
-          opacity: state === 'showing' ? 1 : 0,
+          opacity: fade ? (state === 'showing' ? 1 : 0) : undefined,
           transform: state === 'showing' ? 'none' : from(tilt),
           transition: state === 'showing' ? `opacity ${t}, transform ${t}` : 'none',
         };
   const onTransitionEnd = (e: TransitionEvent<HTMLElement>) => {
-    if (e.target === e.currentTarget && e.propertyName === 'opacity') setState('done');
+    if (e.target === e.currentTarget && e.propertyName === (fade ? 'opacity' : 'transform')) setState('done');
   };
   return { store, done: state === 'done', style, onTransitionEnd };
 }
@@ -149,6 +198,21 @@ export function Reveal({ at, kind, children, ...options }: RevealOptions & { at:
     <div className={FRAME_LAYER} style={{ ...frameLayer(reveal.store), ...reveal.style }} onTransitionEnd={reveal.onTransitionEnd}>
       {children}
     </div>
+  );
+}
+
+/**
+ * A span that reveals by itself, for one line of a heading or an element whose own position
+ * mustn't change (its Tailwind translate stays as it is; the reveal adds a transform on top).
+ * Shown inline-block while it animates, since an inline box can't be transformed.
+ */
+export function RevealSpan({ at, kind, className, style, children, ...options }: RevealOptions & { at: number; kind: RevealKind; className?: string; style?: CSSProperties; children: ReactNode }) {
+  const reveal = useReveal(at, kind, options);
+  const animating = reveal && !reveal.done;
+  return (
+    <span className={className} style={animating ? { display: 'inline-block', ...style, ...reveal.style } : style} onTransitionEnd={reveal?.onTransitionEnd}>
+      {children}
+    </span>
   );
 }
 

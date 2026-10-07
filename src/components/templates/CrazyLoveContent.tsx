@@ -52,8 +52,8 @@ function introStyle({ revealed, reducedMotion }: IntroState): CSSProperties {
 
 // ---------- Scroll reveals ----------
 
-/** Subtle one-time reveals as sections scroll into view. Set to false to turn them all off. */
-const ENABLE_ANIMATIONS = true;
+/** Subtle one-time reveals on the cover and as sections scroll into view. Set to false to turn them all off. */
+export const ENABLE_ANIMATIONS = true;
 
 const fill = 'absolute inset-0 block max-w-none size-full';
 
