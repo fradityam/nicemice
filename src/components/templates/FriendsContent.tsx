@@ -111,7 +111,7 @@ function SeeLocation({ place }: { place: string }) {
   );
 }
 
-/** The bank cup's "COPY" pill, at its Figma position (x, y = the pill's top-left). */
+/** The gift frame's "COPY" pill, at its Figma position (x, y = the pill's top-left). */
 function CopyButton({ x, y, label, text }: { x: number; y: number; label: string; text: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -124,13 +124,13 @@ function CopyButton({ x, y, label, text }: { x: number; y: number; label: string
           setTimeout(() => setCopied(false), 1500);
         });
       }}
-      className="absolute h-[22px] w-[64px] cursor-pointer rounded-[20px] border border-solid border-[#0b5da9] bg-[#efecec]"
+      className="absolute h-[22px] w-[64px] cursor-pointer rounded-[20px] border border-solid border-[#a07eb9] bg-[#efecec]"
       style={{ left: x, top: y }}
     >
       {!copied && <img alt="" src={A('copy.svg')} className="absolute block max-w-none" style={{ left: 9, top: 3.2, width: 11, height: 13.41 }} />}
       {/* "COPIED" is wider than the text slot next to the icon, so it replaces the icon and centres. */}
       <span
-        className="-translate-x-1/2 -translate-y-1/2 absolute top-[10.5px] font-['Raleway'] text-[10px] leading-[15px] tracking-[-0.17px] text-[rgba(11,93,169,0.87)] whitespace-nowrap"
+        className="-translate-x-1/2 -translate-y-1/2 absolute top-[10.5px] font-['Raleway'] text-[10px] leading-[15px] tracking-[-0.17px] text-[#a07eb9] whitespace-nowrap"
         style={{ left: copied ? 31 : 38.5 }}
       >
         {copied ? 'COPIED' : 'COPY'}
@@ -299,11 +299,11 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
           </div>
         ))}
         <div className="absolute left-0 top-[3106px] h-[2245px] w-[376px]" style={{ backgroundImage: yellowGradient }} />
-        <Img file="snowy-venue.webp" x={0} y={5117} w={375} h={561} className="opacity-88" />
+        <Img file="snowy-venue.webp" x={-56} y={4949} w={486} h={729} className="opacity-88" />
         <div className="absolute left-0 top-[5336px] h-[354px] w-[376px] bg-gradient-to-b from-[rgba(255,255,255,0)] to-white to-[80.288%]" />
 
         {/* ===== Background doodles ===== */}
-        <Img file="gift-icons.svg" x={27} y={4723} w={357.567} h={368.557} />
+        <Img file="gift-icons.svg" x={-8} y={4723} w={392.567} h={533.557} />
         <Reveal at={887} kind="pop" origin={[57.5, 1012]} delay={300}>
           <Img file="lily-1.webp" x={-12} y={887} w={139} h={250} />
         </Reveal>
@@ -513,6 +513,9 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
         </Reveal>
 
         {/* ===== Gifting ===== */}
+        <Reveal at={4690} kind="fadeUp">
+          <Centered cx={189.5} cy={4699} className={`${friendsTitle} text-[18px] leading-[20px] text-[#a07eb9]`}>Gifting</Centered>
+        </Reveal>
         <Reveal at={4715} kind="fadeUp" delay={120}>
           <Centered cx={188.5} cy={4729} className="ff-f72-soft text-[12px] leading-[15px] tracking-[-0.017em] text-[#181719]">
             Your prayers and good wishes mean so much to us.
@@ -520,20 +523,44 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
             If you’d like to send us a gift, you can do so here:
           </Centered>
         </Reveal>
-        <Reveal at={4760} kind="fadeUp" delay={200}>
-          <Img file="cup-blue.webp" x={-5} y={4723} w={380} h={253} />
-          <Centered cx={213.5} cy={4840} className="ff-fraunces font-bold text-[20px] leading-[20px] tracking-[-0.017em] text-white">Bank BCA</Centered>
-          <Centered cx={212.5} cy={4868} className="ff-fraunces text-[30px] leading-[20px] text-white">123456789</Centered>
-          <Centered cx={213.5} cy={4922.5} className="font-['Raleway'] text-[10px] leading-[15px] tracking-[-0.17px] text-white">a.n. Raditya M Fadil</Centered>
-          <CopyButton x={181} y={4888} label="Copy account number" text="123456789" />
+
+        {/* The ornate yellow frame around both gift options */}
+        <Reveal at={4756} kind="fadeUp" delay={150}>
+          <div className="absolute left-[37px] top-[4799px] h-[435px] w-[299px] bg-[#fff1c2]" />
+          <Img file="gift-frame.webp" x={14} y={4756} w={348} h={522} />
         </Reveal>
 
-        <Reveal at={5050} kind="fadeUp" delay={200}>
-          {/* Name and address sit 14px higher than in Figma to make room inside the cup for a Copy
-              button like the bank one (Figma's cup has none). */}
-          <Img file="cup-orange.webp" x={-2} y={5021} w={380} h={253} />
-          <Centered cx={166.5} cy={5124} className="ff-fraunces font-bold text-[25px] leading-[20px] tracking-[-0.017em] text-white">Ratu R</Centered>
-          <Centered cx={167} cy={5175.5} className="ff-fraunces text-[10px] leading-[15px] tracking-[-0.017em] text-white">
+        <Reveal at={4844} kind="fadeUp" delay={250}>
+          <Centered cx={189} cy={4854} className={`${friendsTitle} text-[18px] leading-[20px] text-[#cd5524]`}>Bank transfer</Centered>
+          <Centered cx={188.5} cy={4886} className="ff-fraunces font-bold text-[20px] leading-[20px] tracking-[-0.017em] text-[#363636]">Bank BCA</Centered>
+          <Centered cx={187.5} cy={4914} className="ff-fraunces text-[30px] leading-[20px] text-[#363636]">123456789</Centered>
+          <CopyButton x={156} y={4934} label="Copy account number" text="123456789" />
+          <Centered cx={188.5} cy={4968.5} className="font-['Raleway'] text-[10px] leading-[15px] tracking-[-0.17px] text-[#363636]">a.n. Raditya M Fadil</Centered>
+        </Reveal>
+
+        {/* Two lilies between the options: Figma's 22.1 × 37.2 lily, turned (and mirrored) about its box centre. */}
+        <Reveal at={4982} kind="pop" origin={[188.1, 5001.6]} delay={300}>
+          <div className="absolute" style={{ left: 205.66 - 11.054, top: 5001.621 - 18.588, width: 22.108, height: 37.176, transform: 'rotate(57.14deg)' }}>
+            <img alt="" src={A('lily-2.webp')} className={fill} />
+          </div>
+          <div className="absolute" style={{ left: 170.61 - 11.054, top: 5001.621 - 18.588, width: 22.108, height: 37.176, transform: 'rotate(-57.14deg) scaleX(-1)' }}>
+            <img alt="" src={A('lily-2.webp')} className={fill} />
+          </div>
+        </Reveal>
+
+        <Reveal at={5025} kind="fadeUp">
+          <Centered cx={189} cy={5035} className={`${friendsTitle} text-[18px] leading-[20px] text-[#cd5524]`}>Gift Delivery</Centered>
+          <Centered cx={188.5} cy={5064.5} className="ff-f72-soft text-[12px] leading-[15px] tracking-[-0.017em] text-[#181719]">
+            Want to send us a gift?
+            <br />
+            You can send it to the address below.
+          </Centered>
+        </Reveal>
+        <Reveal at={5084} kind="fadeUp" delay={150}>
+          {/* Name and address sit 10px higher than in Figma to make room above the frame's bottom
+              ornament for a Copy button like the bank one (Figma has none). */}
+          <Centered cx={189.5} cy={5094} className="ff-fraunces font-bold text-[25px] leading-[20px] tracking-[-0.017em] text-[#363636]">Ratu R</Centered>
+          <Centered cx={190} cy={5145.5} className="ff-fraunces text-[10px] leading-[15px] tracking-[-0.017em] text-[#363636]">
             Jl. Anggrek Loka No. 24,
             <br />
             RT 005 / RW 002 Kel. Meruya Utara,
@@ -544,21 +571,7 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
             <br />
             Phone: 0812-3456-7890
           </Centered>
-          <CopyButton x={135} y={5216} label="Copy address" text={ADDRESS} />
-        </Reveal>
-
-        <Reveal at={4690} kind="fadeUp">
-          <Centered cx={189.5} cy={4699} className={`${friendsTitle} text-[18px] leading-[20px] text-[#a07eb9]`}>Gifting</Centered>
-        </Reveal>
-        <Reveal at={5010} kind="fadeUp" delay={120}>
-          <Centered cx={188.5} cy={5024.5} className="ff-f72-soft text-[12px] leading-[15px] tracking-[-0.017em] text-[#181719]">
-            Want to send us a gift?
-            <br />
-            You can send it to the address below.
-          </Centered>
-        </Reveal>
-        <Reveal at={4985} kind="fadeUp">
-          <Centered cx={189} cy={4995} className={`${friendsTitle} text-[18px] leading-[20px] text-[#cd5524]`}>Gift Delivery</Centered>
+          <CopyButton x={156} y={5185} label="Copy address" text={ADDRESS} />
         </Reveal>
 
         {/* ===== Couple photo strip ===== */}
@@ -568,14 +581,20 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
           <Transformed m={[1, 0.006, -0.08, -0.006, 1, 4647.349]} w={375.062} h={25.936}><img alt="" src={A('scallop.svg')} className={fill} /></Transformed>
         </Reveal>
 
-        {/* ===== Closing ===== */}
-        <Reveal at={5555} kind="fadeUp">
-          <p className="ff-fraunces -translate-x-1/2 -translate-y-1/2 absolute left-[187.5px] top-[5582px] w-[284px] text-center text-[10px] leading-[13px] tracking-[-0.017em] text-[#181719]">
+        {/* ===== Closing note on torn paper ===== */}
+        <Reveal at={5496} kind="fadeUp">
+          {/* Figma's 200 × 316 paper, turned 90° about the centre of its 316 × 200 box. */}
+          <div className="absolute" style={{ left: 187 - 100.075, top: 5595.825 - 158.025, width: 200.15, height: 316.05, transform: 'rotate(90deg)' }}>
+            <img alt="" src={A('torn-paper.webp')} className={fill} />
+          </div>
+        </Reveal>
+        <Reveal at={5540} kind="fadeUp" delay={150}>
+          <p className="ff-fraunces -translate-x-1/2 -translate-y-1/2 absolute left-[187px] top-[5577.5px] w-[260px] text-center text-[12px] leading-[16px] tracking-[-0.017em] text-[#181719]">
             Thank you for being part of our story and for celebrating this special moment with us. Having our favorite people by our side makes this day even more meaningful. We can’t wait to laugh, dance, and make more memories together.
           </p>
         </Reveal>
-        <Reveal at={5555} kind="fadeUp" delay={150}>
-          <Centered cx={187.5} cy={5627.5} className="ff-fraunces text-[26px] leading-[30px] tracking-[-0.017em] text-[#a07eb9]">
+        <Reveal at={5625} kind="fadeUp" delay={250}>
+          <Centered cx={187.5} cy={5644.14} className="ff-fraunces text-[27px] leading-[30px] tracking-[-0.017em] text-[#a07eb9]">
             Ratu &amp; Radit
           </Centered>
         </Reveal>
