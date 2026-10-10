@@ -19,7 +19,7 @@ export default function SiteHeader() {
           <a href="#contoh">Fitur</a>
           <a href="#cara-kerja">Cara kerja</a>
         </nav>
-        <a className="button button-small button-outline" href="#mulai">
+        <a className="button button-small button-outline" href="#template">
           Pilih template
           <ArrowIcon />
         </a>
