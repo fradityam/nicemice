@@ -1,48 +1,32 @@
-import Header from './components/Header';
-import Marquee from './components/Marquee';
-import Hero from './components/Hero';
-import TemplateShowcase from './components/TemplateShowcase';
-import JourneySection from './components/JourneySection';
-import AestheticsSection from './components/AestheticsSection';
-import DifferenceSection from './components/DifferenceSection';
-import TestimonialsSection from './components/TestimonialsSection';
-import BlogGrid from './components/BlogGrid';
-import Footer from './components/Footer';
+import SiteHeader from './components/home/SiteHeader';
+import Hero from './components/home/Hero';
+import Marquee from './components/home/Marquee';
+import Intro from './components/home/Intro';
+import Catalog from './components/home/Catalog';
+import Showcase from './components/home/Showcase';
+import Process from './components/home/Process';
+import Testimonial from './components/home/Testimonial';
+import FinalCta from './components/home/FinalCta';
+import WhatsAppFloat from './components/home/WhatsAppFloat';
+import SiteFooter from './components/home/SiteFooter';
+import './components/home/home.css';
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#FAF9F6] selection:bg-[#D9F99D]/50 relative overflow-x-hidden">
-      {/* 1. Header Navigation Bar */}
-      <Header />
-
-      {/* 2. Headline Accolades Marquee Banner */}
-      <Marquee />
-
+    <div className="nm-home">
+      <SiteHeader />
       <main>
-        {/* 3. Hero Layout featuring Header title & Testimonials review dots */}
         <Hero />
-
-        {/* 4. Curated Template Showcase Grid & green CTA Stripe ("Free wedding websites") */}
-        <TemplateShowcase />
-
-        {/* 5. Chronological Planning Journey Timeline Checklist Grid */}
-        <JourneySection />
-
-        {/* 6. Aesthetics visual category tags & Aesthetic Finder Simulation Quiz */}
-        <AestheticsSection />
-
-        {/* 7. Underlining "nicemice Difference" value proposition points */}
-        <DifferenceSection />
-
-        {/* 8. Additional requested Section 1: Detailed Client Testimonial Cards */}
-        <TestimonialsSection />
-
-        {/* 9. Additional requested Section 2: Featured Resources blog cards using generated images */}
-        <BlogGrid />
+        <Marquee />
+        <Intro />
+        <Catalog />
+        <Showcase />
+        <Process />
+        <Testimonial />
+        <FinalCta />
       </main>
-
-      {/* 10. Additional requested Section 3: Premium Footer with newsletter form */}
-      <Footer />
+      <WhatsAppFloat />
+      <SiteFooter />
     </div>
   );
 }
