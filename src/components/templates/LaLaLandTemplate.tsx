@@ -16,17 +16,21 @@ const NAVY = '#081a51';
 const COVER_W = 375;
 const COVER_H = 667;
 const MAX_COLUMN_W = 430;
+// Frame y of the painting point each cover text group stays over (see LaLaLandCover).
+const TITLE_ANCHOR_Y = 260;
+const GUEST_ANCHOR_Y = 506;
 const textShadow = '0px 4px 4px rgba(0,0,0,0.25)';
 // Figma Content frame fill (top → bottom).
 const SKY_GRADIENT = 'linear-gradient(to bottom, #000433 0%, #181065 50%, #672dc1 100%)';
 
 // Figma "Cover" frame (375 × 667), laid out at its native coordinates in two layers.
-// The painting always spans the full column width, pinned to the top: on short screens it
-// is cropped at the bottom (the moon and lamp stay in view); on phones taller than the frame
-// the space below continues the frame's own navy (#081a51), which the bottom gradient fades
-// into; on the desktop stage it grows to the full column height instead, cropping the left
-// side only, so the moon and the lamp on the right stay in view.
-// The text and button are scaled as large as fits without being cut off.
+// The painting fills the whole column, pinned to the top: on short screens it is cropped at
+// the bottom (the moon and lamp stay in view); on screens taller than the frame (tall phones,
+// the desktop stage) it grows to the full height instead, cropping the left side only, so the
+// moon and the lamp on the right stay in view.
+// The text and button are scaled as large as fits without being cut off. On a tall phone the
+// painting is then scaled up more than the text, so each text group moves down with the part
+// of the painting it sits on (the title on the sky, the guest and button on the hills).
 // On load it settles in: the painting eases back a touch, the title line drifts down, the
 // names rise one by one, then the guest's name and the button; the button works from the start.
 function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
@@ -46,9 +50,16 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
 
   const stageVisible = useStageVisible(MAX_COLUMN_W);
   const columnW = Math.min(viewport.w, MAX_COLUMN_W);
-  const bgScale = Math.max(columnW / COVER_W, stageVisible ? viewport.h / COVER_H : 0);
+  const bgScale = Math.max(columnW / COVER_W, viewport.h / COVER_H);
   const bgShift = (COVER_W * bgScale - columnW) / 2;
   const text = coverTextLayout(columnW, viewport.h, COVER_W, COVER_H, stageVisible);
+  // On tall phones the text layer is pinned to the top at its own (smaller) scale; moving a
+  // group by this much per frame px of its anchor keeps it over the same spot of the painting.
+  // Only when the painting is scaled to the height: on short screens the text is already
+  // shrunk to fit and must stay where it is. (On the stage it is centred, as before.)
+  const tallPhone = !stageVisible && viewport.h / COVER_H > columnW / COVER_W;
+  const follow = tallPhone ? (bgScale - text.scale) / text.scale : 0;
+  const shift = (anchorY: number) => (follow ? { transform: `translateY(${follow * anchorY}px)` } : undefined);
 
   return (
     <RevealProvider value={reveals}>
@@ -77,7 +88,7 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
         className="absolute left-1/2"
         style={{ top: text.top, width: COVER_W, height: COVER_H, transform: `translateX(-50%) scale(${text.scale})`, transformOrigin: '50% 0' }}
       >
-
+        <div className="absolute inset-0" style={shift(TITLE_ANCHOR_Y)}>
         <Reveal at={0} kind="fadeDown" delay={150}>
           <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+1px)] text-[20px] text-center text-white top-[117px] whitespace-nowrap">
             Meet Me Under the Stars
@@ -94,7 +105,9 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
           <RevealSpan at={0} kind="fadeUp" delay={480} className="-translate-x-1/2 absolute left-[calc(50%-12.5px)] text-[50px] top-[251px] w-[42px]">&amp;</RevealSpan>
           <RevealSpan at={0} kind="fadeUp" delay={560} className="-translate-x-1/2 absolute left-[calc(50%+0.5px)] text-[80px] top-[285px] w-[146px]">Mia</RevealSpan>
         </h1>
+        </div>
 
+        <div className="absolute inset-0" style={shift(GUEST_ANCHOR_Y)}>
         <Reveal at={0} kind="fadeUp" delay={700}>
           <p
             className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[17px] text-center text-white top-[457px] whitespace-nowrap"
@@ -123,6 +136,7 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
             </span>
           </button>
         </Reveal>
+        </div>
       </div>
     </div>
     </RevealProvider>

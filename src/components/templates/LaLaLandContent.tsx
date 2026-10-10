@@ -669,11 +669,16 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
             aria-label="Lihat lokasi di Google Maps"
             className="absolute h-[22.839px] left-[220.33px] rounded-[100px] top-[2445.5px] w-[95.161px]"
           />
-          <p className="absolute font-['Federo'] h-[17.129px] leading-[normal] left-[54px] text-[#fade20] text-[13px] top-[2441.69px] w-[147.5px] whitespace-nowrap">
+          {/* Figma sets the address at 7px on one line; that's too small to read on a phone, so
+              it is 10px on two lines, and the name and address are centred as a block in the
+              box's lower half (2430–2487), level with the Lihat Lokasi button. */}
+          <p className="absolute font-['Federo'] h-[17.129px] leading-[normal] left-[54px] text-[#fade20] text-[13px] top-[2436.5px] w-[147.5px] whitespace-nowrap">
             Gedung Serbaguna ABC
           </p>
-          <p className="absolute font-['Raleway'] h-[11px] leading-[normal] left-[54px] text-[#fade20] text-[7px] top-[2459px] w-[158px] whitespace-nowrap">
-            Jl. Cempaka No. 18, Kota Bogor, Jawa Barat
+          <p className="absolute font-['Raleway'] leading-[12px] left-[54px] text-[#fade20] text-[10px] top-[2455px] whitespace-nowrap">
+            Jl. Cempaka No. 18,
+            <br />
+            Kota Bogor, Jawa Barat
           </p>
         </Reveal>
         <Reveal at={2298} kind="fadeUp">
