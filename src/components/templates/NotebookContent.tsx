@@ -1,11 +1,15 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { weddingDateId, weddingDateIdLong } from './notebookWeddingDate';
+import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { Float, Reveal, RevealProvider, useScrollReveals } from './scrollReveal';
 
-// Every layer is placed at its position in the Figma "Content" frame (375 × 3941), in
-// Figma's layer order, and the whole frame is scaled to the column width.
+// Every layer is placed at its position in the Figma "Content" frame, in Figma's layer order,
+// and the whole frame is scaled to the column width. The frame is 375 × 4010 with the
+// "Made with love" footer; the layers above it were laid out (many with % insets) when it was
+// 375 × 3941, so that stays the frame box and the footer extends below it to PAGE_H.
 const FRAME_W = 375;
 const FRAME_H = 3941;
+const PAGE_H = 4010;
 
 const assetUrls = import.meta.glob('../../assets/images/notebook/*', {
   eager: true,
@@ -277,7 +281,7 @@ export default function NotebookContent({ intro }: { intro: IntroState }) {
 
   return (
     <RevealProvider value={reveals}>
-    <div ref={wrapRef} className="relative w-full overflow-hidden bg-[#fefffa]" style={{ aspectRatio: `${FRAME_W} / ${FRAME_H}` }}>
+    <div ref={wrapRef} className="relative w-full overflow-hidden bg-[#fefffa]" style={{ aspectRatio: `${FRAME_W} / ${PAGE_H}` }}>
       <div className="absolute left-0 top-0" style={{ width: FRAME_W, height: FRAME_H, zoom: scale }}>
         {/* ===== BG ===== */}
         <div className="absolute left-0 top-0 h-[667px] w-[375px] bg-[#fefffa]" />
@@ -667,6 +671,18 @@ export default function NotebookContent({ intro }: { intro: IntroState }) {
         <Reveal at={3354} kind="fadeUp" delay={150}>
           <SalinButton top={3509} label="Salin alamat" text={ADDRESS} />
         </Reveal>
+
+        {/* ===== Made with love by nicemice ===== */}
+        <MadeWithLoveFooter
+          y={3965}
+          bgTop={3937}
+          frameH={PAGE_H}
+          background="#fefffa"
+          edge={
+            // Figma's 447.07 × 33.70 box holds the 446.885 × 30.903 scallop, centred.
+            <img alt="" src={A('footer-scallop.svg')} className="absolute block max-w-none" style={{ left: -60.85, top: 3931.2, width: 446.885, height: 30.903 }} />
+          }
+        />
       </div>
 
       {photo !== null && <Lightbox index={photo} onClose={() => setPhoto(null)} />}

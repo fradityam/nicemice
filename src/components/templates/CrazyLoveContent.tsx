@@ -1,11 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { WEDDING_DATE, weddingDateId } from './crazyLoveWeddingDate';
+import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { Float, Reveal, RevealProvider, useScrollReveals } from './scrollReveal';
 
-// Every layer is placed at its position in the Figma "Content" frame (375 × 5958), in
+// Every layer is placed at its position in the Figma "Content" frame (375 × 6051), in
 // Figma's layer order, and the whole frame is scaled to the column width.
 const FRAME_W = 375;
-const FRAME_H = 5958;
+const FRAME_H = 6051;
 
 const assetUrls = import.meta.glob('../../assets/images/crazylove/*', {
   eager: true,
@@ -773,6 +774,15 @@ export default function CrazyLoveContent({ intro }: { intro: IntroState }) {
           <PopImg file="sticker-43.webp" x={178} y={428} w={34} h={38} delay={1600} />
           <PopImg file="sticker-44.webp" x={218.1} y={399.5} w={21} h={24} delay={1550} />
         </div>
+
+        {/* ===== Made with love by nicemice ===== */}
+        <MadeWithLoveFooter
+          y={5998}
+          bgTop={5970}
+          frameH={FRAME_H}
+          background={CREAM}
+          edge={<Img file="paper-rip.svg" x={-17.99} y={5952} w={402.887} h={37.13} style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.25))' }} />}
+        />
       </div>
 
       {photo !== null && <Lightbox index={photo} onClose={() => setPhoto(null)} />}

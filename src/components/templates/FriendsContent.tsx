@@ -1,11 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { weddingDate } from './friendsWeddingDate';
+import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { Float, Reveal, RevealProvider, useScrollReveals } from './scrollReveal';
 
-// Every layer is placed at its position in the Figma "Content" frame (375 × 5678), in
+// Every layer is placed at its position in the Figma "Content" frame (375 × 5768), in
 // Figma's layer order, and the whole frame is scaled to the column width.
 const FRAME_W = 375;
-const FRAME_H = 5678;
+const FRAME_H = 5768;
 
 const assetUrls = import.meta.glob('../../assets/images/friends/*', {
   eager: true,
@@ -582,6 +583,9 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
         <Reveal at={666} kind="pop" origin={[187.5, 713.5]} delay={900}>
           <Img file="turkey-dance.webp" x={142} y={666} w={91} h={95} />
         </Reveal>
+
+        {/* ===== Made with love by nicemice (no edge in Figma: the white gradient fades into it) ===== */}
+        <MadeWithLoveFooter y={5715} bgTop={5690} frameH={FRAME_H} background="#fefffa" />
       </div>
 
       {photo !== null && <Lightbox index={photo} onClose={() => setPhoto(null)} />}
