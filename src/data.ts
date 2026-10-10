@@ -4,6 +4,25 @@ import { Template } from './types';
 // keeps working either way.
 export const TEMPLATES: Template[] = [
   {
+    id: 'tema-friends',
+    name: 'TEMA FRIENDS',
+    visible: true,
+    subtitle: 'Terinspirasi dari serial Friends, dengan pintu ungu ikonik, sofa oranye Central Perk, dan nuansa ceria penuh tawa bersama sahabat.',
+    code: 'KODE TEMA FRIENDS DESAIN AESTHETIC DAN GAK PASARAN',
+    category: 'film',
+    bgColor: 'bg-[#A07EB9]',
+    textColor: 'text-white',
+    previewType: 'card',
+    details: {
+      husband: 'Radit',
+      wife: 'Ratu',
+      date: '27 September 2027',
+      location: 'Grant House, Jawa Barat',
+      quote: 'We can have any future you want.',
+      accentColor: '#FBDA43'
+    }
+  },
+  {
     id: 'tema-lalaland',
     name: 'TEMA LA LA LAND',
     visible: true,
@@ -39,25 +58,6 @@ export const TEMPLATES: Template[] = [
       location: 'Masjid Istiqlal Jakarta',
       quote: 'I want all of you, forever, everyday. You and me... everyday.',
       accentColor: '#ABA935'
-    }
-  },
-  {
-    id: 'tema-friends',
-    name: 'TEMA FRIENDS',
-    visible: true,
-    subtitle: 'Terinspirasi dari serial Friends, dengan pintu ungu ikonik, sofa oranye Central Perk, dan nuansa ceria penuh tawa bersama sahabat.',
-    code: 'KODE TEMA FRIENDS DESAIN AESTHETIC DAN GAK PASARAN',
-    category: 'film',
-    bgColor: 'bg-[#A07EB9]',
-    textColor: 'text-white',
-    previewType: 'card',
-    details: {
-      husband: 'Radit',
-      wife: 'Ratu',
-      date: '27 September 2027',
-      location: 'Grant House, Jawa Barat',
-      quote: 'We can have any future you want.',
-      accentColor: '#FBDA43'
     }
   },
   {
