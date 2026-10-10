@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 import coverBg from '../../assets/images/lalaland/figma/cover-bg.webp';
-import LaLaLandContent, { ENABLE_ANIMATIONS, INTRO } from './LaLaLandContent';
+import LaLaLandContent, { ENABLE_ANIMATIONS, INTRO, NAVY_FADE } from './LaLaLandContent';
 import { Reveal, RevealProvider, RevealSpan, useCoverReveals } from './scrollReveal';
 import { weddingDateId } from './lalalandWeddingDate';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
@@ -19,15 +19,6 @@ const MAX_COLUMN_W = 430;
 const textShadow = '0px 4px 4px rgba(0,0,0,0.25)';
 // Figma Content frame fill (top → bottom).
 const SKY_GRADIENT = 'linear-gradient(to bottom, #000433 0%, #181065 50%, #672dc1 100%)';
-
-// Figma's rgba(144,105,165,0) → #081a51 gradient, interpolated the way Figma does it
-// (non-premultiplied, so the purple tint carries through the middle). A plain CSS
-// gradient interpolates premultiplied and comes out noticeably darker mid-way.
-const coverGradient = `linear-gradient(to bottom, ${Array.from({ length: 11 }, (_, i) => {
-  const t = i / 10;
-  const c = (a: number, b: number) => Math.round(a + (b - a) * t);
-  return `rgba(${c(144, 8)},${c(105, 26)},${c(165, 81)},${t}) ${t * 100}%`;
-}).join(', ')})`;
 
 // Figma "Cover" frame (375 × 667), laid out at its native coordinates in two layers.
 // The painting always spans the full column width, pinned to the top: on short screens it
@@ -80,7 +71,7 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
             style={{ left: -1, top: -1, width: 376, height: 668 }}
           />
         </Reveal>
-        <div className="absolute left-0 top-[360px] h-[307px] w-[375px]" style={{ backgroundImage: coverGradient }} />
+        <div className="absolute left-0 top-[360px] h-[307px] w-[375px]" style={{ backgroundImage: NAVY_FADE }} />
       </div>
       <div
         className="absolute left-1/2"
@@ -88,12 +79,12 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
       >
 
         <Reveal at={0} kind="fadeDown" delay={150}>
-          <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[20px] text-center text-white top-[117px] whitespace-nowrap">
+          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+1px)] text-[20px] text-center text-white top-[117px] whitespace-nowrap">
             Meet Me Under the Stars
           </p>
         </Reveal>
         <Reveal at={0} kind="fadeDown" delay={250}>
-          <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[16px] text-center text-white top-[144px] whitespace-nowrap">
+          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+1px)] text-[16px] text-center text-white top-[144px] whitespace-nowrap">
             {weddingDateId}
           </p>
         </Reveal>
@@ -106,7 +97,7 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
 
         <Reveal at={0} kind="fadeUp" delay={700}>
           <p
-            className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-1/2 text-[20px] text-center text-white top-[452px] whitespace-nowrap"
+            className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[17px] text-center text-white top-[457px] whitespace-nowrap"
             style={{ textShadow }}
           >
             Kepada
@@ -114,7 +105,7 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
         </Reveal>
         <Reveal at={0} kind="fadeUp" delay={770}>
           <p
-            className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%+0.5px)] text-[30px] text-center text-white top-[481px] whitespace-nowrap"
+            className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+0.5px)] text-[25px] text-center text-white top-[481px] whitespace-nowrap"
             style={{ textShadow }}
           >
             Emma &amp; Ryan
@@ -127,7 +118,7 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
             onClick={onOpen}
             className="absolute left-[95px] top-[522px] h-[34px] w-[185px] rounded-[20px] bg-[#f9de1f] cursor-pointer"
           >
-            <span className="-translate-x-1/2 absolute left-[96px] top-[5px] font-['Pompiere'] leading-[normal] text-[20px] text-[#181065] text-center whitespace-nowrap">
+            <span className="-translate-x-1/2 absolute left-[93px] top-[7px] font-['Raleway'] leading-[normal] text-[17px] text-[#181065] text-center whitespace-nowrap">
               BUKA UNDANGAN
             </span>
           </button>

@@ -1,13 +1,17 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { WEDDING_DATE, weddingDateEn, weddingDateId, weddingDateIdLong } from './lalalandWeddingDate';
+import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { Float, Reveal, RevealProvider, useReveal, useScrollReveals } from './scrollReveal';
 
-// Every layer below is laid out in the Figma "Content" frame's own coordinate space
-// (375 × 4641). The whole frame is then scaled uniformly to the column width, so the
-// composition stays identical on any phone — positions, sizes and font sizes are the
-// Figma values verbatim.
+// Every layer below is laid out in the Figma "Content" frame's own coordinate space. The
+// whole frame is then scaled uniformly to the column width, so the composition stays
+// identical on any phone — positions, sizes and font sizes are the Figma values verbatim.
+// The frame is 375 × 4795 with the closing card and "Made with love" footer; the layers
+// above them were laid out (many with % insets) when it was 375 × 4641, so that stays the
+// frame box and the closing extends below it to PAGE_H.
 const FRAME_W = 375;
 const FRAME_H = 4641;
+const PAGE_H = 4795;
 
 const assetUrls = import.meta.glob('../../assets/images/lalaland/figma/*', {
   eager: true,
@@ -91,13 +95,13 @@ const BG_ILLUSTRATIONS = [
 
 // Paper rip vector: node box is 398.887 × 33.13; the exported SVG adds 1% on each side
 // and 24.15% below for the drop shadow.
-function PaperRip({ y }: { y: number }) {
+function PaperRip({ x = -18, y }: { x?: number; y: number }) {
   return (
     <img
       alt=""
       src={A('ea3d9.svg')}
       className="absolute block max-w-none"
-      style={{ left: -18 - 3.98887, top: y, width: 406.887, height: 41.1304 }}
+      style={{ left: x - 3.98887, top: y, width: 406.887, height: 41.1304 }}
     />
   );
 }
@@ -160,6 +164,16 @@ const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURICom
   'Gedung Serbaguna ABC, Jl. Cempaka No. 18, Kota Bogor, Jawa Barat',
 )}`;
 
+// Figma's rgba(144,105,165,0) → #081a51 gradient, interpolated the way Figma does it
+// (non-premultiplied, so the purple tint carries through the middle). A plain CSS
+// gradient interpolates premultiplied and comes out noticeably darker mid-way. Used by
+// the cover and the closing.
+export const NAVY_FADE = `linear-gradient(to bottom, ${Array.from({ length: 11 }, (_, i) => {
+  const t = i / 10;
+  const c = (a: number, b: number) => Math.round(a + (b - a) * t);
+  return `rgba(${c(144, 8)},${c(105, 26)},${c(165, 81)},${t}) ${t * 100}%`;
+}).join(', ')})`;
+
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
 function CountdownNumbers() {
@@ -177,19 +191,19 @@ function CountdownNumbers() {
 
   return (
     <div className="leading-[normal] text-[#f9de1f] text-center" role="timer" aria-live="off">
-      {/* Figma's "137" + "days" group, centred at 188px: the number box is followed by
-          "days", overlapping it by 2.1px and sitting 17.13px lower. Built as a row so the
-          group stays centred whatever the digit count. */}
-      <div className="-translate-x-1/2 absolute flex items-start left-[calc(50%+0.5px)] top-[2551.13px] whitespace-nowrap">
+      {/* Figma's "137" + "days" group, centred at 192px: "days" follows the number 2.9px
+          after it and 22.87px lower. Built as a row so the group stays centred whatever the
+          digit count. */}
+      <div className="-translate-x-1/2 absolute flex items-start left-[calc(50%+4.5px)] top-[2551.13px] whitespace-nowrap">
         <span className="font-['Federo'] text-[40px]">{days}</span>
-        <span className="font-['Pompiere'] text-[20px] ml-[-2.1px] mt-[17.13px]">days</span>
+        <span className="font-['Raleway'] text-[15px] ml-[2.9px] mt-[22.87px]">days</span>
       </div>
       <p className="-translate-x-1/2 absolute font-['Federo'] h-[27.597px] left-[calc(50%-105.06px)] text-[25px] top-[2612.98px] w-max">{pad2(hours)}</p>
-      <p className="-translate-x-1/2 absolute font-['Pompiere'] h-[13.323px] left-[calc(50%-105.68px)] text-[12px] top-[2640.58px] w-[25.815px]">hours</p>
+      <p className="-translate-x-1/2 absolute font-['Raleway'] h-[13px] left-[calc(50%-106px)] text-[10px] top-[2641px] w-[31px]">hours</p>
       <p className="-translate-x-1/2 absolute font-['Federo'] h-[27.597px] left-[calc(50%-5.25px)] text-[25px] top-[2612.98px] w-max">{pad2(minutes)}</p>
-      <p className="-translate-x-1/2 absolute font-['Pompiere'] h-[13.323px] left-[calc(50%-6.69px)] text-[12px] top-[2640.58px] w-[41.621px]">minutes</p>
+      <p className="-translate-x-1/2 absolute font-['Raleway'] h-[13.323px] left-[calc(50%-6.69px)] text-[10px] top-[2641px] w-[41.621px]">minutes</p>
       <p className="-translate-x-1/2 absolute font-['Federo'] h-[27.597px] left-[calc(50%+102.47px)] text-[25px] top-[2612.98px] w-max">{pad2(seconds)}</p>
-      <p className="-translate-x-1/2 absolute font-['Pompiere'] h-[13.323px] left-[calc(50%+101.86px)] text-[12px] top-[2640.58px] w-[35.282px]">seconds</p>
+      <p className="-translate-x-1/2 absolute font-['Raleway'] h-[13px] left-[calc(50%+102px)] text-[10px] top-[2641px] w-[51px]">seconds</p>
     </div>
   );
 }
@@ -331,9 +345,9 @@ const ATTENDANCE = [
   { value: 'berhalangan', label: 'Berhalangan Hadir', top: 3490 },
 ];
 
-const fieldLabel = "-translate-y-1/2 absolute flex flex-col font-['Pompiere'] justify-center leading-[0] left-[44px] text-[16px] text-[#f1e9dd] tracking-[-0.272px] whitespace-nowrap";
+const fieldLabel = "-translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[44px] text-[15px] text-[#f1e9dd] tracking-[-0.255px] whitespace-nowrap";
 const fieldBox = "absolute left-[37px] w-[302px] bg-white border border-[#fade20] border-solid rounded-[10px]";
-const fieldText = "font-['Pompiere'] text-[16px] leading-[20px] tracking-[-0.272px] text-black placeholder:text-[rgba(0,0,0,0.2)] outline-none";
+const fieldText = "font-['Raleway'] text-[13px] leading-[20px] tracking-[-0.221px] text-black placeholder:text-[rgba(0,0,0,0.2)] outline-none";
 
 export default function LaLaLandContent({ intro }: { intro: IntroState }) {
   const introStyle = quotesIntroStyle(intro);
@@ -354,7 +368,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
 
   return (
     <RevealProvider value={reveals}>
-    <div ref={wrapRef} className="relative w-full overflow-hidden" style={{ aspectRatio: `${FRAME_W} / ${FRAME_H}` }}>
+    <div ref={wrapRef} className="relative w-full overflow-hidden" style={{ aspectRatio: `${FRAME_W} / ${PAGE_H}` }}>
       {/* Scaled with `zoom`, not `transform`: a transform would isolate this canvas, and the
           colour-dodge flares below must blend with the viewport-fixed gradient behind it. */}
       <div className="absolute left-0 top-0" style={{ width: FRAME_W, height: FRAME_H, zoom: scale }}>
@@ -371,20 +385,25 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           <img key={b.file} alt="" src={A(b.file)} className="absolute left-0 block max-w-none" style={{ top: b.top, width: 375, height: b.h }} />
         ))}
 
-        {/* ===== First meet ===== */}
-        <div className="absolute overflow-hidden" style={{ left: -1, top: 4450, width: 378, height: 191 }}>
+        {/* ===== Closing painting (Figma "Painting", the last BG layer) =====
+            465 × 615 at (-49, 4454), cropped by the frame's bottom edge at PAGE_H. */}
+        <div className="absolute overflow-hidden" style={{ left: -49, top: 4454, width: 465, height: PAGE_H - 4454 }}>
           <img
-            alt="Sebastian dan Mia saat pertama bertemu"
-            className="absolute h-[280.63%] left-[-0.09%] max-w-none top-[-8.38%] w-[100.17%]"
+            alt="Sebastian dan Mia di restoran"
+            className="absolute left-0 max-w-none"
+            style={{ top: -615 * 0.0701, width: 465, height: 615 * 1.0703 }}
             src={A('b7947.webp')}
           />
         </div>
+        {/* Navy fades: over the bottom of the piano scene, and over the painting under the footer. */}
+        <div className="absolute" style={{ left: -6, top: 4147, width: 387, height: 307, backgroundImage: NAVY_FADE }} />
+        <div className="absolute" style={{ left: -6, top: 4549, width: 387, height: 307, backgroundImage: NAVY_FADE }} />
 
-        <PaperRip y={2248} />
+        <PaperRip x={-23} y={2250} />
         <PaperRip y={1675} />
         <PaperRip y={3187} />
-        <PaperRip y={4433} />
         <PaperRip y={3749} />
+        <PaperRip x={-6} y={4438} />
 
         {/* ===== Gift =====
             Each card and its text rise together (same timing, split only because the bow is
@@ -402,13 +421,13 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           </Float>
         </Reveal>
         <Reveal at={3921} kind="fadeUp" delay={150}>
-          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Pompiere'] justify-center leading-[0] left-[calc(50%+0.5px)] text-[30px] text-[#081a51] text-center top-[3987px] tracking-[-0.51px] whitespace-nowrap">
+          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[calc(50%+0.5px)] text-[25px] text-[#081a51] text-center top-[3987px] tracking-[-0.425px] whitespace-nowrap">
             <p className="leading-[20px]">Bank BCA</p>
           </div>
-          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Pompiere'] justify-center leading-[0] left-1/2 text-[40px] text-[#081a51] text-center top-[4036px] whitespace-nowrap">
+          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[calc(50%-0.5px)] text-[35px] text-[#081a51] text-center top-[4027px] whitespace-nowrap">
             <p className="leading-[20px]">123456789</p>
           </div>
-          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Pompiere'] justify-center leading-[0] left-[188.5px] text-[16px] text-[#081a51] text-center top-[4102.5px] tracking-[-0.272px] whitespace-nowrap">
+          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[188.5px] text-[16px] text-[#081a51] text-center top-[4102.5px] tracking-[-0.272px] whitespace-nowrap">
             <p className="leading-[15px]">a.n. Mia Dolan</p>
           </div>
           <SalinButton top={4057} label="Salin nomor rekening" text="123456789" />
@@ -429,10 +448,10 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           </div>
         </Reveal>
         <Reveal at={4175} kind="fadeUp" delay={150}>
-          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Pompiere'] justify-center leading-[0] left-[calc(50%+1px)] text-[#29567f] text-[30px] text-center top-[4233px] tracking-[-0.51px] whitespace-nowrap">
+          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[calc(50%+1px)] text-[#29567f] text-[25px] text-center top-[4233px] tracking-[-0.425px] whitespace-nowrap">
             <p className="leading-[20px]">Sebastian W</p>
           </div>
-          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Pompiere'] justify-center leading-[0] left-[188px] text-[#29567f] text-[15px] text-center top-[4298.5px] tracking-[-0.255px] whitespace-nowrap">
+          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[188.5px] text-[#29567f] text-[13px] text-center top-[4298.5px] tracking-[-0.221px] whitespace-nowrap">
             <p className="leading-[19px] whitespace-pre">{'Jl. Anggrek Loka No. 24, '}</p>
             <p className="leading-[19px] whitespace-pre">{'RT 005 / RW 002 Kel. Meruya Utara, '}</p>
             <p className="leading-[19px] whitespace-pre">{'Kec. Kembangan Jakarta Barat, '}</p>
@@ -446,12 +465,12 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           />
         </Reveal>
         <Reveal at={3838} kind="fadeUp" delay={120}>
-          <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[187.5px] text-[18px] text-[#f1e9dd] text-center top-[3838px] w-max whitespace-nowrap">
-            Doa restu Anda adalah karunia yang berarti bagi kami.
+          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[187.5px] text-[13px] text-[#f1e9dd] text-center top-[3838px] w-max whitespace-nowrap">
+            Doa restu Anda adalah karunia yang berarti bagi
             <br />
-            Jika ingin memberi tanda kasih, kami dengan senang hati
+            kami. Jika ingin memberi tanda kasih, kami dengan
             <br />
-            menerimanya melalui:
+            senang hati menerimanya melalui:
           </p>
         </Reveal>
         <Reveal at={3802} kind="fadeUp">
@@ -489,7 +508,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
                 <span className="absolute left-[9px] top-[8px] size-[19px] rounded-full border-2 border-[#324532]">
                   {attendance === opt.value && <span className="absolute left-[3px] top-[3px] size-[9px] rounded-full bg-[#324532]" />}
                 </span>
-                <span className="-translate-y-1/2 absolute left-[39px] top-[18px] font-['Pompiere'] text-[16px] leading-[20px] tracking-[-0.272px] text-black whitespace-nowrap">
+                <span className="-translate-y-1/2 absolute left-[39px] top-[18px] font-['Raleway'] text-[13px] leading-[20px] tracking-[-0.221px] text-black whitespace-nowrap">
                   {opt.label}
                 </span>
               </label>
@@ -509,7 +528,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
               type="submit"
               className="-translate-x-1/2 absolute bg-[#f9de1f] h-[38px] left-[calc(50%+0.5px)] rounded-[10px] top-[3680px] w-[302px] cursor-pointer"
             >
-              <span className="-translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-1/2 font-['Pompiere'] text-[20px] leading-[20px] text-[#000433] tracking-[2px] whitespace-nowrap">
+              <span className="-translate-x-1/2 -translate-y-1/2 absolute left-[calc(50%-1px)] top-1/2 font-['Raleway'] text-[20px] leading-[20px] text-[#000433] tracking-[2px] whitespace-nowrap">
                 KIRIM UCAPAN
               </span>
             </button>
@@ -596,7 +615,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
         {/* ===== Countdown ===== */}
         <div className="-translate-x-1/2 absolute bg-[#081a51] border border-[#f9de1f] border-solid h-[194.129px] left-[calc(50%+2.85px)] rounded-[10px] top-[2516.87px] w-[299.758px]" />
         <div className="-translate-x-1/2 absolute bg-[#081a51] border border-[#f9de1f] border-solid h-[194.129px] left-[calc(50%-2.85px)] rounded-[10px] top-[2512.11px] w-[299.758px]" />
-        <p className="-translate-x-1/2 absolute font-['Pompiere'] h-[17px] leading-[normal] left-[calc(50%+0.5px)] text-[15px] text-[#f9de1f] text-center top-[2677px] w-max whitespace-nowrap">
+        <p className="-translate-x-1/2 absolute font-['Raleway'] h-[17px] leading-[normal] left-[calc(50%+0.5px)] text-[13px] text-[#f9de1f] text-center top-[2677px] w-max whitespace-nowrap">
           to {weddingDateEn}
         </p>
         <p className="-translate-x-1/2 absolute font-['Federo'] h-[17px] leading-[normal] left-1/2 text-[15px] text-[#f9de1f] text-center top-[2524px] w-[99px]">
@@ -617,7 +636,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           <p className="-translate-x-1/2 absolute font-['Federo'] h-[17px] leading-[normal] left-[calc(50%-73.5px)] text-[13px] text-[#f9de1f] text-center top-[2381px] w-[96px]">
             Akad Nikah
           </p>
-          <p className="absolute font-['Pompiere'] h-[19.032px] leading-[normal] left-[calc(50%-104.2px)] text-[15px] text-[#f9de1f] top-[2404.58px] w-[75.177px] whitespace-nowrap">
+          <p className="absolute font-['Raleway'] h-[19.032px] leading-[normal] left-[calc(50%-104.2px)] text-[11px] text-[#f9de1f] top-[2406px] w-[75.177px] whitespace-nowrap">
             08.00 - 11.00
           </p>
           <div className="absolute inset-[51.83%_79.31%_47.86%_16.88%]">
@@ -626,7 +645,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           <p className="-translate-x-1/2 absolute font-['Federo'] h-[17.129px] leading-[normal] left-[calc(50%+69.94px)] text-[13px] text-[#f9de1f] text-center top-[2380.79px] w-[43.774px] whitespace-nowrap">
             Resepsi
           </p>
-          <p className="absolute font-['Pompiere'] h-[19.032px] leading-[normal] left-[calc(50%+43.3px)] text-[15px] text-[#f9de1f] top-[2404.58px] w-[73.274px] whitespace-nowrap">
+          <p className="absolute font-['Raleway'] h-[19.032px] leading-[normal] left-[calc(50%+43.3px)] text-[11px] text-[#f9de1f] top-[2406px] w-[73.274px] whitespace-nowrap">
             11.00 - selesai
           </p>
           <div className="absolute inset-[51.83%_39.98%_47.86%_56.22%]">
@@ -650,10 +669,10 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
             aria-label="Lihat lokasi di Google Maps"
             className="absolute h-[22.839px] left-[220.33px] rounded-[100px] top-[2445.5px] w-[95.161px]"
           />
-          <p className="absolute font-['Federo'] h-[17.129px] leading-[normal] left-[57.6px] text-[#fade20] text-[13px] top-[2441.69px] w-[147.5px] whitespace-nowrap">
+          <p className="absolute font-['Federo'] h-[17.129px] leading-[normal] left-[54px] text-[#fade20] text-[13px] top-[2441.69px] w-[147.5px] whitespace-nowrap">
             Gedung Serbaguna ABC
           </p>
-          <p className="absolute font-['Pompiere'] h-[11px] leading-[normal] left-[58px] text-[#fade20] text-[10px] top-[2459px] w-[147px] whitespace-nowrap">
+          <p className="absolute font-['Raleway'] h-[11px] leading-[normal] left-[54px] text-[#fade20] text-[7px] top-[2459px] w-[158px] whitespace-nowrap">
             Jl. Cempaka No. 18, Kota Bogor, Jawa Barat
           </p>
         </Reveal>
@@ -661,7 +680,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           <p className="-translate-x-1/2 absolute font-['Federo'] h-[27.597px] leading-[normal] left-[calc(50%+0.48px)] text-[#fade20] text-[23px] text-center top-[2325.6px] w-max whitespace-nowrap">
             {weddingDateIdLong}
           </p>
-          <p className="-translate-x-1/2 absolute font-['Pompiere'] h-[22.839px] leading-[normal] left-[calc(50%+0.95px)] text-[18px] text-center text-white top-[2298px] w-max whitespace-nowrap">
+          <p className="-translate-x-1/2 absolute font-['Raleway'] h-[23px] leading-[normal] left-[calc(50%+2.5px)] text-[13px] text-center text-white top-[2298px] w-max whitespace-nowrap">
             Acara akan dilangsungkan pada:
           </p>
         </Reveal>
@@ -700,7 +719,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           <p className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1594px] whitespace-nowrap">
             Mia Dolan
           </p>
-          <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-[calc(50%-0.5px)] text-[18px] text-center text-white top-[1639px] whitespace-nowrap">
+          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[13px] text-center text-white top-[1630px] whitespace-nowrap">
             Putri dari Bapak Jerome P dan Ibu Cania C
           </p>
         </Reveal>
@@ -724,19 +743,19 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           <p className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1195px] whitespace-nowrap">
             Sebastian Wilder
           </p>
-          <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-1/2 text-[18px] text-center text-white top-[1240px] whitespace-nowrap">
+          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[13px] text-center text-white top-[1231px] whitespace-nowrap">
             Putra dari Bapak Ari W dan Ibu Dian S
           </p>
         </Reveal>
 
         {/* ===== Intro text ===== */}
         <Reveal at={809} kind="fadeUp">
-          <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[normal] left-1/2 text-[18px] text-center text-white top-[809px] w-max whitespace-nowrap">
-            Dengan penuh kebahagiaan,
+          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-1/2 text-[13px] text-center text-white top-[809px] w-max whitespace-nowrap">
+            Dengan penuh kebahagiaan, kami mengundang
             <br />
-            kami mengundang Anda untuk menjadi bagian
+            Anda untuk menjadi bagian dari hari ketika kisah
             <br />
-            dari hari ketika kisah kami memasuki babak baru.
+            kami memasuki babak baru.
           </p>
         </Reveal>
 
@@ -802,12 +821,32 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           </div>
         </Reveal>
         <PaperRip y={2738} />
-        <Reveal at={4490} kind="fadeUp" delay={150}>
-          <div className="absolute font-['Pompiere'] text-[26px] text-white whitespace-nowrap" style={{ left: 25, top: 4490 }}>
-            <p className="leading-[28px] whitespace-pre">{'I guess I’ll see you '}</p>
-            <p className="leading-[28px] whitespace-pre">on our big day</p>
+
+        {/* ===== Closing: thank-you note on torn paper ===== */}
+        <Reveal at={4549} kind="fadeUp">
+          {/* Figma's 200 × 316 paper, turned 90° about the centre of its 316 × 200 box. */}
+          <div className="absolute" style={{ left: 188.02 - 100, top: 4649 - 158.025, width: 200, height: 316.05, transform: 'rotate(90deg)' }}>
+            <img alt="" src={A('paper-vintage.webp')} className="absolute inset-0 block size-full max-w-none" />
           </div>
         </Reveal>
+        <Reveal at={4586} kind="fadeUp" delay={150}>
+          <p className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[22px] left-[188px] text-[18px] text-[#181719] text-center top-[4614.5px] tracking-[-0.306px] w-max whitespace-nowrap">
+            Terima kasih telah menjadi bagian dari cerita kami
+            <br />
+            dan berbagi kebahagiaan di hari istimewa ini.
+          </p>
+        </Reveal>
+        <Reveal at={4656} kind="fadeUp" delay={250}>
+          <p className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[22px] left-[188px] text-[18px] text-black text-center top-[4667px] tracking-[-0.306px] whitespace-nowrap">
+            with love,
+          </p>
+          <p className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[30px] left-[188.49px] text-[27px] text-[#081a51] text-center top-[4697.14px] tracking-[-0.459px] whitespace-nowrap">
+            Sebastian &amp; Mia
+          </p>
+        </Reveal>
+
+        {/* ===== Made with love by nicemice (on the painting's navy fade; no edge of its own) ===== */}
+        <MadeWithLoveFooter y={4754} tone="light" />
       </div>
     </div>
     </RevealProvider>

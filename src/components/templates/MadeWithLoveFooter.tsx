@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import logo from '../../assets/images/home/nicemice-logo.webp';
+import logoWhite from '../../assets/images/home/nicemice-logo-white.webp';
 import { Reveal } from './scrollReveal';
 
 // The "Made with love by nicemice" credit under a template's closing section, drawn inside the
@@ -17,24 +18,28 @@ const CREDITS_H = 29;
 
 export function MadeWithLoveFooter({
   y,
-  bgTop,
-  frameH,
+  bgTop = 0,
+  frameH = 0,
   background,
   edge,
+  tone = 'dark',
 }: {
   /** Frame y of the credit row. */
   y: number;
   /** Frame y where the footer's background starts; it runs to the bottom of the frame. */
-  bgTop: number;
-  frameH: number;
-  /** The background colour under the credit row. */
-  background: string;
+  bgTop?: number;
+  frameH?: number;
+  /** The background colour under the credit row; leave out when the template draws its own. */
+  background?: string;
   /** The template's edge across the top of the footer (e.g. a paper rip), at its Figma position. */
   edge?: ReactNode;
+  /** Black text and the colour logo, or white text and the white logo for a dark background. */
+  tone?: 'dark' | 'light';
 }) {
+  const light = tone === 'light';
   return (
     <>
-      <div className="absolute inset-x-0" style={{ top: bgTop, height: frameH - bgTop, backgroundColor: background }} />
+      {background && <div className="absolute inset-x-0" style={{ top: bgTop, height: frameH - bgTop, backgroundColor: background }} />}
       {edge}
       <Reveal at={y} kind="fadeUp">
         <a
@@ -44,11 +49,11 @@ export function MadeWithLoveFooter({
           className="absolute block"
           style={{ left: CREDITS_X, top: y, width: CREDITS_W, height: CREDITS_H }}
         >
-          <span className="-translate-x-1/2 absolute left-[42.5px] top-px font-['Raleway'] text-[10px] leading-[28px] text-black whitespace-nowrap">
+          <span className={`-translate-x-1/2 absolute left-[42.5px] top-px font-['Raleway'] text-[10px] leading-[28px] whitespace-nowrap ${light ? 'text-white' : 'text-black'}`}>
             Made with love by
           </span>
           {/* 600 × 144 artwork in a 100 × 24 slot: sharp at 2x even at the widest column. */}
-          <img alt="nicemice" src={logo} className="absolute left-[91px] top-0 block h-[24px] w-[100px] max-w-none object-cover" />
+          <img alt="nicemice" src={light ? logoWhite : logo} className="absolute left-[91px] top-0 block h-[24px] w-[100px] max-w-none object-cover" />
         </a>
       </Reveal>
     </>
