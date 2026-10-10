@@ -8,6 +8,7 @@ import Process from './components/home/Process';
 import Testimonial from './components/home/Testimonial';
 import FinalCta from './components/home/FinalCta';
 import WhatsAppFloat from './components/home/WhatsAppFloat';
+import OrderNotice from './components/home/OrderNotice';
 import SiteFooter from './components/home/SiteFooter';
 import './components/home/home.css';
 
@@ -26,6 +27,7 @@ export default function App() {
         <FinalCta />
       </main>
       <WhatsAppFloat />
+      <OrderNotice />
       <SiteFooter />
     </div>
   );

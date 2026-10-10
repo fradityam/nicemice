@@ -7,10 +7,10 @@ export default function Testimonial() {
       <div className="quote-mark" aria-hidden="true">“</div>
       <figure>
         <blockquote>
-          Dari awal prosesnya menyenangkan banget. Hasilnya lebih dari yang kami bayangkan—rapi,
+          Dari awal prosesnya menyenangkan banget. Hasilnya lebih dari yang kami bayangkan - rapi,
           mudah dibuka, dan semua tamu bilang undangannya lucu!
         </blockquote>
-        <figcaption>— Nabila &amp; Arga, Jakarta</figcaption>
+        <figcaption>- Nabila &amp; Arga, Jakarta</figcaption>
       </figure>
       <div className="testimonial-hearts">
         <HeartIcon />

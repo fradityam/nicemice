@@ -11,7 +11,7 @@ export default function SiteHeader() {
       </div>
 
       <header className="site-header">
-        <a className="brand" href="#beranda" aria-label="nice mice — beranda">
+        <a className="brand" href="#beranda" aria-label="nice mice - beranda">
           <img src={logo} alt="nice mice" width={600} height={144} />
         </a>
         <nav aria-label="Navigasi utama">

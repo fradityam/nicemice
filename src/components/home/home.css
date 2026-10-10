@@ -132,6 +132,7 @@ body:has(.nm-home) {
 .nm-home .button {
   align-items: center;
   border: 1.5px solid var(--ink);
+  cursor: pointer;
   display: inline-flex;
   font-size: 0.77rem;
   font-weight: 700;
@@ -692,9 +693,12 @@ body:has(.nm-home) {
   padding-top: 1rem;
 }
 
-.nm-home .template-actions a {
+/* "Pesan" is a <button> while ordering isn't open yet (see OrderLink). */
+.nm-home .template-actions a,
+.nm-home .template-actions button {
   align-items: center;
   border: 1px solid rgba(41, 23, 20, 0.22);
+  cursor: pointer;
   display: flex;
   font-family: var(--mono);
   font-size: 0.58rem;
@@ -704,7 +708,8 @@ body:has(.nm-home) {
   text-transform: uppercase;
 }
 
-.nm-home .template-actions a:last-child {
+.nm-home .template-actions a:last-child,
+.nm-home .template-actions button:last-child {
   background: var(--ink);
   border-color: var(--ink);
   color: white;
@@ -1183,6 +1188,48 @@ body:has(.nm-home) {
   fill: #25d366;
 }
 
+/* "Pemesanan segera dibuka!" toast (OrderNotice), styled like the floating WhatsApp button
+   with the hero note's heart badge. */
+.nm-home .order-notice {
+  align-items: center;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  bottom: 1.4rem;
+  box-shadow: 0.3rem 0.3rem 0 var(--ink);
+  display: flex;
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  gap: 0.7rem;
+  left: 50%;
+  max-width: calc(100vw - 2rem);
+  opacity: 0;
+  padding: 0.55rem 1.2rem 0.55rem 0.6rem;
+  pointer-events: none;
+  position: fixed;
+  transform: translate(-50%, 1rem);
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease,
+    visibility 0s linear 200ms;
+  visibility: hidden;
+  white-space: nowrap;
+  z-index: 60;
+}
+
+.nm-home .order-notice.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+  visibility: visible;
+}
+
+.nm-home .order-notice .heart-mini {
+  flex: 0 0 auto;
+}
+
 .nm-home footer {
   align-items: center;
   background: var(--ink);
@@ -1493,6 +1540,11 @@ body:has(.nm-home) {
 
   .nm-home .marquee > div {
     animation: none;
+  }
+
+  .nm-home .order-notice,
+  .nm-home .order-notice.is-visible {
+    transform: translate(-50%, 0);
   }
 
   .nm-home .button {

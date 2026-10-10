@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { ORDER_FALLBACK_HREF, whatsappLink } from '../../config';
+import { whatsappLink } from '../../config';
+import { showOrderNotice } from './OrderNotice';
 
 interface OrderLinkProps {
   /** Prefilled WhatsApp message. */
@@ -8,7 +9,7 @@ interface OrderLinkProps {
   children: ReactNode;
 }
 
-/** Opens a WhatsApp chat when CONTACT_WHATSAPP is set; until then, scrolls to the catalog. */
+/** Opens a WhatsApp chat when CONTACT_WHATSAPP is set; until then, shows a "coming soon" note. */
 export default function OrderLink({ message, className, children }: OrderLinkProps) {
   const href = whatsappLink(message);
   return href ? (
@@ -16,8 +17,8 @@ export default function OrderLink({ message, className, children }: OrderLinkPro
       {children}
     </a>
   ) : (
-    <a className={className} href={ORDER_FALLBACK_HREF}>
+    <button className={className} type="button" onClick={showOrderNotice}>
       {children}
-    </a>
+    </button>
   );
 }
