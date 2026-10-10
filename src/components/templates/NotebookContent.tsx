@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { weddingDateId, weddingDateIdLong } from './notebookWeddingDate';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
+import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
 import { Float, Reveal, RevealProvider, useScrollReveals } from './scrollReveal';
 
 // Every layer is placed at its position in the Figma "Content" frame, in Figma's layer order,
@@ -151,7 +152,7 @@ function SalinButton({ top, label, text }: { top: number; label: string; text: s
   );
 }
 
-// ---------- Photo collage + lightbox ----------
+// ---------- Photo collage + gallery ----------
 
 const PREWED = [
   { large: 'prewed-1-lg.webp', button: 'inset-[44.03%_59.22%_51.17%_5.24%]' },
@@ -160,44 +161,13 @@ const PREWED = [
   { large: 'prewed-4-lg.webp', button: 'inset-[46.43%_19.41%_51.08%_43.47%]' },
 ];
 
-function Lightbox({ index, onClose }: { index: number; onClose: () => void }) {
-  const closeRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [onClose]);
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Foto pre-wedding ${index + 1}`}
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 p-4"
-      onClick={onClose}
-    >
-      <img
-        alt={`Foto pre-wedding Noah & Allie ${index + 1}`}
-        src={A(PREWED[index].large)}
-        className="max-h-[88vh] max-w-full rounded-lg object-contain"
-      />
-      <button
-        ref={closeRef}
-        type="button"
-        aria-label="Tutup"
-        onClick={onClose}
-        className="absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] flex size-10 cursor-pointer items-center justify-center rounded-full bg-white/15 text-2xl leading-none text-white"
-      >
-        ×
-      </button>
-    </div>
-  );
-}
+const PREWED_PHOTOS: LightboxPhoto[] = PREWED.map((p, i) => ({ src: A(p.large), alt: `Foto pre-wedding Noah & Allie ${i + 1} dari ${PREWED.length}` }));
+const LIGHTBOX_THEME: LightboxTheme = {
+  arrowBg: '#aba935',
+  arrowFg: '#fefffa',
+  counterClass: "font-['Raleway'] font-semibold text-[14px] leading-none tracking-[0.12em] text-[#fefffa]",
+  labels: { dialog: 'Foto pre-wedding Noah & Allie', close: 'Tutup', prev: 'Foto sebelumnya', next: 'Foto berikutnya' },
+};
 
 // ---------- RSVP ----------
 
@@ -685,7 +655,7 @@ export default function NotebookContent({ intro }: { intro: IntroState }) {
         />
       </div>
 
-      {photo !== null && <Lightbox index={photo} onClose={() => setPhoto(null)} />}
+      {photo !== null && <PhotoLightbox photos={PREWED_PHOTOS} start={photo} theme={LIGHTBOX_THEME} onClose={() => setPhoto(null)} />}
     </div>
     </RevealProvider>
   );

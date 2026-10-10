@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { WEDDING_DATE, weddingDateId } from './crazyLoveWeddingDate';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
+import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
 import { Float, Reveal, RevealProvider, useScrollReveals } from './scrollReveal';
 
 // Every layer is placed at its position in the Figma "Content" frame (375 × 6051), in
@@ -266,55 +267,37 @@ function Countdown() {
   );
 }
 
-// ---------- Photos + lightbox ----------
+// ---------- Photos + gallery ----------
 
 const PHOTOS = ['photo-6', 'photo-1', 'photo-4', 'photo-3', 'photo-10', 'photo-7', 'photo-5'];
 
-function Lightbox({ index, onClose }: { index: number; onClose: () => void }) {
-  const closeRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [onClose]);
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Foto ${index + 1}`}
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 p-4"
-      onClick={onClose}
-    >
-      <img alt={`Ratu & Radit, foto ${index + 1}`} src={A(`${PHOTOS[index]}-lg.webp`)} className="max-h-[88vh] max-w-full rounded-lg object-contain" />
-      <button
-        ref={closeRef}
-        type="button"
-        aria-label="Tutup"
-        onClick={onClose}
-        className="absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] flex size-10 cursor-pointer items-center justify-center rounded-full bg-white/15 text-2xl leading-none text-white"
-      >
-        ×
-      </button>
-    </div>
-  );
-}
+// Each photo section is its own gallery: a tap opens it on that photo, and guests swipe
+// through the rest of the section. Values are indexes into PHOTOS, in on-screen order.
+const GALLERIES = {
+  collage: [0, 1, 2],
+  grid: [1, 3, 4, 5, 6],
+} as const;
+type GallerySection = keyof typeof GALLERIES;
+const galleryPhotos = (section: GallerySection): LightboxPhoto[] =>
+  GALLERIES[section].map((p, i, all) => ({ src: A(`${PHOTOS[p]}-lg.webp`), alt: `Ratu & Radit, foto ${i + 1} dari ${all.length}` }));
+const GALLERY_PHOTOS = { collage: galleryPhotos('collage'), grid: galleryPhotos('grid') };
+const LIGHTBOX_THEME: LightboxTheme = {
+  arrowBg: PINK,
+  arrowFg: CREAM,
+  counterClass: "font-['Josefin_Sans'] text-[15px] leading-none tracking-[0.14em] text-[#fff4e8]",
+  labels: { dialog: 'Foto Ratu & Radit', close: 'Tutup', prev: 'Foto sebelumnya', next: 'Foto berikutnya' },
+};
 
 /**
  * One framed photo. The button has no box of its own; its children keep their frame
  * coordinates, so the stacking (and which photo a tap lands on) is exactly Figma's.
  */
-function Photo({ index, onOpen, children }: { index: number; onOpen: (i: number) => void; children: ReactNode }) {
+function Photo({ label, onOpen, children }: { label: string; onOpen: () => void; children: ReactNode }) {
   return (
     <button
       type="button"
-      aria-label={`Perbesar foto ${index + 1}`}
-      onClick={() => onOpen(index)}
+      aria-label={label}
+      onClick={onOpen}
       className="absolute left-0 top-0 size-0 cursor-zoom-in outline-none focus-visible:[&_img]:brightness-90"
       // Figma's drop shadow on each polaroid group (frame + photo).
       style={{ filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.25))' }}
@@ -410,7 +393,11 @@ function StoryEntry({ x, cy, right, date, lh, children }: { x: number; cy: numbe
 export default function CrazyLoveContent({ intro }: { intro: IntroState }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [photo, setPhoto] = useState<number | null>(null);
+  const [gallery, setGallery] = useState<{ section: GallerySection; start: number } | null>(null);
+  const openPhoto = (section: GallerySection, start: number) => ({
+    label: `Perbesar foto ${start + 1} dari ${GALLERIES[section].length}`,
+    onOpen: () => setGallery({ section, start }),
+  });
   useLayoutEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
@@ -509,7 +496,7 @@ export default function CrazyLoveContent({ intro }: { intro: IntroState }) {
 
         {/* ===== Photo grid ===== */}
         <Reveal at={3777.56} kind="settle" origin={[187.5, 3893.6]}>
-          <Photo index={1} onOpen={setPhoto}>
+          <Photo {...openPhoto('grid', 0)}>
             <Rot box={[31.26, 3777.56, 312.435, 232.06]} w={310.524} h={229.468} deg={-0.48}>
               <img alt="" src={A('prewed-frame-wide.svg')} className={fill} />
             </Rot>
@@ -520,7 +507,7 @@ export default function CrazyLoveContent({ intro }: { intro: IntroState }) {
         </Reveal>
         {GRID.map((g, i) => (
           <Reveal key={i} at={g.y} kind="settle" origin={[g.x + 75.6, g.y + 83]} tilt={i % 2 ? -3 : 3} delay={150 + (i % 2) * 130}>
-            <Photo index={i + 3} onOpen={setPhoto}>
+            <Photo {...openPhoto('grid', i + 1)}>
               <Rot box={[g.x, g.y, 151.139, 166.041]} w={149.764} h={164.792} deg={-0.48}>
                 <img alt="" src={A('prewed-frame.svg')} className={fill} />
               </Rot>
@@ -727,7 +714,7 @@ export default function CrazyLoveContent({ intro }: { intro: IntroState }) {
           <Img file="bow-quote.svg" x={42} y={486} w={74.888} h={69.998} />
 
           <Reveal at={0} kind="settle" origin={[162, 131.6]} delay={250}>
-            <Photo index={0} onOpen={setPhoto}>
+            <Photo {...openPhoto('collage', 0)}>
               <Rot box={[51.21, 44, 221.705, 175.277]} w={204.634} h={151.218} deg={-7.08}>
                 <img alt="" src={A('top-frame.svg')} className={fill} />
               </Rot>
@@ -737,7 +724,7 @@ export default function CrazyLoveContent({ intro }: { intro: IntroState }) {
             </Photo>
           </Reveal>
           <Reveal at={0} kind="settle" origin={[237.9, 262.2]} tilt={-3} delay={380}>
-            <Photo index={1} onOpen={setPhoto}>
+            <Photo {...openPhoto('collage', 1)}>
               <Rot box={[128, 176, 219.751, 172.406]} w={204.634} h={151.218} deg={6.19}>
                 <img alt="" src={A('top-frame.svg')} className={fill} />
               </Rot>
@@ -747,7 +734,7 @@ export default function CrazyLoveContent({ intro }: { intro: IntroState }) {
             </Photo>
           </Reveal>
           <Reveal at={0} kind="settle" origin={[127.8, 376.6]} delay={510}>
-            <Photo index={2} onOpen={setPhoto}>
+            <Photo {...openPhoto('collage', 2)}>
               <Rot box={[22.67, 297.11, 210.355, 159.055]} w={204.634} h={151.218} deg={-2.23}>
                 <img alt="" src={A('top-frame.svg')} className={fill} />
               </Rot>
@@ -785,7 +772,7 @@ export default function CrazyLoveContent({ intro }: { intro: IntroState }) {
         />
       </div>
 
-      {photo !== null && <Lightbox index={photo} onClose={() => setPhoto(null)} />}
+      {gallery && <PhotoLightbox photos={GALLERY_PHOTOS[gallery.section]} start={gallery.start} theme={LIGHTBOX_THEME} onClose={() => setGallery(null)} />}
     </div>
     </RevealProvider>
   );

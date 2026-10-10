@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { weddingDate } from './friendsWeddingDate';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
+import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
 import { Float, Reveal, RevealProvider, useScrollReveals } from './scrollReveal';
 
 // Every layer is placed at its position in the Figma "Content" frame (375 × 5768), in
@@ -139,59 +140,37 @@ function CopyButton({ x, y, label, text }: { x: number; y: number; label: string
   );
 }
 
-// ---------- Polaroids + lightbox ----------
+// ---------- Polaroids + gallery ----------
 
-const POLAROIDS = ['polaroid-1-lg.webp', 'polaroid-2-lg.webp', 'polaroid-3-lg.webp'];
-
-function Lightbox({ index, onClose }: { index: number; onClose: () => void }) {
-  const closeRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [onClose]);
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Photo ${index + 1}`}
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 p-4"
-      onClick={onClose}
-    >
-      <img alt={`Ratu & Radit, photo ${index + 1}`} src={A(POLAROIDS[index])} className="max-h-[88vh] max-w-full rounded-lg object-contain" />
-      <button
-        ref={closeRef}
-        type="button"
-        aria-label="Close"
-        onClick={onClose}
-        className="absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] flex size-10 cursor-pointer items-center justify-center rounded-full bg-white/15 text-2xl leading-none text-white"
-      >
-        ×
-      </button>
-    </div>
-  );
-}
+// The gallery starts on the photo at the top of the stack (polaroid 3, drawn last) and goes
+// down through it.
+const POLAROID_PHOTOS: LightboxPhoto[] = ['polaroid-3-lg.webp', 'polaroid-2-lg.webp', 'polaroid-1-lg.webp'].map((file, i) => ({
+  src: A(file),
+  alt: `Ratu & Radit, photo ${i + 1} of 3`,
+}));
+const LIGHTBOX_THEME: LightboxTheme = {
+  arrowBg: '#a07eb9',
+  arrowFg: '#fbda43',
+  counterClass: 'ff-friends text-[20px] leading-none tracking-[0.04em] text-[#fbda43]',
+  labels: { dialog: 'Photos of Ratu & Radit', close: 'Close', prev: 'Previous photo', next: 'Next photo' },
+};
 
 /**
  * One polaroid: the white frame and the photo, clipped to Figma's mask rectangle (given in
- * the photo's own rotated coordinates). The button has no
- * box of its own; its children keep their frame coordinates, so the stacking (and which photo
- * a tap lands on) is exactly Figma's.
+ * the photo's own rotated coordinates). It has no box of its own; its children keep their
+ * frame coordinates, so the stacking is exactly Figma's. A tap anywhere on the stack opens
+ * the gallery on the top photo: the top polaroid is the (focusable) button, the two under it
+ * just take taps.
  */
-function Polaroid({ index, onOpen, children }: { index: number; onOpen: (i: number) => void; children: ReactNode }) {
+function Polaroid({ top = false, onOpen, children }: { top?: boolean; onOpen: () => void; children: ReactNode }) {
+  if (!top)
+    return (
+      <div aria-hidden="true" onClick={onOpen} className="absolute left-0 top-0 size-0 cursor-zoom-in">
+        {children}
+      </div>
+    );
   return (
-    <button
-      type="button"
-      aria-label={`Enlarge photo ${index + 1}`}
-      onClick={() => onOpen(index)}
-      className="group absolute left-0 top-0 size-0 cursor-zoom-in outline-none"
-    >
+    <button type="button" aria-label="View the photos (3)" onClick={onOpen} className="group absolute left-0 top-0 size-0 cursor-zoom-in outline-none">
       {children}
     </button>
   );
@@ -267,7 +246,8 @@ const eventTitle = 'ff-f72-supersoft text-[22px] leading-[30px] tracking-[-0.017
 export default function FriendsContent({ intro }: { intro: IntroState }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [photo, setPhoto] = useState<number | null>(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const openGallery = () => setGalleryOpen(true);
 
   useLayoutEffect(() => {
     const el = wrapRef.current;
@@ -407,7 +387,7 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
 
         {/* ===== Stacked polaroids ===== */}
         <Reveal at={2177} kind="settle" origin={[186.7, 2299]} tilt={3} delay={150}>
-          <Polaroid index={0} onOpen={setPhoto}>
+          <Polaroid onOpen={openGallery}>
             <Img file="polaroid-frame-1.svg" x={46.963} y={2202} w={279.501} h={194} />
             <div className="absolute left-[50px] top-[2177px] h-[243px] w-[274px]" style={{ clipPath: 'inset(33.049px 5.507px 32.045px 4.701px)' }}>
               <img alt="" src={A('polaroid-1.webp')} className={polaroidPhoto} />
@@ -415,7 +395,7 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
           </Polaroid>
         </Reveal>
         <Reveal at={2177} kind="settle" origin={[207.2, 2298.9]} tilt={-3} delay={300}>
-          <Polaroid index={1} onOpen={setPhoto}>
+          <Polaroid onOpen={openGallery}>
             <Transformed m={[0.995, -0.097, 77.799, 0.097, 0.995, 2189]} w={279} h={193.652}><img alt="" src={A('polaroid-frame-2.svg')} className={fill} /></Transformed>
             <Transformed m={[0.995, -0.097, 79.751, 0.097, 0.995, 2168.984]} w={286.575} h={214.931} style={{ clipPath: 'inset(28.137px 15.535px 9.207px 7.721px)' }}>
               <img alt="" src={A('polaroid-2.webp')} className={polaroidPhoto} />
@@ -423,7 +403,7 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
           </Polaroid>
         </Reveal>
         <Reveal at={2177} kind="settle" origin={[171.6, 2303.9]} tilt={3} delay={450}>
-          <Polaroid index={2} onOpen={setPhoto}>
+          <Polaroid top onOpen={openGallery}>
             <Transformed m={[0.996, 0.089, 24, -0.089, 0.996, 2219.829]} w={279} h={193.652}><img alt="" src={A('polaroid-frame-3.svg')} className={fill} /></Transformed>
             <Transformed m={[0.996, 0.089, 9.771, -0.089, 0.996, 2229.132]} w={316} h={178} style={{ clipPath: 'inset(0.035px 29.958px 0.378px 22.723px)' }}>
               <img alt="" src={A('polaroid-3.webp')} className={polaroidPhoto} />
@@ -607,7 +587,7 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
         <MadeWithLoveFooter y={5715} bgTop={5690} frameH={FRAME_H} background="#fefffa" />
       </div>
 
-      {photo !== null && <Lightbox index={photo} onClose={() => setPhoto(null)} />}
+      {galleryOpen && <PhotoLightbox photos={POLAROID_PHOTOS} start={0} theme={LIGHTBOX_THEME} onClose={() => setGalleryOpen(false)} />}
     </div>
     </RevealProvider>
   );
