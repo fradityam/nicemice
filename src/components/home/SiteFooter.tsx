@@ -16,7 +16,7 @@ export default function SiteFooter() {
         )}
         <a href="#beranda">Kembali ke atas ↑</a>
       </div>
-      <small>© {new Date().getFullYear()} nice mice. Semua hak dilindungi.</small>
+      <small>© {new Date().getFullYear()} nicemice. Semua hak dilindungi.</small>
     </footer>
   );
 }
