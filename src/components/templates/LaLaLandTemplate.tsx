@@ -17,8 +17,8 @@ const COVER_W = 375;
 const COVER_H = 667;
 const MAX_COLUMN_W = 430;
 // Frame y of the painting point each cover text group stays over (see LaLaLandCover).
-const TITLE_ANCHOR_Y = 260;
-const GUEST_ANCHOR_Y = 506;
+const TITLE_ANCHOR_Y = 245;
+const GUEST_ANCHOR_Y = 548;
 const textShadow = '0px 4px 4px rgba(0,0,0,0.25)';
 // Figma Content frame fill (top → bottom).
 const SKY_GRADIENT = 'linear-gradient(to bottom, #000433 0%, #181065 50%, #672dc1 100%)';
@@ -90,27 +90,27 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
       >
         <div className="absolute inset-0" style={shift(TITLE_ANCHOR_Y)}>
         <Reveal at={0} kind="fadeDown" delay={150}>
-          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+1px)] text-[20px] text-center text-white top-[117px] whitespace-nowrap">
+          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+1px)] text-[20px] text-center text-white top-[112px] whitespace-nowrap">
             Meet Me Under the Stars
           </p>
         </Reveal>
         <Reveal at={0} kind="fadeDown" delay={250}>
-          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+1px)] text-[16px] text-center text-white top-[144px] whitespace-nowrap">
+          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+1px)] text-[16px] text-center text-white top-[139px] whitespace-nowrap">
             {weddingDateId}
           </p>
         </Reveal>
 
         <h1 className="font-['Fasthand'] leading-[normal] text-center text-white">
-          <RevealSpan at={0} kind="fadeUp" delay={400} className="-translate-x-1/2 absolute left-1/2 text-[80px] top-[163px] w-[331px]">Sebastian</RevealSpan>
-          <RevealSpan at={0} kind="fadeUp" delay={480} className="-translate-x-1/2 absolute left-[calc(50%-12.5px)] text-[50px] top-[251px] w-[42px]">&amp;</RevealSpan>
-          <RevealSpan at={0} kind="fadeUp" delay={560} className="-translate-x-1/2 absolute left-[calc(50%+0.5px)] text-[80px] top-[285px] w-[146px]">Mia</RevealSpan>
+          <RevealSpan at={0} kind="fadeUp" delay={400} className="-translate-x-1/2 absolute left-1/2 text-[80px] top-[147px] w-[331px]">Sebastian</RevealSpan>
+          <RevealSpan at={0} kind="fadeUp" delay={480} className="-translate-x-1/2 absolute left-[calc(50%-12.5px)] text-[50px] top-[235px] w-[42px]">&amp;</RevealSpan>
+          <RevealSpan at={0} kind="fadeUp" delay={560} className="-translate-x-1/2 absolute left-[calc(50%+0.5px)] text-[80px] top-[269px] w-[146px]">Mia</RevealSpan>
         </h1>
         </div>
 
         <div className="absolute inset-0" style={shift(GUEST_ANCHOR_Y)}>
         <Reveal at={0} kind="fadeUp" delay={700}>
           <p
-            className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[17px] text-center text-white top-[457px] whitespace-nowrap"
+            className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[17px] text-center text-white top-[499px] whitespace-nowrap"
             style={{ textShadow }}
           >
             Kepada
@@ -118,7 +118,7 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
         </Reveal>
         <Reveal at={0} kind="fadeUp" delay={770}>
           <p
-            className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+0.5px)] text-[25px] text-center text-white top-[481px] whitespace-nowrap"
+            className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+0.5px)] text-[25px] text-center text-white top-[523px] whitespace-nowrap"
             style={{ textShadow }}
           >
             Emma &amp; Ryan
@@ -129,7 +129,7 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
           <button
             type="button"
             onClick={onOpen}
-            className="absolute left-[95px] top-[522px] h-[34px] w-[185px] rounded-[20px] bg-[#f9de1f] cursor-pointer"
+            className="absolute left-[95px] top-[564px] h-[34px] w-[185px] rounded-[20px] bg-[#f9de1f] cursor-pointer"
           >
             <span className="-translate-x-1/2 absolute left-[93px] top-[7px] font-['Raleway'] leading-[normal] text-[17px] text-[#181065] text-center whitespace-nowrap">
               BUKA UNDANGAN
