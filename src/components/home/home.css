@@ -648,11 +648,17 @@ body:has(.nm-home) {
 
 /* The design cropped a sprite sheet of cover screenshots here (rounded, faint border, a few px
    of inset above the rule). We show each template's own cover thumbnail the same way. */
+/* An explicit width (the card minus the side margins) instead of flex stretch: older Safari
+   sizes a stretched aspect-ratio item to the full card width, ignoring the margins, so the
+   cover spilled past the right border. min-width: 0 keeps the cover image's own width from
+   setting a minimum. */
 .nm-home .template-preview {
   aspect-ratio: 275 / 369;
   border-bottom: 1px solid rgba(41, 23, 20, 0.12);
   margin: 1rem 1rem 0;
+  min-width: 0;
   padding: 0.2rem 0 0.15rem;
+  width: calc(100% - 2rem);
 }
 
 .nm-home .template-preview img {
