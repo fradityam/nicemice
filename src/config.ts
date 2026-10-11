@@ -3,7 +3,7 @@
 // floating WhatsApp button is hidden; without Instagram, the footer link is hidden.
 
 /** WhatsApp number in international format, digits only, e.g. '6281234567890'. */
-export const CONTACT_WHATSAPP = '';
+export const CONTACT_WHATSAPP = '628215000720';
 
 /** Full Instagram profile URL, e.g. 'https://instagram.com/nicemice.id'. */
 export const CONTACT_INSTAGRAM = '';

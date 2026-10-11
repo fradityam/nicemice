@@ -18,7 +18,7 @@ export default function Hero() {
             Lihat template
             <ArrowIcon />
           </a>
-          <a className="text-link" href="#cara-kerja">
+          <a className="text-link" href="#cara-pesan">
             Cara memesan
           </a>
         </div>

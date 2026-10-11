@@ -10,20 +10,20 @@ const STEPS = [
   {
     number: '02',
     title: 'Kirim datanya',
-    copy: 'Lengkapi detail acara, foto, dan cerita yang ingin ditampilkan.',
-    benefit: 'Informasi tersusun rapi',
+    copy: 'Pesan lewat WhatsApp, lalu kirim detail acara, foto, dan cerita yang ingin ditampilkan.',
+    benefit: 'Selesai dalam 3x24 jam',
   },
   {
     number: '03',
     title: 'Bagikan bahagianya',
-    copy: 'Setelah revisi selesai, undanganmu siap dikirim ke orang-orang tersayang.',
+    copy: 'Dengan 2x revisi gratis, undanganmu siap dikirim ke orang-orang tersayang.',
     benefit: 'Nyaman dibuka dari ponsel',
   },
 ];
 
 export default function Process() {
   return (
-    <section className="process" id="cara-kerja">
+    <section className="process" id="cara-pesan">
       <div className="process-title">
         <p className="section-kicker">Mudah dan lengkap</p>
         <h2>Semua yang kamu butuhkan, dalam tiga langkah sederhana.</h2>

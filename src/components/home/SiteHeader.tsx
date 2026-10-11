@@ -16,8 +16,10 @@ export default function SiteHeader() {
         </a>
         <nav aria-label="Navigasi utama">
           <a href="#tentang">Tentang</a>
-          <a href="#contoh">Fitur</a>
-          <a href="#cara-kerja">Cara kerja</a>
+          <a href="#template">Template</a>
+          <a href="#cara-pesan">Cara kerja</a>
+          <a href="#harga">Harga</a>
+          <a href="#faq">FAQ</a>
         </nav>
         <a className="button button-small button-outline" href="#template">
           Pilih template

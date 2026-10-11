@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CATALOG_TEMPLATES } from '../../data';
 import type { Template } from '../../types';
@@ -37,8 +38,6 @@ const CATEGORY_LABELS: Record<Template['category'], string> = {
   vintage: 'Klasik',
 };
 
-const COUNT_WORDS = ['Nol', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh'];
-
 /** 'TEMA LA LA LAND' -> 'La La Land' */
 function themeName(tpl: Template) {
   return tpl.name
@@ -47,8 +46,15 @@ function themeName(tpl: Template) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// Categories of the visible templates, in catalog order. The filter only shows once there are
+// at least two to choose between.
+const CATEGORIES = [...new Set(CATALOG_TEMPLATES.map((tpl) => tpl.category))];
+
 export default function Catalog() {
-  const count = CATALOG_TEMPLATES.length;
+  const [activeCategory, setActiveCategory] = useState<Template['category'] | null>(null);
+  const templates = activeCategory
+    ? CATALOG_TEMPLATES.filter((tpl) => tpl.category === activeCategory)
+    : CATALOG_TEMPLATES;
 
   return (
     <section className="catalog" id="template">
@@ -63,8 +69,24 @@ export default function Catalog() {
         </p>
       </div>
 
+      {CATEGORIES.length > 1 && (
+        <div className="catalog-filter" role="group" aria-label="Filter kategori template">
+          {[null, ...CATEGORIES].map((category) => (
+            <button
+              aria-pressed={activeCategory === category}
+              className={activeCategory === category ? 'active' : ''}
+              key={category ?? 'semua'}
+              onClick={() => setActiveCategory(category)}
+              type="button"
+            >
+              {category ? CATEGORY_LABELS[category] : 'Semua tema'}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="template-grid">
-        {CATALOG_TEMPLATES.map((tpl) => {
+        {templates.map((tpl) => {
           const name = themeName(tpl);
           return (
             <article className="template-card" key={tpl.id}>
@@ -97,9 +119,7 @@ export default function Catalog() {
         })}
       </div>
 
-      <p className="catalog-note">
-        {COUNT_WORDS[count] ?? count} tema pilihan, dengan tema baru yang akan terus hadir.
-      </p>
+      <p className="catalog-note">Tema baru, cerita baru. Segera hadir!</p>
     </section>
   );
 }
