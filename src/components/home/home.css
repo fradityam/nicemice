@@ -61,10 +61,6 @@ body:has(.nm-home) {
   text-transform: uppercase;
 }
 
-.nm-home .announcement a {
-  border-bottom: 1px solid currentColor;
-}
-
 .nm-home .announcement-dot {
   color: var(--red);
 }
@@ -1663,7 +1659,8 @@ body:has(.nm-home) {
     grid-template-columns: 1fr auto;
   }
 
-  .nm-home nav {
+  .nm-home nav,
+  .nm-home .site-header .button-small {
     display: none;
   }
 
@@ -1735,12 +1732,6 @@ body:has(.nm-home) {
   .nm-home .brand {
     height: 3rem;
     width: 7.8rem;
-  }
-
-  .nm-home .button-small {
-    font-size: 0.61rem;
-    gap: 0.4rem;
-    padding: 0.6rem 0.7rem;
   }
 
   .nm-home .hero {

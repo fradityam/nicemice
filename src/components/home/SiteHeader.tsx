@@ -7,7 +7,7 @@ export default function SiteHeader() {
       <div className="announcement">
         <span>Slot pengerjaan sudah dibuka</span>
         <span className="announcement-dot" aria-hidden="true">•</span>
-        <a href="#mulai">Amankan tanggalmu</a>
+        <span>Amankan tanggalmu</span>
       </div>
 
       <header className="site-header">
