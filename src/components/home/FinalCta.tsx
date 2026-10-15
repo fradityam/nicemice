@@ -1,3 +1,4 @@
+import { ORDER_MESSAGE } from '../../config';
 import OrderLink from './OrderLink';
 import { ArrowIcon, SparkIcon } from './icons';
 
@@ -6,17 +7,17 @@ export default function FinalCta() {
     <section className="final-cta" id="mulai">
       <div className="final-cta-copy">
         <p className="section-kicker">Sudah punya pilihan?</p>
-        <h2>Pesan template favoritmu dan kami siapkan sisanya.</h2>
+        <h2>Dengan Nice Mice, undanganmu lebih punya cerita!</h2>
         <p>
-          Kirim nama template yang kamu pilih dan detail acaramu. Tim nice mice akan membantu sampai
-          undangan siap dibagikan.
+          Pilih tema dari katalog Nice Mice atau diskusikan ide desain custom kamu bersama tim kami
+          sekarang.
         </p>
       </div>
       <OrderLink
         className="button button-primary button-large"
-        message="Halo nice mice, saya ingin pesan undangan digital."
+        message={ORDER_MESSAGE}
       >
-        Ngobrol dengan kami
+        Ngobrol Gratis, Yuk!
         <ArrowIcon />
       </OrderLink>
       <div className="final-spark">

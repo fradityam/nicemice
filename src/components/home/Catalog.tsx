@@ -60,12 +60,13 @@ export default function Catalog() {
     <section className="catalog" id="template">
       <div className="catalog-heading">
         <div>
-          <p className="section-kicker">Katalog template</p>
-          <h2>Pilih suasana yang paling terasa seperti kalian.</h2>
+          <p className="section-kicker">Katalog Tema</p>
+          <h2>Pilih tema yang cocok dengan kisah kamu dan pasangan!</h2>
         </div>
         <p>
-          Setiap template sudah dirancang utuh dan siap diisi dengan detail pernikahanmu. Pilih tema,
-          lihat contohnya, lalu pesan dengan mudah.
+          Jelajahi koleksi Nice Mice, lihat contohnya, lalu pilih favoritmu. Jika ingin undangan
+          dengan desain yang dibuat khusus untuk kamu dan tidak dimiliki pasangan lain, yuk obrolin
+          dengan kami!
         </p>
       </div>
 
@@ -108,7 +109,7 @@ export default function Catalog() {
                 <p>{tpl.subtitle}</p>
                 <div className="template-actions">
                   <Link to={ROUTES[tpl.id]}>Lihat contoh</Link>
-                  <OrderLink message={`Halo nice mice, saya ingin pesan undangan digital Tema ${name}.`}>
+                  <OrderLink message={`Halo Nice Mice, saya ingin pesan undangan digital Tema ${name}.`}>
                     Pesan
                     <ArrowIcon />
                   </OrderLink>
@@ -119,7 +120,7 @@ export default function Catalog() {
         })}
       </div>
 
-      <p className="catalog-note">Tema baru, cerita baru. Segera hadir!</p>
+      <p className="catalog-note">Cerita cinta lainnya sedang kami siapkan.</p>
     </section>
   );
 }

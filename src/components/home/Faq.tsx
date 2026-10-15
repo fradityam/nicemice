@@ -19,7 +19,7 @@ export default function Faq() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: FAQ_JSON_LD }} />
       <div className="faq-heading">
         <p className="section-kicker">Pertanyaan umum</p>
-        <h2>Hal yang mungkin ingin kamu tanyakan.</h2>
+        <h2>Hal yang mungkin ingin kamu tanyakan</h2>
         <p>Belum menemukan jawabannya? Tim kami dengan senang hati akan membantu lewat WhatsApp.</p>
       </div>
       <div className="faq-list">

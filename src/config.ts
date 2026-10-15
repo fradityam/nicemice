@@ -15,6 +15,9 @@ export const CONTACT_INSTAGRAM = '';
  */
 export const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzljiDOOhcevTP-pWQ23ywSeuQSSoz8jcrbe1YO64qMKf9ovg6h8KhvEsjqDmrS4Y57gw/exec';
 
+/** Prefilled WhatsApp message for general order buttons (announcement bar, final CTA, floating button). */
+export const ORDER_MESSAGE = 'Halo Nice Mice, saya ingin pesan undangan digital.';
+
 /** A wa.me link with a prefilled message, or null when no WhatsApp number is set. */
 export function whatsappLink(message: string): string | null {
   const number = CONTACT_WHATSAPP.replace(/\D/g, '');

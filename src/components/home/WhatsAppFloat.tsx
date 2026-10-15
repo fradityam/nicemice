@@ -1,9 +1,9 @@
-import { whatsappLink } from '../../config';
+import { ORDER_MESSAGE, whatsappLink } from '../../config';
 import { WhatsAppIcon } from './icons';
 
 /** Floating order button. Hidden until CONTACT_WHATSAPP is set in config.ts. */
 export default function WhatsAppFloat() {
-  const href = whatsappLink('Halo nice mice, saya ingin pesan undangan digital.');
+  const href = whatsappLink(ORDER_MESSAGE);
   if (!href) return null;
 
   return (
@@ -12,10 +12,10 @@ export default function WhatsAppFloat() {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Pesan undangan melalui WhatsApp"
+      aria-label="Ngobrol dengan Nice Mice lewat WhatsApp"
     >
       <WhatsAppIcon />
-      <span>Pesan undangan</span>
+      <span>Ngobrol Yuk</span>
     </a>
   );
 }

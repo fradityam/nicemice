@@ -25,7 +25,15 @@
   font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  /* clip, not hidden: hidden would make this a scroll container and stop the header sticking.
+     Browsers without clip fall back to hidden (header just scrolls away). */
   overflow: hidden;
+  overflow: clip;
+}
+
+/* Anchor links land below the sticky header. --nm-sticky-height is measured in SiteHeader. */
+html:has(.nm-home) {
+  scroll-padding-top: var(--nm-sticky-height, 8.4rem);
 }
 
 /* Overscroll areas outside the wrapper match the page. */
@@ -47,6 +55,12 @@ body:has(.nm-home) {
   text-decoration: none;
 }
 
+.nm-home .site-top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
 .nm-home .announcement {
   align-items: center;
   background: var(--lime);
@@ -62,6 +76,24 @@ body:has(.nm-home) {
 }
 
 .nm-home .announcement-dot {
+  color: var(--red);
+}
+
+/* A button when no WhatsApp number is set (see OrderLink), so reset button styles too. */
+.nm-home .announcement-link {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  letter-spacing: inherit;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-transform: inherit;
+  text-underline-offset: 0.25em;
+}
+
+.nm-home .announcement-link:hover {
   color: var(--red);
 }
 
@@ -1281,7 +1313,7 @@ body:has(.nm-home) {
 .nm-home .faq-heading {
   align-self: start;
   position: sticky;
-  top: 3rem;
+  top: calc(var(--nm-sticky-height, 8.4rem) + 3rem);
 }
 
 .nm-home .faq-heading > p:last-child {
@@ -1721,7 +1753,13 @@ body:has(.nm-home) {
 
 @media (max-width: 720px) {
   .nm-home .announcement {
+    column-gap: 0.5rem;
+    flex-wrap: wrap;
     font-size: 0.55rem;
+    line-height: 1.5;
+    min-height: 2rem;
+    padding: 0.3rem 1rem;
+    text-align: center;
   }
 
   .nm-home .site-header {
@@ -1956,6 +1994,13 @@ body:has(.nm-home) {
   }
 
   .nm-home .whatsapp-float span {
+    display: none;
+  }
+}
+
+/* The announcement wraps to two lines here; drop the dot so it doesn't dangle at a line end. */
+@media (max-width: 359px) {
+  .nm-home .announcement-dot {
     display: none;
   }
 }

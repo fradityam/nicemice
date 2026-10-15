@@ -5,17 +5,17 @@ export default function Hero() {
   return (
     <section className="hero" id="beranda">
       <div className="hero-copy">
-        <p className="eyebrow">Undangan digital untuk cerita yang cuma satu</p>
+        <p className="eyebrow">Undangan pernikahan digital</p>
         <h1>
-          Hari bahagia, dimulai dari undangan yang terasa <em>kalian.</em>
+          Ceritakan Hari Bahagiamu Lewat Undangan yang <em>Kamu Banget</em>
         </h1>
         <p className="hero-description">
-          Wedding website yang cantik, hangat, dan mudah digunakan. Pilih desain favoritmu, kirim
-          detail acara, lalu kami siapkan hingga siap dibagikan.
+          Setiap pasangan punya cerita perjalanan cinta yang unik. Yuk, temukan tema yang paling
+          cocok untuk menceritakan kisah kalian di sini!
         </p>
         <div className="hero-actions">
           <a className="button button-primary" href="#template">
-            Lihat template
+            Lihat tema
             <ArrowIcon />
           </a>
           <a className="text-link" href="#cara-pesan">
@@ -28,7 +28,7 @@ export default function Hero() {
           </span>
           <span>
             Dikerjakan dengan hati
-            <small>oleh tim kreatif nice mice</small>
+            <small>oleh tim kreatif Nice Mice</small>
           </span>
         </div>
       </div>
@@ -43,7 +43,7 @@ export default function Hero() {
             height={1501}
             fetchPriority="high"
           />
-          <span className="photo-caption">Cerita mereka, selamanya.</span>
+          <span className="photo-caption">Kisahmu, selamanya!</span>
         </div>
         <div className="invitation-card">
           <span className="invitation-label">THE WEDDING OF</span>

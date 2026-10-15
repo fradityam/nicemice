@@ -10,11 +10,11 @@ export default function Pricing() {
       <div className="pricing-heading">
         <div>
           <p className="section-kicker section-kicker-light">Daftar harga</p>
-          <h2>Pilih yang siap pakai, atau buat cerita yang benar-benar baru.</h2>
+          <h2>Pilih tema yang tersedia atau mulai dari kisahmu sendiri</h2>
         </div>
         <p>
-          Mulai dari koleksi template pilihan hingga desain custom, semuanya dikerjakan dan didampingi
-          langsung oleh tim nice mice.
+          Apa pun pilihan kamu, tim Nice Mice siap membantu menyiapkan undangannya. Cek harga dan
+          detail setiap paket sebelum memesan.
         </p>
       </div>
 
@@ -46,7 +46,7 @@ export default function Pricing() {
             ))}
           </div>
           <a className="button button-primary" href="#template">
-            Pilih template
+            Pilih tema
             <ArrowIcon />
           </a>
         </article>

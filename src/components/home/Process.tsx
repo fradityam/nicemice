@@ -3,21 +3,21 @@ import { CheckIcon } from './icons';
 const STEPS = [
   {
     number: '01',
-    title: 'Pilih templatenya',
-    copy: 'Jelajahi katalog dan temukan desain yang paling terasa seperti kalian.',
-    benefit: 'Pilihan tema yang berkarakter',
+    title: 'Mulai dari tema',
+    copy: 'Temukan tema yang paling cocok dengan kisah dan selera kalian.',
+    benefit: 'Dari cerita sampai hal favoritmu',
   },
   {
     number: '02',
-    title: 'Kirim datanya',
-    copy: 'Pesan lewat WhatsApp, lalu kirim detail acara, foto, dan cerita yang ingin ditampilkan.',
+    title: 'Ceritakan acaramu',
+    copy: 'Hubungi via WhatsApp, kirim detail acara, foto, dan informasi yang ingin dicantumkan di undangan.',
     benefit: 'Selesai dalam 3x24 jam',
   },
   {
     number: '03',
-    title: 'Bagikan bahagianya',
-    copy: 'Dengan 2x revisi gratis, undanganmu siap dikirim ke orang-orang tersayang.',
-    benefit: 'Nyaman dibuka dari ponsel',
+    title: 'Siap sebar undangan!',
+    copy: 'Cek hasilnya, ya! Kalau perlu penyesuaian, tersedia 2x revisi gratis. Setelah cocok, undanganmu siap disebar.',
+    benefit: 'Praktis via HP',
   },
 ];
 
@@ -25,11 +25,11 @@ export default function Process() {
   return (
     <section className="process" id="cara-pesan">
       <div className="process-title">
-        <p className="section-kicker">Mudah dan lengkap</p>
-        <h2>Semua yang kamu butuhkan, dalam tiga langkah sederhana.</h2>
+        <p className="section-kicker">3 Langkah Pesan</p>
+        <h2>Pilih temanya, biar kami urus sisanya</h2>
         <p>
-          Dari memilih desain sampai undangan siap dibagikan, prosesnya praktis dan tetap didampingi
-          oleh tim nice mice.
+          Cukup kirim detail pernikahanmu, lalu tim Nice Mice akan bantu siapkan undangannya sampai
+          siap dibagikan!
         </p>
       </div>
       <div className="steps">
