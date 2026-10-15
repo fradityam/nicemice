@@ -4,7 +4,6 @@ import { ArrowLeft } from 'lucide-react';
 
 import yellowFrame from '../../assets/images/friends/yellow-frame.webp';
 import peepholeRing from '../../assets/images/friends/peephole-ring.webp';
-import peepholeView from '../../assets/images/friends/peephole-view.webp';
 import buttonPill from '../../assets/images/friends/button-pill.svg';
 import buttonRivets from '../../assets/images/friends/button-rivets.svg';
 import FriendsContent, { ENABLE_ANIMATIONS, INTRO } from './FriendsContent';
@@ -12,12 +11,10 @@ import { Reveal, RevealProvider, RevealSpan, useCoverReveals } from './scrollRev
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import './friends.css';
 import { STAGE_BG } from './templateStage';
+import { useFit, type FitBox } from './fitText';
 import type { TemplateProps } from '../CouplePage';
+import { friendsDemo } from '../../invitations/demo/friends';
 import type { FriendsInvitation } from '../../invitations/types';
-
-// The couple's song, served from public/. Swap the file to give each couple their own
-// music; set to null to hide the player.
-const MUSIC_SRC: string | null = `${import.meta.env.BASE_URL}friends-music.mp3`;
 
 const PURPLE = '#a07eb9';
 const COVER_W = 375;
@@ -25,6 +22,8 @@ const COVER_H = 667;
 const MAX_COLUMN_W = 430;
 // Width of the cover that must stay on screen: the door frame and title span x 49–327.
 const SAFE_W = 301;
+// The couple's names and the guest's shrink to stay inside that width.
+const COVER_FIT: FitBox = { w: 295 };
 
 // The peephole as it appears in the second Figma cover (551 × 551 ring at -88, -39, with the
 // photo clipped to a circle inside it). The first cover's tiny peephole is the same artwork at
@@ -75,8 +74,11 @@ function useCoverScale() {
 // "open invitation" opens the invitation. On load the door settles in: the yellow frame
 // fades in and grows a touch into place, the title rises line by line, then the peephole
 // starts to pulse. A tap works from the first moment.
-function FriendsCover({ phase, reducedMotion, onPeek, onOpen }: { phase: Phase; reducedMotion: boolean; onPeek: () => void; onOpen: () => void }) {
+function FriendsCover({ invitation: inv, guest, phase, reducedMotion, onPeek, onOpen }: { invitation: FriendsInvitation; guest: string; phase: Phase; reducedMotion: boolean; onPeek: () => void; onOpen: () => void }) {
   const { ref, scale, top } = useCoverScale();
+  const titleFit = useFit<HTMLHeadingElement>(COVER_FIT);
+  const greetingFit = useFit<HTMLParagraphElement>(COVER_FIT);
+  const guestFit = useFit<HTMLParagraphElement>(COVER_FIT);
   const { reveals, settled } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1300 });
   const pulseRef = useRef<HTMLDivElement>(null);
   const atDoor = phase === 'door';
@@ -166,12 +168,17 @@ function FriendsCover({ phase, reducedMotion, onPeek, onOpen }: { phase: Phase; 
           </Reveal>
         </div>
         <div className="absolute inset-0" style={{ opacity: atDoor ? 1 : 0, transition: fade(reducedMotion ? 0 : 200) }}>
-          <h1 className="ff-friends -translate-x-1/2 -translate-y-1/2 absolute left-[188.5px] top-[523px] text-center text-[35px] leading-[42px] tracking-[-0.017em] whitespace-nowrap text-white">
+          <h1
+            ref={titleFit.ref}
+            className="ff-friends -translate-x-1/2 -translate-y-1/2 absolute left-[188.5px] top-[523px] text-center text-[35px] leading-[42px] tracking-[-0.017em] whitespace-nowrap text-white"
+            style={titleFit.style}
+          >
             <RevealSpan at={0} kind="fadeUp" delay={350}>The one with</RevealSpan>
             <br />
-            <RevealSpan at={0} kind="fadeUp" delay={470}>Ratu &amp; Radit</RevealSpan>
+            <RevealSpan at={0} kind="fadeUp" delay={470}>{inv.coupleNames}</RevealSpan>
             <br />
             <RevealSpan at={0} kind="fadeUp" delay={590}>Wedding</RevealSpan>
+            {titleFit.probe}
           </h1>
         </div>
         <div
@@ -184,18 +191,28 @@ function FriendsCover({ phase, reducedMotion, onPeek, onOpen }: { phase: Phase; 
         {/* The peephole: small on the door, then the whole view in step 2 */}
         <div ref={peepholeRef} className="pointer-events-none absolute inset-0" style={peepholeStyle}>
           <div className="absolute left-[-29px] top-[22px] size-[434px]" style={{ clipPath: 'circle(229.583px at 216.5px 229.81px)' }}>
-            <img alt="Ratu & Radit peeking through the door" src={peepholeView} className="absolute inset-0 block size-full max-w-none object-cover" />
+            <img alt={`${inv.coupleNames} peeking through the door`} src={inv.coverPhoto} className="absolute inset-0 block size-full max-w-none object-cover" />
           </div>
           <img alt="" src={peepholeRing} className="absolute block max-w-none" style={{ left: RING.x, top: RING.y, width: RING.size, height: RING.size }} />
         </div>
 
         {/* Step 2: the guest's name and the button */}
         <div className="absolute inset-0" style={step2Style} aria-hidden={atDoor}>
-          <p className="ff-friends -translate-x-1/2 -translate-y-1/2 absolute left-[187px] top-[539px] text-[18px] leading-[42px] tracking-[-0.017em] whitespace-nowrap text-white">
-            Dear
+          <p
+            ref={greetingFit.ref}
+            className="ff-friends -translate-x-1/2 -translate-y-1/2 absolute left-[187px] top-[539px] text-[18px] leading-[42px] tracking-[-0.017em] whitespace-nowrap text-white"
+            style={greetingFit.style}
+          >
+            {inv.greeting}
+            {greetingFit.probe}
           </p>
-          <p className="ff-friends -translate-x-1/2 -translate-y-1/2 absolute left-[187px] top-[566px] text-[30px] leading-[42px] tracking-[-0.017em] whitespace-nowrap text-white">
-            Phoebe &amp; Mike
+          <p
+            ref={guestFit.ref}
+            className="ff-friends -translate-x-1/2 -translate-y-1/2 absolute left-[187px] top-[566px] text-[30px] leading-[42px] tracking-[-0.017em] whitespace-nowrap text-white"
+            style={guestFit.style}
+          >
+            {guest}
+            {guestFit.probe}
           </p>
           <button
             type="button"
@@ -217,10 +234,12 @@ function FriendsCover({ phase, reducedMotion, onPeek, onOpen }: { phase: Phase; 
   );
 }
 
-export default function FriendsTemplate(_props: Partial<TemplateProps<FriendsInvitation>>) {
+/** A couple's invitation, or (with no props, at /template/friends) the demo. */
+export default function FriendsTemplate({ invitation = friendsDemo }: Partial<TemplateProps<FriendsInvitation>>) {
   const [phase, setPhase] = useState<Phase>('door');
   const [reducedMotion, setReducedMotion] = useState(false);
-  const music = useBackgroundMusic(MUSIC_SRC);
+  const music = useBackgroundMusic(invitation.music);
+  const guest = invitation.demo?.sampleGuest ?? invitation.guestFallback;
 
   // The site sets `scroll-behavior: smooth` on <html>, so scrolls here are explicitly instant.
   useLayoutEffect(() => {
@@ -269,13 +288,15 @@ export default function FriendsTemplate(_props: Partial<TemplateProps<FriendsInv
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: STAGE_BG }}>
-      <Link
-        to="/"
-        className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        nicemice
-      </Link>
+      {invitation.demo && (
+        <Link
+          to="/"
+          className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          nicemice
+        </Link>
+      )}
 
       {phase !== 'open' && (
         <div
@@ -288,15 +309,15 @@ export default function FriendsTemplate(_props: Partial<TemplateProps<FriendsInv
             transition: `opacity ${coverT}, transform ${coverT}`,
           }}
         >
-          <FriendsCover phase={phase} reducedMotion={reducedMotion} onPeek={peek} onOpen={open} />
+          <FriendsCover invitation={invitation} guest={guest} phase={phase} reducedMotion={reducedMotion} onPeek={peek} onOpen={open} />
         </div>
       )}
 
       <div className="relative max-w-[430px] mx-auto">
-        <FriendsContent intro={{ revealed: phase === 'opening' || phase === 'open', reducedMotion }} />
+        <FriendsContent invitation={invitation} intro={{ revealed: phase === 'opening' || phase === 'open', reducedMotion }} />
       </div>
 
-      {MUSIC_SRC && (phase === 'opening' || phase === 'open') && (
+      {invitation.music && (phase === 'opening' || phase === 'open') && (
         <MusicToggle playing={music.playing} onToggle={music.toggle} background={PURPLE} iconColor="#fbda43" />
       )}
     </div>

@@ -1,5 +1,7 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { weddingDate } from './friendsWeddingDate';
+import { Fragment, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { parseIsoDate } from '../../invitations/dates';
+import type { FriendsInvitation } from '../../invitations/types';
+import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
 import { Float, Reveal, RevealProvider, useScrollReveals } from './scrollReveal';
@@ -19,9 +21,6 @@ const A = (file: string) => assetUrls[`../../assets/images/friends/${file}`];
 export const ENABLE_ANIMATIONS = true;
 
 const PURPLE = '#a07eb9';
-const VENUE = 'Grant House, Jawa Barat';
-const ADDRESS =
-  'Ratu R, Jl. Anggrek Loka No. 24, RT 005 / RW 002 Kel. Meruya Utara, Kec. Kembangan Jakarta Barat, DKI Jakarta, 11620. Phone: 0812-3456-7890';
 // Figma's #fbda43 → rgba(255,252,238,0) gradient, interpolated non-premultiplied like Figma (a
 // plain CSS gradient keeps the yellow saturated all the way down to transparent).
 const yellowGradient = `linear-gradient(to bottom, ${Array.from({ length: 11 }, (_, i) => {
@@ -31,6 +30,32 @@ const yellowGradient = `linear-gradient(to bottom, ${Array.from({ length: 11 }, 
 }).join(', ')})`;
 
 const mapsUrl = (place: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`;
+
+/** The design's date style: "27 September 2027". */
+const formatDate = (iso: string) => new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(parseIsoDate(iso));
+
+// The room each piece of the couple's text has (see FitBox). Text longer than the sample
+// shrinks to fit rather than running out of its slot.
+const FIT = {
+  title: { w: 335 },
+  line: { w: 335 },
+  doodle: { w: 150, h: 60 },
+  doodleSignature: { w: 120 },
+  storyTitle: { w: 255, origin: '0 50%' },
+  // Story texts are centred on their Figma lines; these are the heights that clear the titles
+  // above and below.
+  storyText: [
+    { h: 64, origin: '0 50%' },
+    { h: 47, origin: '0 50%' },
+    { h: 64, origin: '0 50%' },
+  ],
+  // Inside the ornate frames, clear of their borders.
+  event: { w: 250 },
+  gift: { w: 240 },
+  address: { w: 240, h: 76 },
+  closing: { h: 96 },
+  signature: { w: 280 },
+} satisfies Record<string, FitBox | FitBox[]>;
 
 /** Cover → content transition (shared with the template). */
 export const INTRO = {
@@ -54,12 +79,12 @@ function introStyle({ revealed, reducedMotion }: IntroState): CSSProperties {
   return { opacity: 1, transform: 'translateY(0)', transition: `opacity ${t}, transform ${t}` };
 }
 
-/** Image layer at a Figma box. */
-function Img({ file, x, y, w, h, alt = '', className = '', style }: { file: string; x: number; y: number; w: number; h: number; alt?: string; className?: string; style?: CSSProperties }) {
+/** Image layer at a Figma box: a design file (`file`) or one of the couple's photos (`src`). */
+function Img({ file, src, x, y, w, h, alt = '', className = '', style }: { file?: string; src?: string; x: number; y: number; w: number; h: number; alt?: string; className?: string; style?: CSSProperties }) {
   return (
     <img
       alt={alt}
-      src={A(file)}
+      src={src ?? A(file!)}
       className={`absolute block max-w-none object-cover ${className}`}
       style={{ left: x, top: y, width: w, height: h, ...style }}
     />
@@ -80,21 +105,46 @@ function Transformed({ m, w, h, className = '', style, children }: { m: [number,
 }
 const fill = 'absolute inset-0 block max-w-none size-full';
 
-/** Text centred on a point, like Figma's centre-anchored text boxes. */
-function Centered({ cx, cy, className, style, children }: { cx: number; cy: number; className: string; style?: CSSProperties; children: ReactNode }) {
+/** Text centred on a point, like Figma's centre-anchored text boxes; `fit` for the couple's own text. */
+function Centered({ cx, cy, className, style, fit, children }: { cx: number; cy: number; className: string; style?: CSSProperties; fit?: FitBox; children: ReactNode }) {
+  const f = useFit<HTMLDivElement>(fit);
   return (
-    <div className={`-translate-x-1/2 -translate-y-1/2 absolute text-center whitespace-nowrap ${className}`} style={{ left: cx, top: cy, ...style }}>
+    <div ref={f.ref} className={`-translate-x-1/2 -translate-y-1/2 absolute text-center whitespace-nowrap ${className}`} style={{ left: cx, top: cy, ...style, ...f.style }}>
       {children}
+      {f.probe}
     </div>
   );
 }
 
+/** A paragraph of the couple's text that shrinks to fit `fit`. */
+function FitP({ className, style, fit, children }: { className: string; style?: CSSProperties; fit: FitBox; children: ReactNode }) {
+  const f = useFit<HTMLParagraphElement>(fit);
+  return (
+    <p ref={f.ref} className={className} style={{ ...style, ...f.style }}>
+      {children}
+      {f.probe}
+    </p>
+  );
+}
+
+/** Lines of text with a <br /> between them. */
+const Lines = ({ lines }: { lines: readonly string[] }) => (
+  <>
+    {lines.map((line, i) => (
+      <Fragment key={i}>
+        {i > 0 && <br />}
+        {line}
+      </Fragment>
+    ))}
+  </>
+);
+
 const friendsTitle = 'ff-friends tracking-[-0.017em] whitespace-nowrap';
 
-function SeeLocation({ place }: { place: string }) {
+function SeeLocation({ place, href }: { place: string; href: string }) {
   return (
     <a
-      href={mapsUrl(place)}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`See ${place} on Google Maps`}
@@ -142,18 +192,16 @@ function CopyButton({ x, y, label, text }: { x: number; y: number; label: string
 
 // ---------- Polaroids + gallery ----------
 
-// The gallery starts on the photo at the top of the stack (polaroid 3, drawn last) and goes
-// down through it.
-const POLAROID_PHOTOS: LightboxPhoto[] = ['polaroid-3-lg.webp', 'polaroid-2-lg.webp', 'polaroid-1-lg.webp'].map((file, i) => ({
-  src: A(file),
-  alt: `Ratu & Radit, photo ${i + 1} of 3`,
-}));
-const LIGHTBOX_THEME: LightboxTheme = {
+// The gallery starts on the photo at the top of the stack (the third polaroid drawn, the
+// first in the data) and goes down through it.
+const lightboxPhotos = ({ polaroids, coupleNames }: FriendsInvitation): LightboxPhoto[] =>
+  polaroids.map((p, i) => ({ src: p.large ?? p.photo, alt: `${coupleNames}, photo ${i + 1} of ${polaroids.length}` }));
+const lightboxTheme = ({ coupleNames }: FriendsInvitation): LightboxTheme => ({
   arrowBg: '#a07eb9',
   arrowFg: '#fbda43',
   counterClass: 'ff-friends text-[20px] leading-none tracking-[0.04em] text-[#fbda43]',
-  labels: { dialog: 'Photos of Ratu & Radit', close: 'Close', prev: 'Previous photo', next: 'Next photo' },
-};
+  labels: { dialog: `Photos of ${coupleNames}`, close: 'Close', prev: 'Previous photo', next: 'Next photo' },
+});
 
 /**
  * One polaroid: the white frame and the photo, clipped to Figma's mask rectangle (given in
@@ -242,8 +290,21 @@ const storyTitle = 'ff-f72 -translate-y-1/2 absolute left-[89px] text-[15px] lea
 const storyText = 'ff-f72 -translate-y-1/2 absolute left-[89px] w-[218px] text-[11px] leading-[13px] tracking-[-0.017em] text-black';
 const eventText = 'ff-f72 text-[17px] leading-[22px] tracking-[-0.017em] text-white';
 const eventTitle = 'ff-f72-supersoft text-[22px] leading-[30px] tracking-[-0.017em] text-white';
+// "Our Love Story": where each moment's title and text sit on the torn paper.
+const STORY_SLOTS = [
+  { at: 2540, titleTop: 2553, textTop: 2593.5 },
+  { at: 2632, titleTop: 2646, textTop: 2678.5 },
+  { at: 2708, titleTop: 2723, textTop: 2763.5 },
+];
 
-export default function FriendsContent({ intro }: { intro: IntroState }) {
+export default function FriendsContent({ invitation: inv, intro }: { invitation: FriendsInvitation; intro: IntroState }) {
+  const weddingDate = formatDate(inv.date);
+  const photos = useMemo(() => lightboxPhotos(inv), [inv]);
+  const theme = useMemo(() => lightboxTheme(inv), [inv]);
+  // Polaroids are drawn bottom of the stack first.
+  const [topPolaroid, middlePolaroid, bottomPolaroid] = inv.polaroids;
+  const gift = inv.giftDelivery;
+  const titleFit = useFit<HTMLHeadingElement>(FIT.title);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -335,10 +396,11 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
           <Img file="lamp.webp" x={264} y={389} w={157} h={236} />
           <Img file="lamp.webp" x={-47} y={389} w={157} h={236} />
           <Img file="orange-couch.webp" x={24} y={472} w={327} h={164} alt="The orange couch in front of the fountain" />
-          <h1 className={`-translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-[116.5px] text-center ${friendsTitle} leading-[35px] text-white`}>
+          <h1 ref={titleFit.ref} className={`-translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-[116.5px] text-center ${friendsTitle} leading-[35px] text-white`} style={titleFit.style}>
             <span className="block text-[20px]">The one with</span>
-            <span className="block text-[27px]">Ratu &amp; Radit</span>
+            <span className="block text-[27px]">{inv.coupleNames}</span>
             <span className="block text-[27px]">Wedding</span>
+            {titleFit.probe}
           </h1>
           <Centered cx={187.5} cy={185} className={`${friendsTitle} text-[17px] leading-[42px] text-white`}>
             {weddingDate}
@@ -346,15 +408,11 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
 
           {/* Magna Doodle */}
           <Img file="magna-doodle.webp" x={81.25} y={515} w={223.5} h={149} />
-          <Centered cx={181.24} cy={572.84} className={`${friendsTitle} text-[14px] leading-[19px] text-[#3a3535]`}>
-            we can have
-            <br />
-            any future
-            <br />
-            you want!
+          <Centered cx={181.24} cy={572.84} className={`${friendsTitle} text-[14px] leading-[19px] text-[#3a3535]`} fit={FIT.doodle}>
+            <Lines lines={inv.doodle.lines} />
           </Centered>
-          <Centered cx={176.8} cy={614.87} className={`${friendsTitle} text-[12px] leading-[26px] text-[#3a3535]`}>
-            -Mike
+          <Centered cx={176.8} cy={614.87} className={`${friendsTitle} text-[12px] leading-[26px] text-[#3a3535]`} fit={FIT.doodleSignature}>
+            {inv.doodle.signature}
           </Centered>
         </div>
 
@@ -366,23 +424,23 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
 
         {/* ===== Groom & bride in the yellow peephole frames ===== */}
         <Reveal at={887} kind="fadeUp" delay={150}>
-          <Img file="groom.webp" x={83} y={940} w={239} h={239} alt="Raditya M Fadil" style={{ clipPath: 'inset(3px 33px 12px 10px)' }} />
+          <Img src={inv.groom.photo} x={83} y={940} w={239} h={239} alt={inv.groom.name} style={{ clipPath: 'inset(3px 33px 12px 10px)' }} />
           <Img file="yellow-frame.webp" x={39} y={887} w={298} h={337} />
         </Reveal>
         <Reveal at={1225} kind="fadeUp" delay={150}>
-          <Centered cx={188} cy={1239} className={`${friendsTitle} text-[24px] leading-[30px] text-white`}>Raditya m Fadil</Centered>
-          <Centered cx={187} cy={1265} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white">Beloved son of</Centered>
-          <Centered cx={187.5} cy={1286} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white">Chandra Bong &amp; Monica Ganjar</Centered>
+          <Centered cx={188} cy={1239} className={`${friendsTitle} text-[24px] leading-[30px] text-white`} fit={FIT.line}>{inv.groom.name}</Centered>
+          <Centered cx={187} cy={1265} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.groom.parentsLabel}</Centered>
+          <Centered cx={187.5} cy={1286} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.groom.parents}</Centered>
         </Reveal>
 
         <Reveal at={1381} kind="fadeUp" delay={150}>
-          <Img file="bride.webp" x={70} y={1437} w={240} h={240} alt="Ratu Regina" style={{ clipPath: 'inset(0 21px 16px 23px)' }} />
+          <Img src={inv.bride.photo} x={70} y={1437} w={240} h={240} alt={inv.bride.name} style={{ clipPath: 'inset(0 21px 16px 23px)' }} />
           <Img file="yellow-frame.webp" x={39} y={1381} w={298} h={337} />
         </Reveal>
         <Reveal at={1720} kind="fadeUp" delay={150}>
-          <Centered cx={188} cy={1733} className={`${friendsTitle} text-[24px] leading-[30px] text-white`}>Ratu Regina</Centered>
-          <Centered cx={187.5} cy={1759} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white">Beloved daughter of</Centered>
-          <Centered cx={187} cy={1780} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white">Joseph Tribuana &amp; Rachel Hijau</Centered>
+          <Centered cx={188} cy={1733} className={`${friendsTitle} text-[24px] leading-[30px] text-white`} fit={FIT.line}>{inv.bride.name}</Centered>
+          <Centered cx={187.5} cy={1759} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.bride.parentsLabel}</Centered>
+          <Centered cx={187} cy={1780} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.bride.parents}</Centered>
         </Reveal>
 
         {/* ===== Stacked polaroids ===== */}
@@ -390,7 +448,7 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
           <Polaroid onOpen={openGallery}>
             <Img file="polaroid-frame-1.svg" x={46.963} y={2202} w={279.501} h={194} />
             <div className="absolute left-[50px] top-[2177px] h-[243px] w-[274px]" style={{ clipPath: 'inset(33.049px 5.507px 32.045px 4.701px)' }}>
-              <img alt="" src={A('polaroid-1.webp')} className={polaroidPhoto} />
+              <img alt="" src={bottomPolaroid.photo} className={polaroidPhoto} />
             </div>
           </Polaroid>
         </Reveal>
@@ -398,7 +456,7 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
           <Polaroid onOpen={openGallery}>
             <Transformed m={[0.995, -0.097, 77.799, 0.097, 0.995, 2189]} w={279} h={193.652}><img alt="" src={A('polaroid-frame-2.svg')} className={fill} /></Transformed>
             <Transformed m={[0.995, -0.097, 79.751, 0.097, 0.995, 2168.984]} w={286.575} h={214.931} style={{ clipPath: 'inset(28.137px 15.535px 9.207px 7.721px)' }}>
-              <img alt="" src={A('polaroid-2.webp')} className={polaroidPhoto} />
+              <img alt="" src={middlePolaroid.photo} className={polaroidPhoto} />
             </Transformed>
           </Polaroid>
         </Reveal>
@@ -406,7 +464,7 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
           <Polaroid top onOpen={openGallery}>
             <Transformed m={[0.996, 0.089, 24, -0.089, 0.996, 2219.829]} w={279} h={193.652}><img alt="" src={A('polaroid-frame-3.svg')} className={fill} /></Transformed>
             <Transformed m={[0.996, 0.089, 9.771, -0.089, 0.996, 2229.132]} w={316} h={178} style={{ clipPath: 'inset(0.035px 29.958px 0.378px 22.723px)' }}>
-              <img alt="" src={A('polaroid-3.webp')} className={polaroidPhoto} />
+              <img alt="" src={topPolaroid.photo} className={polaroidPhoto} />
             </Transformed>
           </Polaroid>
         </Reveal>
@@ -430,24 +488,12 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
             <Img key={y} file="timeline-bullet.svg" x={62} y={y} w={17} h={17} />
           ))}
         </Reveal>
-        <Reveal at={2540} kind="fadeUp" delay={150}>
-          <p className={storyTitle} style={{ top: 2553 }}>The One Where They Met</p>
-          <p className={storyText} style={{ top: 2593.5 }}>
-            It was a rainy Tuesday at a tiny coffee shop that smelled of cinnamon and bad decisions. Ratu knocked over Radit’s americano, and he said it was the best thing that ever happened to him.
-          </p>
-        </Reveal>
-        <Reveal at={2632} kind="fadeUp" delay={150}>
-          <p className={storyTitle} style={{ top: 2646 }}>The One With the First Date</p>
-          <p className={storyText} style={{ top: 2678.5 }}>
-            He took her to a rooftop cinema, forgot the blanket, and she wore his jacket the whole night. She still has it.
-          </p>
-        </Reveal>
-        <Reveal at={2708} kind="fadeUp" delay={150}>
-          <p className={storyTitle} style={{ top: 2723 }}>The One With the Proposal</p>
-          <p className={storyText} style={{ top: 2763.5 }}>
-            Central Perk. Their usual table. He got down on one knee and the barista started slow-clapping. Everyone joined in. It was embarrassingly perfect.
-          </p>
-        </Reveal>
+        {STORY_SLOTS.map((slot, i) => (
+          <Reveal key={i} at={slot.at} kind="fadeUp" delay={150}>
+            <FitP className={storyTitle} style={{ top: slot.titleTop }} fit={FIT.storyTitle}>{inv.story[i].title}</FitP>
+            <FitP className={storyText} style={{ top: slot.textTop }} fit={FIT.storyText[i]}>{inv.story[i].text}</FitP>
+          </Reveal>
+        ))}
 
         {/* ===== Central Perk ===== */}
         <Img file="perk-bar.webp" x={47} y={2808} w={280} h={224} />
@@ -460,18 +506,18 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
         <Reveal at={3221} kind="fadeUp" delay={150}>
           <div className="absolute left-[37px] top-[3265px] h-[435px] w-[299px]" style={{ backgroundColor: PURPLE }} />
           <Img file="ornate-frame.webp" x={14} y={3221} w={348} h={523} />
-          <Centered cx={188} cy={3591} className={eventText}>{VENUE}</Centered>
-          <SeeLocation place={VENUE} />
+          <Centered cx={188} cy={3591} className={eventText} fit={FIT.event}>{inv.venue.name}</Centered>
+          <SeeLocation place={inv.venue.name} href={inv.venue.mapsUrl ?? mapsUrl(inv.venue.name)} />
 
           <Centered cx={188} cy={3353} className={eventTitle}>Ceremony</Centered>
           <Centered cx={188} cy={3379} className={eventText}>{weddingDate}</Centered>
-          <Centered cx={188} cy={3405} className={eventText}>10.00 - 11.00 WIB</Centered>
+          <Centered cx={188} cy={3405} className={eventText} fit={FIT.event}>{inv.ceremony.time}</Centered>
           <Img file="rings.svg" x={166} y={3314.2} w={43.942} h={24} />
           <Img file="wreath.webp" x={238.99} y={3343} w={41.806} h={17.637} />
           <Transformed m={[-1, 0, 134.806, 0, 1, 3343]} w={41.806} h={17.637}><img alt="" src={A('wreath.webp')} className={fill} /></Transformed>
 
           <Centered cx={188} cy={3518} className={eventText}>{weddingDate}</Centered>
-          <Centered cx={188.5} cy={3544} className={eventText}>13.00 - 16.00 WIB</Centered>
+          <Centered cx={188.5} cy={3544} className={eventText} fit={FIT.event}>{inv.reception.time}</Centered>
           <Centered cx={188} cy={3488} className={eventTitle}>Reception</Centered>
           <Img file="wreath.webp" x={238.99} y={3478.9} w={41.806} h={17.637} />
           <Transformed m={[-1, 0, 135.81, 0, 1, 3478.9]} w={41.806} h={17.637}><img alt="" src={A('wreath.webp')} className={fill} /></Transformed>
@@ -512,10 +558,11 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
 
         <Reveal at={4844} kind="fadeUp" delay={250}>
           <Centered cx={189} cy={4854} className={`${friendsTitle} text-[18px] leading-[20px] text-[#cd5524]`}>Bank transfer</Centered>
-          <Centered cx={188.5} cy={4886} className="ff-fraunces font-bold text-[20px] leading-[20px] tracking-[-0.017em] text-[#363636]">Bank BCA</Centered>
-          <Centered cx={187.5} cy={4914} className="ff-fraunces text-[30px] leading-[20px] text-[#363636]">123456789</Centered>
-          <CopyButton x={156} y={4934} label="Copy account number" text="123456789" />
-          <Centered cx={188.5} cy={4968.5} className="font-['Raleway'] text-[10px] leading-[15px] tracking-[-0.17px] text-[#363636]">a.n. Raditya M Fadil</Centered>
+          <Centered cx={188.5} cy={4886} className="ff-fraunces font-bold text-[20px] leading-[20px] tracking-[-0.017em] text-[#363636]" fit={FIT.gift}>{inv.bank.bank}</Centered>
+          <Centered cx={187.5} cy={4914} className="ff-fraunces text-[30px] leading-[20px] text-[#363636]" fit={FIT.gift}>{inv.bank.number}</Centered>
+          {/* Copied without spaces or dashes, so it pastes straight into a banking app. */}
+          <CopyButton x={156} y={4934} label="Copy account number" text={inv.bank.number.replace(/[\s-]/g, '')} />
+          <Centered cx={188.5} cy={4968.5} className="font-['Raleway'] text-[10px] leading-[15px] tracking-[-0.17px] text-[#363636]" fit={FIT.gift}>{inv.bank.holder}</Centered>
         </Reveal>
 
         {/* Two lilies between the options: Figma's 22.1 × 37.2 lily, turned (and mirrored) about its box centre. */}
@@ -539,24 +586,16 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
         <Reveal at={5084} kind="fadeUp" delay={150}>
           {/* Name and address sit 10px higher than in Figma to make room above the frame's bottom
               ornament for a Copy button like the bank one (Figma has none). */}
-          <Centered cx={189.5} cy={5094} className="ff-fraunces font-bold text-[25px] leading-[20px] tracking-[-0.017em] text-[#363636]">Ratu R</Centered>
-          <Centered cx={190} cy={5145.5} className="ff-fraunces text-[10px] leading-[15px] tracking-[-0.017em] text-[#363636]">
-            Jl. Anggrek Loka No. 24,
-            <br />
-            RT 005 / RW 002 Kel. Meruya Utara,
-            <br />
-            Kec. Kembangan Jakarta Barat,
-            <br />
-            DKI Jakarta, 11620
-            <br />
-            Phone: 0812-3456-7890
+          <Centered cx={189.5} cy={5094} className="ff-fraunces font-bold text-[25px] leading-[20px] tracking-[-0.017em] text-[#363636]" fit={FIT.gift}>{gift.name}</Centered>
+          <Centered cx={190} cy={5145.5} className="ff-fraunces text-[10px] leading-[15px] tracking-[-0.017em] text-[#363636]" fit={FIT.address}>
+            <Lines lines={gift.addressLines} />
           </Centered>
-          <CopyButton x={156} y={5185} label="Copy address" text={ADDRESS} />
+          <CopyButton x={156} y={5185} label="Copy address" text={[gift.name, ...gift.addressLines].map((l) => l.replace(/,$/, '')).join(', ')} />
         </Reveal>
 
         {/* ===== Couple photo strip ===== */}
         <Reveal at={4276} kind="fade" delay={100}>
-          <Img file="couple.webp" x={0} y={4276} w={376} h={376} alt="Ratu & Radit" />
+          <Img src={inv.couplePhoto} x={0} y={4276} w={376} h={376} alt={inv.coupleNames} />
           <Transformed m={[1, 0.006, -0.08, 0.006, -1, 4277.936]} w={375.062} h={25.936}><img alt="" src={A('scallop.svg')} className={fill} /></Transformed>
           <Transformed m={[1, 0.006, -0.08, -0.006, 1, 4647.349]} w={375.062} h={25.936}><img alt="" src={A('scallop.svg')} className={fill} /></Transformed>
         </Reveal>
@@ -569,13 +608,16 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
           </div>
         </Reveal>
         <Reveal at={5540} kind="fadeUp" delay={150}>
-          <p className="ff-fraunces -translate-x-1/2 -translate-y-1/2 absolute left-[187px] top-[5577.5px] w-[260px] text-center text-[12px] leading-[16px] tracking-[-0.017em] text-[#181719]">
-            Thank you for being part of our story and for celebrating this special moment with us. Having our favorite people by our side makes this day even more meaningful. We can’t wait to laugh, dance, and make more memories together.
-          </p>
+          <FitP
+            className="ff-fraunces -translate-x-1/2 -translate-y-1/2 absolute left-[187px] top-[5577.5px] w-[260px] text-center text-[12px] leading-[16px] tracking-[-0.017em] text-[#181719]"
+            fit={FIT.closing}
+          >
+            {inv.closing.text}
+          </FitP>
         </Reveal>
         <Reveal at={5625} kind="fadeUp" delay={250}>
-          <Centered cx={187.5} cy={5644.14} className="ff-fraunces text-[27px] leading-[30px] tracking-[-0.017em] text-[#a07eb9]">
-            Ratu &amp; Radit
+          <Centered cx={187.5} cy={5644.14} className="ff-fraunces text-[27px] leading-[30px] tracking-[-0.017em] text-[#a07eb9]" fit={FIT.signature}>
+            {inv.closing.signature}
           </Centered>
         </Reveal>
 
@@ -587,7 +629,7 @@ export default function FriendsContent({ intro }: { intro: IntroState }) {
         <MadeWithLoveFooter y={5715} bgTop={5690} frameH={FRAME_H} background="#fefffa" />
       </div>
 
-      {galleryOpen && <PhotoLightbox photos={POLAROID_PHOTOS} start={0} theme={LIGHTBOX_THEME} onClose={() => setGalleryOpen(false)} />}
+      {galleryOpen && <PhotoLightbox photos={photos} start={0} theme={theme} onClose={() => setGalleryOpen(false)} />}
     </div>
     </RevealProvider>
   );
