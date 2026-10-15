@@ -14,6 +14,7 @@ import { STAGE_BG } from './templateStage';
 import { useFit, type FitBox } from './fitText';
 import type { TemplateProps } from '../CouplePage';
 import { friendsDemo } from '../../invitations/demo/friends';
+import { useGuestName } from '../../invitations/guestName';
 import type { FriendsInvitation } from '../../invitations/types';
 
 const PURPLE = '#a07eb9';
@@ -239,7 +240,9 @@ export default function FriendsTemplate({ invitation = friendsDemo }: Partial<Te
   const [phase, setPhase] = useState<Phase>('door');
   const [reducedMotion, setReducedMotion] = useState(false);
   const music = useBackgroundMusic(invitation.music);
-  const guest = invitation.demo?.sampleGuest ?? invitation.guestFallback;
+  // Demo pages show their sample guest unless the link names one, so a demo can be tried with
+  // any name too.
+  const guest = useGuestName(invitation.demo?.sampleGuest ?? invitation.guestFallback);
 
   // The site sets `scroll-behavior: smooth` on <html>, so scrolls here are explicitly instant.
   useLayoutEffect(() => {
