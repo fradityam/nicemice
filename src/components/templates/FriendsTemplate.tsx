@@ -12,6 +12,8 @@ import { Reveal, RevealProvider, RevealSpan, useCoverReveals } from './scrollRev
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import './friends.css';
 import { STAGE_BG } from './templateStage';
+import type { TemplateProps } from '../CouplePage';
+import type { FriendsInvitation } from '../../invitations/types';
 
 // The couple's song, served from public/. Swap the file to give each couple their own
 // music; set to null to hide the player.
@@ -215,7 +217,7 @@ function FriendsCover({ phase, reducedMotion, onPeek, onOpen }: { phase: Phase; 
   );
 }
 
-export default function FriendsTemplate() {
+export default function FriendsTemplate(_props: Partial<TemplateProps<FriendsInvitation>>) {
   const [phase, setPhase] = useState<Phase>('door');
   const [reducedMotion, setReducedMotion] = useState(false);
   const music = useBackgroundMusic(MUSIC_SRC);

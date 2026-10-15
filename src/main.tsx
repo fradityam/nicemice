@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import App from './App.tsx';
 import ComingSoonPage from './components/ComingSoonPage.tsx';
+import NotFoundPage from './components/NotFoundPage.tsx';
 import './index.css';
 
 // Each template is its own chunk, downloaded only when its route is opened, so the
@@ -16,6 +17,9 @@ const LaLaLandTemplate = lazy(() => import('./components/templates/LaLaLandTempl
 const NotebookTemplate = lazy(() => import('./components/templates/NotebookTemplate.tsx'));
 const FriendsTemplate = lazy(() => import('./components/templates/FriendsTemplate.tsx'));
 const CrazyLoveTemplate = lazy(() => import('./components/templates/CrazyLoveTemplate.tsx'));
+// A couple's invitation, nicemice.id/<slug> from src/couples/<slug>.ts. The site's own pages
+// always win over it.
+const CouplePage = lazy(() => import('./components/CouplePage.tsx'));
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -36,6 +40,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/faq" element={<ComingSoonPage title="FAQ" />} />
         <Route path="/blog" element={<ComingSoonPage title="Blog & Jurnal" />} />
         <Route path="/testimoni" element={<ComingSoonPage title="Cerita Pasangan" />} />
+        <Route path="/:slug" element={<CouplePage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </Suspense>
     </BrowserRouter>
