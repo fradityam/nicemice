@@ -236,7 +236,7 @@ function FriendsCover({ invitation: inv, guest, phase, reducedMotion, onPeek, on
 }
 
 /** A couple's invitation, or (with no props, at /template/friends) the demo. */
-export default function FriendsTemplate({ invitation = friendsDemo }: Partial<TemplateProps<FriendsInvitation>>) {
+export default function FriendsTemplate({ invitation = friendsDemo, slug }: Partial<TemplateProps<FriendsInvitation>>) {
   const [phase, setPhase] = useState<Phase>('door');
   const [reducedMotion, setReducedMotion] = useState(false);
   const music = useBackgroundMusic(invitation.music);
@@ -317,7 +317,7 @@ export default function FriendsTemplate({ invitation = friendsDemo }: Partial<Te
       )}
 
       <div className="relative max-w-[430px] mx-auto">
-        <FriendsContent invitation={invitation} intro={{ revealed: phase === 'opening' || phase === 'open', reducedMotion }} />
+        <FriendsContent invitation={invitation} slug={slug} intro={{ revealed: phase === 'opening' || phase === 'open', reducedMotion }} />
       </div>
 
       {invitation.music && (phase === 'opening' || phase === 'open') && (

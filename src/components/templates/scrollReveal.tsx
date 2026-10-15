@@ -63,6 +63,12 @@ const RevealContext = createContext<RevealStore | null>(null);
 export const RevealProvider = RevealContext.Provider;
 
 /**
+ * How far (in frame px) the layers inside have been moved down from their Figma position,
+ * e.g. by a section inserted above them, so they still reveal as they scroll into view.
+ */
+export const RevealOffset = createContext(0);
+
+/**
  * Sets up the reveals for a frame of `frameW` × `frameH` drawn (scaled) in `wrapRef`. Returns
  * null, and every Reveal / Float renders its children untouched, when `enabled` is false or the
  * guest prefers reduced motion. Reveals start once `started` (the cover has opened).
@@ -160,8 +166,9 @@ type RevealOptions = { origin?: [number, number]; delay?: number; tilt?: number 
  */
 export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, tilt = 3 }: RevealOptions = {}) {
   const store = useContext(RevealContext);
+  const offset = useContext(RevealOffset);
   const [state, setState] = useState<'waiting' | 'showing' | 'done'>('waiting');
-  useEffect(() => store?.watch(at, () => setState('showing')), [store, at]);
+  useEffect(() => store?.watch(at + offset, () => setState('showing')), [store, at, offset]);
   if (!store) return null;
   const { from, ms, fade = true } = REVEAL[kind];
   const t = `${ms}ms ${EASE_OUT} ${delay}ms`;

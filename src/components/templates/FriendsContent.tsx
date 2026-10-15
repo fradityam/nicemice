@@ -1,10 +1,23 @@
 import { Fragment, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { parseIsoDate } from '../../invitations/dates';
+import {
+  MAX_MESSAGE,
+  MAX_NAME,
+  rememberSent,
+  sendRsvp,
+  sentBefore,
+  useWishes,
+  type Attendance,
+  type RsvpReply,
+  type SendResult,
+  type Wish,
+  type WishesState,
+} from '../../invitations/rsvp';
 import type { FriendsInvitation } from '../../invitations/types';
 import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
-import { Float, Reveal, RevealProvider, useScrollReveals } from './scrollReveal';
+import { Float, Reveal, RevealOffset, RevealProvider, useScrollReveals } from './scrollReveal';
 
 // Every layer is placed at its position in the Figma "Content" frame (375 × 5768), in
 // Figma's layer order, and the whole frame is scaled to the column width.
@@ -227,25 +240,99 @@ const polaroidPhoto = 'absolute inset-0 block max-w-none size-full object-cover 
 
 // ---------- RSVP ----------
 
-const ATTENDANCE = [
-  { value: 'yes', label: 'I’ll be there', top: 3922 },
-  { value: 'no', label: 'Sorry, I can’t make it', top: 3965 },
-  { value: 'maybe', label: 'I’m not sure yet', top: 4008 },
+const ATTENDANCE: { value: Attendance; label: string; top: number }[] = [
+  { value: 'hadir', label: 'I’ll be there', top: 3922 },
+  { value: 'tidak', label: 'Sorry, I can’t make it', top: 3965 },
+  { value: 'mungkin', label: 'I’m not sure yet', top: 4008 },
 ];
 const fieldLabel = 'ff-f72 -translate-y-1/2 absolute left-[44px] text-[12px] leading-[20px] tracking-[-0.017em] text-black whitespace-nowrap';
 const fieldBox = 'absolute left-[37px] w-[302px] rounded-[10px] border border-solid border-[#a07eb9] bg-white';
 const fieldText = 'ff-f72 text-[12px] leading-[20px] tracking-[-0.017em] text-black placeholder:text-[rgba(0,0,0,0.2)] outline-none';
 
-function Rsvp() {
-  const [attendance, setAttendance] = useState('yes');
+const SEND_ERRORS: Record<Exclude<SendResult, 'ok'>, string> = {
+  failed: 'Couldn’t send your reply. Check your connection and try again.',
+  busy: 'So many replies right now! Please try again in a minute.',
+  closed: 'Replies to this invitation are closed.',
+};
+const THANKS: Record<Attendance, string> = {
+  hadir: 'See you there!',
+  tidak: 'We’ll miss you. Thank you for letting us know.',
+  mungkin: 'Let us know once you’re sure.',
+};
+
+/**
+ * The attendance form. On a couple's page (`slug`) it sends to the RSVP script; on the demo
+ * it only shows the thank-you. After sending, the fields give way to a thank-you card, which
+ * is also what the guest sees when they reopen the invitation on the same phone.
+ */
+function Rsvp({ inv, slug, onWish }: { inv: FriendsInvitation; slug?: string; onWish: (wish: Wish) => void }) {
+  const [attendance, setAttendance] = useState<Attendance>('hadir');
+  const [sent, setSent] = useState(() => (slug ? sentBefore(slug) : null));
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<Exclude<SendResult, 'ok'> | null>(null);
+
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (sending) return;
+    const form = new FormData(e.currentTarget);
+    const reply: RsvpReply = {
+      name: String(form.get('name') ?? '').trim(),
+      attendance,
+      message: String(form.get('message') ?? '').trim(),
+      website: String(form.get('website') ?? ''),
+    };
+    if (!reply.name) return;
+    if (!slug) return setSent(reply);
+    setSending(true);
+    setError(null);
+    const result = await sendRsvp(slug, reply);
+    setSending(false);
+    if (result !== 'ok') return setError(result);
+    rememberSent(slug, { name: reply.name, attendance });
+    setSent(reply);
+    if (reply.message) onWish({ name: reply.name, message: reply.message, time: new Date().toISOString() });
+  };
+
+  const sendAnother = () => {
+    if (slug) rememberSent(slug, null);
+    setSent(null);
+    setAttendance('hadir');
+  };
+
+  const title = (
+    <Centered cx={188.5} cy={3800} className={`${friendsTitle} text-[18px] leading-[20px] text-[#a07eb9]`}>
+      attendance
+    </Centered>
+  );
+
+  if (sent)
+    return (
+      <>
+        {title}
+        <div role="status" className={`${fieldBox} top-[3846px] flex h-[390px] flex-col items-center justify-center gap-[10px] px-[24px] text-center`}>
+          <img alt="" src={A('turkey-dance.webp')} className="block h-[95px] w-[91px] max-w-none" />
+          <p className={`${friendsTitle} text-[30px] leading-[36px] text-[#a07eb9]`}>thank you!</p>
+          <p className="ff-f72 text-[14px] leading-[19px] tracking-[-0.017em] text-[#181719]">
+            Your reply is on its way to {inv.coupleNames}.
+            <br />
+            {THANKS[sent.attendance]}
+          </p>
+          {!slug && <p className="ff-f72 text-[11px] leading-[15px] text-[#8a7a96]">(This is a demo, so nothing was sent.)</p>}
+          <button type="button" onClick={sendAnother} className="ff-f72 mt-[4px] cursor-pointer text-[12px] leading-[20px] tracking-[-0.017em] text-[#a07eb9] underline underline-offset-2">
+            send another reply
+          </button>
+        </div>
+      </>
+    );
+
   return (
-    <form onSubmit={(e) => e.preventDefault()}>
-      <Centered cx={188.5} cy={3800} className={`${friendsTitle} text-[18px] leading-[20px] text-[#a07eb9]`}>
-        attendance
-      </Centered>
+    <form onSubmit={submit}>
+      {title}
 
       <label htmlFor="fr-name" className={fieldLabel} style={{ top: 3831 }}>Name</label>
-      <input id="fr-name" name="name" placeholder="Your Name" className={`${fieldBox} ${fieldText} top-[3846px] h-[38px] px-[14px]`} />
+      <input id="fr-name" name="name" required maxLength={MAX_NAME} autoComplete="name" placeholder="Your Name" className={`${fieldBox} ${fieldText} top-[3846px] h-[38px] px-[14px]`} />
+      {/* Hidden from guests (off the frame): only bots fill it in, and the script then drops the reply. */}
+      {slug && <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-1000px] top-[3846px] h-px w-px" />}
 
       <p className={fieldLabel} style={{ top: 3907 }}>Will you be joining us?</p>
       {ATTENDANCE.map((opt) => (
@@ -271,16 +358,105 @@ function Rsvp() {
       <textarea
         id="fr-message"
         name="message"
+        maxLength={MAX_MESSAGE}
         placeholder="A Note for Us"
         className={`${fieldBox} ${fieldText} top-[4085px] h-[104px] resize-none px-[14px] pt-[8px]`}
       />
 
-      <button type="submit" className="absolute left-[37px] top-[4198px] h-[38px] w-[302px] cursor-pointer rounded-[10px]" style={{ backgroundColor: PURPLE }}>
+      <button
+        type="submit"
+        disabled={sending}
+        className="absolute left-[37px] top-[4198px] h-[38px] w-[302px] cursor-pointer rounded-[10px] disabled:cursor-wait disabled:opacity-70"
+        style={{ backgroundColor: PURPLE }}
+      >
         <span className="ff-f72 -translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-1/2 font-semibold text-[12px] leading-[20px] tracking-[1.2px] text-white whitespace-nowrap">
-          SUBMIT RSVP
+          {sending ? 'SENDING…' : 'SUBMIT RSVP'}
         </span>
       </button>
+      {error && (
+        <p role="alert" className="ff-f72 -translate-x-1/2 absolute left-1/2 top-[4241px] w-[302px] text-center text-[11px] leading-[14px] tracking-[-0.017em] text-[#d64f16]">
+          {SEND_ERRORS[error]}
+        </p>
+      )}
     </form>
+  );
+}
+
+// ---------- Wishes ----------
+
+// On a couple's page the guests' wishes get their own band under the form: everything below
+// it moves down by WISHES_H. The demo has no band and keeps Figma's layout exactly.
+const WISHES_Y = 4256;
+const WISHES_H = 470;
+// The yellow gradient behind the form, at the band's top, continues as the band's colour.
+const GRADIENT_TOP = 3106;
+const GRADIENT_H = 2245;
+const bandColour = (() => {
+  const t = (WISHES_Y - GRADIENT_TOP) / GRADIENT_H;
+  const c = (a: number, b: number) => Math.round(a + (b - a) * t);
+  return `rgba(${c(251, 255)},${c(218, 252)},${c(67, 238)},${(1 - t).toFixed(3)})`;
+})();
+
+/** Layers below the wishes band, moved down by its height `by`; untouched when there is no band. */
+function ShiftDown({ by, children }: { by: number; children: ReactNode }) {
+  if (!by) return <>{children}</>;
+  return (
+    <RevealOffset.Provider value={by}>
+      <div className="absolute left-0 top-0 *:pointer-events-auto" style={{ width: FRAME_W, height: FRAME_H, transform: `translateY(${by}px)`, pointerEvents: 'none' }}>
+        {children}
+      </div>
+    </RevealOffset.Provider>
+  );
+}
+
+const relativeTime = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+const shortDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
+/** "just now", "5 minutes ago", "yesterday", "3 days ago", then "12 Oct". */
+function timeAgo(iso: string | null) {
+  if (!iso) return '';
+  const then = new Date(iso);
+  const s = (Date.now() - then.getTime()) / 1000;
+  if (s < 60) return 'just now';
+  if (s < 3600) return relativeTime.format(-Math.floor(s / 60), 'minute');
+  if (s < 86400) return relativeTime.format(-Math.floor(s / 3600), 'hour');
+  if (s < 30 * 86400) return relativeTime.format(-Math.floor(s / 86400), 'day');
+  return shortDate.format(then);
+}
+
+function WishesBand({ wishes }: { wishes: WishesState }) {
+  const note = 'ff-f72 px-[10px] py-[24px] text-center text-[12px] leading-[17px] tracking-[-0.017em] text-[#8a7a96]';
+  return (
+    <>
+      <div className="absolute left-0 w-[376px]" style={{ top: WISHES_Y, height: WISHES_H, backgroundColor: bandColour }} />
+      <Reveal at={WISHES_Y} kind="fadeUp">
+        <Centered cx={188.5} cy={WISHES_Y + 30} className={`${friendsTitle} text-[18px] leading-[20px] text-[#a07eb9]`}>
+          wishes{wishes.wishes.length > 0 && ` (${wishes.wishes.length})`}
+        </Centered>
+        <div className={`${fieldBox} overflow-y-auto px-[16px]`} style={{ top: WISHES_Y + 50, height: WISHES_H - 80 }}>
+          {wishes.wishes.length > 0 ? (
+            <ul>
+              {wishes.wishes.map((w, i) => (
+                <li key={`${i}-${w.time}`} className="border-b border-dashed border-[#a07eb9]/40 py-[12px] last:border-b-0">
+                  <p className="ff-f72 flex items-baseline justify-between gap-[8px] text-[13px] leading-[18px] tracking-[-0.017em] text-[#181719]">
+                    <span className="min-w-0 break-words font-semibold">{w.name}</span>
+                    <span className="shrink-0 text-[10px] text-[#8a7a96]">{timeAgo(w.time)}</span>
+                  </p>
+                  <p className="ff-f72 mt-[4px] whitespace-pre-line break-words text-[12px] leading-[17px] tracking-[-0.017em] text-[#363636]">{w.message}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={note}>
+              {wishes.status === 'loading'
+                ? 'Loading wishes…'
+                : wishes.status === 'error'
+                  ? 'Wishes can’t be shown right now.'
+                  : 'No wishes yet. Be the first to leave one!'}
+            </p>
+          )}
+        </div>
+      </Reveal>
+    </>
   );
 }
 
@@ -297,7 +473,11 @@ const STORY_SLOTS = [
   { at: 2708, titleTop: 2723, textTop: 2763.5 },
 ];
 
-export default function FriendsContent({ invitation: inv, intro }: { invitation: FriendsInvitation; intro: IntroState }) {
+export default function FriendsContent({ invitation: inv, slug, intro }: { invitation: FriendsInvitation; slug?: string; intro: IntroState }) {
+  const wishes = useWishes(slug);
+  // Couple pages get the wishes band; the demo keeps Figma's frame exactly.
+  const shift = slug ? WISHES_H : 0;
+  const frameH = FRAME_H + shift;
   const weddingDate = formatDate(inv.date);
   const photos = useMemo(() => lightboxPhotos(inv), [inv]);
   const theme = useMemo(() => lightboxTheme(inv), [inv]);
@@ -319,12 +499,14 @@ export default function FriendsContent({ invitation: inv, intro }: { invitation:
     return () => ro.disconnect();
   }, []);
 
-  const reveals = useScrollReveals({ enabled: ENABLE_ANIMATIONS, frameW: FRAME_W, frameH: FRAME_H, wrapRef, started: intro.revealed });
+  const reveals = useScrollReveals({ enabled: ENABLE_ANIMATIONS, frameW: FRAME_W, frameH, wrapRef, started: intro.revealed });
 
   return (
     <RevealProvider value={reveals}>
-    <div ref={wrapRef} className="relative w-full overflow-hidden bg-[#fefffa]" style={{ aspectRatio: `${FRAME_W} / ${FRAME_H}` }}>
-      <div className="absolute left-0 top-0 overflow-hidden" style={{ width: FRAME_W, height: FRAME_H, zoom: scale }}>
+    <div ref={wrapRef} className="relative w-full overflow-hidden bg-[#fefffa]" style={{ aspectRatio: `${FRAME_W} / ${frameH}` }}>
+      {/* `clip` rather than `hidden` (kept as the fallback) so the browser can't scroll the frame
+          sideways when it brings a form field or button into view. */}
+      <div className="absolute left-0 top-0 overflow-hidden" style={{ width: FRAME_W, height: frameH, zoom: scale, overflow: 'clip' }}>
         {/* ===== BG ===== */}
         <div className="absolute left-0 top-[459px] h-[1587px] w-[377px]" style={{ backgroundColor: PURPLE }} />
         <Img file="fabric-texture.webp" x={1.01} y={676.8} w={378} h={1408.1} className="opacity-10" />
@@ -339,12 +521,28 @@ export default function FriendsContent({ invitation: inv, intro }: { invitation:
             <img alt="" src={A('brick.webp')} className="absolute left-0 top-0 block h-[334px] w-full max-w-none object-cover" />
           </div>
         ))}
-        <div className="absolute left-0 top-[3106px] h-[2245px] w-[376px]" style={{ backgroundImage: yellowGradient }} />
-        <Img file="snowy-venue.webp" x={-56} y={4949} w={486} h={729} className="opacity-88" />
-        <div className="absolute left-0 top-[5336px] h-[354px] w-[376px] bg-gradient-to-b from-[rgba(255,255,255,0)] to-white to-[80.288%]" />
+        {shift ? (
+          // The gradient in two pieces: above the wishes band, and (moved down) below it.
+          <div className="absolute left-0 top-[3106px] w-[376px] overflow-hidden" style={{ height: WISHES_Y - GRADIENT_TOP }}>
+            <div className="w-full" style={{ height: GRADIENT_H, backgroundImage: yellowGradient }} />
+          </div>
+        ) : (
+          <div className="absolute left-0 top-[3106px] h-[2245px] w-[376px]" style={{ backgroundImage: yellowGradient }} />
+        )}
+        <ShiftDown by={shift}>
+          {shift > 0 && (
+            <div className="absolute left-0 w-[376px] overflow-hidden" style={{ top: WISHES_Y, height: GRADIENT_TOP + GRADIENT_H - WISHES_Y }}>
+              <div className="w-full" style={{ height: GRADIENT_H, marginTop: GRADIENT_TOP - WISHES_Y, backgroundImage: yellowGradient }} />
+            </div>
+          )}
+          <Img file="snowy-venue.webp" x={-56} y={4949} w={486} h={729} className="opacity-88" />
+          <div className="absolute left-0 top-[5336px] h-[354px] w-[376px] bg-gradient-to-b from-[rgba(255,255,255,0)] to-white to-[80.288%]" />
+        </ShiftDown>
 
         {/* ===== Background doodles ===== */}
-        <Img file="gift-icons.svg" x={-8} y={4723} w={392.567} h={533.557} />
+        <ShiftDown by={shift}>
+          <Img file="gift-icons.svg" x={-8} y={4723} w={392.567} h={533.557} />
+        </ShiftDown>
         <Reveal at={887} kind="pop" origin={[57.5, 1012]} delay={300}>
           <Img file="lily-1.webp" x={-12} y={887} w={139} h={250} />
         </Reveal>
@@ -535,9 +733,11 @@ export default function FriendsContent({ invitation: inv, intro }: { invitation:
 
         {/* ===== Attendance ===== */}
         <Reveal at={3790} kind="fadeUp">
-          <Rsvp />
+          <Rsvp inv={inv} slug={slug} onWish={wishes.add} />
         </Reveal>
+        {shift > 0 && <WishesBand wishes={wishes} />}
 
+        <ShiftDown by={shift}>
         {/* ===== Gifting ===== */}
         <Reveal at={4690} kind="fadeUp">
           <Centered cx={189.5} cy={4699} className={`${friendsTitle} text-[18px] leading-[20px] text-[#a07eb9]`}>Gifting</Centered>
@@ -620,13 +820,16 @@ export default function FriendsContent({ invitation: inv, intro }: { invitation:
             {inv.closing.signature}
           </Centered>
         </Reveal>
+        </ShiftDown>
 
         <Reveal at={666} kind="pop" origin={[187.5, 713.5]} delay={900}>
           <Img file="turkey-dance.webp" x={142} y={666} w={91} h={95} />
         </Reveal>
 
         {/* ===== Made with love by nicemice (no edge in Figma: the white gradient fades into it) ===== */}
-        <MadeWithLoveFooter y={5715} bgTop={5690} frameH={FRAME_H} background="#fefffa" />
+        <ShiftDown by={shift}>
+          <MadeWithLoveFooter y={5715} bgTop={5690} frameH={FRAME_H} background="#fefffa" />
+        </ShiftDown>
       </div>
 
       {galleryOpen && <PhotoLightbox photos={photos} start={0} theme={theme} onClose={() => setGalleryOpen(false)} />}

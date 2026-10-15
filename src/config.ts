@@ -8,6 +8,13 @@ export const CONTACT_WHATSAPP = '628215000720';
 /** Full Instagram profile URL, e.g. 'https://instagram.com/nicemice.id'. */
 export const CONTACT_INSTAGRAM = '';
 
+/**
+ * The Google Apps Script web app that saves every couple's RSVPs ("Web app URL" from
+ * apps-script/SETUP.md, ending in /exec). Until it is set, RSVP forms on couple pages say
+ * sending isn't possible yet.
+ */
+export const RSVP_ENDPOINT = '';
+
 /** A wa.me link with a prefilled message, or null when no WhatsApp number is set. */
 export function whatsappLink(message: string): string | null {
   const number = CONTACT_WHATSAPP.replace(/\D/g, '');
