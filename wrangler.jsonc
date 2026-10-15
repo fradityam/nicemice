@@ -1,0 +1,15 @@
+// Cloudflare Worker "nicemice" (nicemice.id). Workers Builds deploys it from GitHub main.
+// The site is a static single-page app: Vite builds it into dist/ and the Worker serves
+// those files. Any path that isn't a file (a couple's /radit-ratu, /template/friends, …)
+// gets index.html, and the app's router shows the right page or its own "not found".
+{
+  "name": "nicemice",
+  "compatibility_date": "2026-10-01",
+  "build": {
+    "command": "npm run build"
+  },
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
