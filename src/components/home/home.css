@@ -31,11 +31,6 @@
   overflow: clip;
 }
 
-/* Anchor links land below the sticky header. --nm-sticky-height is measured in SiteHeader. */
-html:has(.nm-home) {
-  scroll-padding-top: var(--nm-sticky-height, 8.4rem);
-}
-
 /* Overscroll areas outside the wrapper match the page. */
 body:has(.nm-home) {
   background: #fbf6ec;
@@ -56,9 +51,23 @@ body:has(.nm-home) {
 }
 
 .nm-home .site-top {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 30;
+}
+
+/* On desktop (Tailwind's lg and up) the announcement bar and nav stick together; on smaller
+   screens they scroll away. Anchor links (and the sticky FAQ heading, further down) then land
+   below them.
+   --nm-sticky-height is measured in SiteHeader. */
+@media (min-width: 1024px) {
+  html:has(.nm-home) {
+    scroll-padding-top: var(--nm-sticky-height, 8.4rem);
+  }
+
+  .nm-home .site-top {
+    position: sticky;
+    top: 0;
+  }
 }
 
 .nm-home .announcement {
@@ -212,7 +221,7 @@ body:has(.nm-home) {
 
 .nm-home .hero {
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(26rem, 1.08fr);
+  grid-template-columns: minmax(0, 1fr) minmax(26rem, 1fr);
   min-height: 44rem;
   padding: 5.5rem 5.8vw 5.8rem;
   position: relative;
@@ -220,7 +229,7 @@ body:has(.nm-home) {
 
 .nm-home .hero-copy {
   align-self: center;
-  max-width: 42rem;
+  max-width: 46rem;
   position: relative;
   z-index: 2;
 }
@@ -255,7 +264,7 @@ body:has(.nm-home) {
 
 .nm-home h1 {
   font-family: var(--serif);
-  font-size: clamp(3.4rem, 5.7vw, 6.1rem);
+  font-size: clamp(3.2rem, 4.9vw, 5.6rem);
   font-weight: 400;
   letter-spacing: -0.055em;
   line-height: 0.98;
@@ -266,6 +275,11 @@ body:has(.nm-home) {
 .nm-home h2 em {
   color: var(--red);
   font-weight: 400;
+}
+
+/* Keeps "Kamu Banget" together on one line. */
+.nm-home h1 em {
+  white-space: nowrap;
 }
 
 .nm-home .hero-description {
@@ -1313,7 +1327,14 @@ body:has(.nm-home) {
 .nm-home .faq-heading {
   align-self: start;
   position: sticky;
-  top: calc(var(--nm-sticky-height, 8.4rem) + 3rem);
+  top: 3rem;
+}
+
+/* Below the sticky header on desktop (see .site-top). */
+@media (min-width: 1024px) {
+  .nm-home .faq-heading {
+    top: calc(var(--nm-sticky-height, 8.4rem) + 3rem);
+  }
 }
 
 .nm-home .faq-heading > p:last-child {
@@ -1777,7 +1798,7 @@ body:has(.nm-home) {
   }
 
   .nm-home h1 {
-    font-size: clamp(3rem, 14vw, 4.4rem);
+    font-size: clamp(2.3rem, 11.5vw, 4rem);
   }
 
   .nm-home .hero-description {

@@ -45,7 +45,7 @@ export default function Pricing() {
               </span>
             ))}
           </div>
-          <a className="button button-primary" href="#template">
+          <a className="button button-primary" href="#tema">
             Pilih tema
             <ArrowIcon />
           </a>

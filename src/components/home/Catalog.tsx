@@ -57,7 +57,7 @@ export default function Catalog() {
     : CATALOG_TEMPLATES;
 
   return (
-    <section className="catalog" id="template">
+    <section className="catalog" id="tema">
       <div className="catalog-heading">
         <div>
           <p className="section-kicker">Katalog Tema</p>
@@ -71,7 +71,7 @@ export default function Catalog() {
       </div>
 
       {CATEGORIES.length > 1 && (
-        <div className="catalog-filter" role="group" aria-label="Filter kategori template">
+        <div className="catalog-filter" role="group" aria-label="Filter kategori tema">
           {[null, ...CATEGORIES].map((category) => (
             <button
               aria-pressed={activeCategory === category}

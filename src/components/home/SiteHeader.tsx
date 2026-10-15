@@ -8,9 +8,9 @@ import { ArrowIcon } from './icons';
 export default function SiteHeader() {
   const topRef = useRef<HTMLDivElement>(null);
 
-  // The announcement bar and nav stick together. Their height (which changes when the bar wraps
-  // on narrow screens) goes into --nm-sticky-height, so anchor jumps and the sticky FAQ heading
-  // land below them instead of underneath.
+  // On desktop the announcement bar and nav stick together (see .site-top in home.css). Their
+  // height goes into --nm-sticky-height, so anchor jumps and the sticky FAQ heading land below
+  // them instead of underneath.
   useEffect(() => {
     const top = topRef.current;
     if (!top) return;
@@ -36,17 +36,17 @@ export default function SiteHeader() {
       </div>
 
       <header className="site-header">
-        <a className="brand" href="#beranda" aria-label="nice mice - beranda">
+        <a className="brand" href="#beranda" aria-label="Nice Mice - beranda">
           <img src={logo} alt="nice mice" width={600} height={144} />
         </a>
         <nav aria-label="Navigasi utama">
           <a href="#tentang">Tentang</a>
-          <a href="#template">Tema</a>
+          <a href="#tema">Tema</a>
           <a href="#cara-pesan">Cara Pesan</a>
           <a href="#harga">Harga</a>
           <a href="#faq">FAQ</a>
         </nav>
-        <a className="button button-small button-outline" href="#template">
+        <a className="button button-small button-outline" href="#tema">
           Pilih Tema
           <ArrowIcon />
         </a>

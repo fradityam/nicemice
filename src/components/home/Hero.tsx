@@ -14,7 +14,7 @@ export default function Hero() {
           cocok untuk menceritakan kisah kalian di sini!
         </p>
         <div className="hero-actions">
-          <a className="button button-primary" href="#template">
+          <a className="button button-primary" href="#tema">
             Lihat tema
             <ArrowIcon />
           </a>

@@ -1,11 +1,21 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, type Plugin} from 'vite';
+import {PRICING} from './src/content/homeInfo';
+
+// Fills %PROMO_PRICE% in index.html (the meta description) with the current price, so it
+// changes along with the pricing section.
+function promoPrice(): Plugin {
+  return {
+    name: 'nicemice-promo-price',
+    transformIndexHtml: (html) => html.replaceAll('%PROMO_PRICE%', PRICING.regular.price),
+  };
+}
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), promoPrice()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
