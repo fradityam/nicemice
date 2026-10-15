@@ -13,14 +13,17 @@ export type RsvpReply = {
   website: string;
 };
 export type Wish = { name: string; message: string; time: string | null };
-/** `closed`: the couple's RSVPs are switched off (or the link isn't a couple's). */
-export type SendResult = 'ok' | 'closed' | 'busy' | 'failed';
+/**
+ * `closed`: the couple's RSVPs are switched off (or the link isn't a couple's).
+ * `unavailable`: RSVP_ENDPOINT isn't set yet, so nothing can be sent.
+ */
+export type SendResult = 'ok' | 'closed' | 'busy' | 'failed' | 'unavailable';
 
 export const MAX_NAME = 60;
 export const MAX_MESSAGE = 500;
 
 export async function sendRsvp(slug: string, reply: RsvpReply): Promise<SendResult> {
-  if (!RSVP_ENDPOINT) return 'failed';
+  if (!RSVP_ENDPOINT) return 'unavailable';
   try {
     // Sent as text/plain so the browser posts it straight away, without asking Google first
     // whether it may (Apps Script can't answer that question).

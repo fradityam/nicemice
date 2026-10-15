@@ -13,7 +13,7 @@ export const CONTACT_INSTAGRAM = '';
  * apps-script/SETUP.md, ending in /exec). Until it is set, RSVP forms on couple pages say
  * sending isn't possible yet.
  */
-export const RSVP_ENDPOINT = '';
+export const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzljiDOOhcevTP-pWQ23ywSeuQSSoz8jcrbe1YO64qMKf9ovg6h8KhvEsjqDmrS4Y57gw/exec';
 
 /** A wa.me link with a prefilled message, or null when no WhatsApp number is set. */
 export function whatsappLink(message: string): string | null {

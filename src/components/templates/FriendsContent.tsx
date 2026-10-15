@@ -253,6 +253,7 @@ const SEND_ERRORS: Record<Exclude<SendResult, 'ok'>, string> = {
   failed: 'Couldn’t send your reply. Check your connection and try again.',
   busy: 'So many replies right now! Please try again in a minute.',
   closed: 'Replies to this invitation are closed.',
+  unavailable: 'Sending replies isn’t possible yet. Please try again later.',
 };
 const THANKS: Record<Attendance, string> = {
   hadir: 'See you there!',
