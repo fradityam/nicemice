@@ -25,6 +25,58 @@
   }
 }
 
+/* Wind in a tree: a gust pushes the crown over, it eases back with a few flutters, then a
+   smaller gust, so it never swings like a pendulum. It bends from the foot of the trunk (a skew,
+   which leaves the base where it is, plus a little tilt), outward only: towards the frame's edge,
+   where the image is cut off beyond the frame, and away from the Resepsi card. A positive skew
+   moves the crown left; a flipped tree, mirrored after this transform, bends right. The crown's
+   movement is set by --nb-wind (degrees of skew at a full gust; the tilt is 0.3 of it). */
+@keyframes nb-wind {
+  0%,
+  100% {
+    transform: none;
+  }
+  5% {
+    transform: rotate(calc(var(--nb-wind) * -0.054deg)) skewX(calc(var(--nb-wind) * 0.18deg));
+  }
+  9% {
+    transform: rotate(calc(var(--nb-wind) * -0.018deg)) skewX(calc(var(--nb-wind) * 0.06deg));
+  }
+  17% {
+    transform: rotate(calc(var(--nb-wind) * -0.276deg)) skewX(calc(var(--nb-wind) * 0.92deg));
+  }
+  23% {
+    transform: rotate(calc(var(--nb-wind) * -0.3deg)) skewX(calc(var(--nb-wind) * 1deg));
+  }
+  31% {
+    transform: rotate(calc(var(--nb-wind) * -0.216deg)) skewX(calc(var(--nb-wind) * 0.72deg));
+  }
+  35% {
+    transform: rotate(calc(var(--nb-wind) * -0.252deg)) skewX(calc(var(--nb-wind) * 0.84deg));
+  }
+  45% {
+    transform: rotate(calc(var(--nb-wind) * -0.126deg)) skewX(calc(var(--nb-wind) * 0.42deg));
+  }
+  51% {
+    transform: rotate(calc(var(--nb-wind) * -0.168deg)) skewX(calc(var(--nb-wind) * 0.56deg));
+  }
+  61% {
+    transform: rotate(calc(var(--nb-wind) * -0.06deg)) skewX(calc(var(--nb-wind) * 0.2deg));
+  }
+  68% {
+    transform: rotate(calc(var(--nb-wind) * -0.18deg)) skewX(calc(var(--nb-wind) * 0.6deg));
+  }
+  74% {
+    transform: rotate(calc(var(--nb-wind) * -0.12deg)) skewX(calc(var(--nb-wind) * 0.4deg));
+  }
+  84% {
+    transform: rotate(calc(var(--nb-wind) * -0.021deg)) skewX(calc(var(--nb-wind) * 0.07deg));
+  }
+  91% {
+    transform: rotate(calc(var(--nb-wind) * -0.042deg)) skewX(calc(var(--nb-wind) * 0.14deg));
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .nb-scene {
@@ -40,7 +92,11 @@
     animation: nb-sway var(--nb-sway-ms) cubic-bezier(0.37, 0, 0.63, 1) var(--nb-sway-delay) infinite both;
     animation-play-state: paused;
   }
-  .nb-scene[data-in-view] .nb-sway {
+  .nb-wind {
+    animation: nb-wind var(--nb-wind-ms) cubic-bezier(0.45, 0, 0.55, 1) var(--nb-wind-delay) infinite both;
+    animation-play-state: paused;
+  }
+  .nb-scene[data-in-view] :is(.nb-sway, .nb-wind) {
     animation-play-state: running;
   }
 }

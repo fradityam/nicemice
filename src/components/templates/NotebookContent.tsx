@@ -128,23 +128,39 @@ type Sway = { deg: number; ms: number; origin: string };
 const BREEZE_MS = 1200;
 
 /**
+ * Wind in a tree (notebook.css): gusts bend it outward from the foot of its trunk, one round of
+ * gusts every `ms`, starting `delay` ms after it comes on screen (so two trees stay out of step).
+ */
+type Wind = { ms: number; delay: number };
+
+// How hard the wind blows in the trees: degrees of skew at a full gust. Locally, ?wind=subtle,
+// ?wind=medium or ?wind=strong on the URL tries the others.
+const WIND_STRENGTHS = { subtle: 2, medium: 3.5, strong: 6 };
+const WIND = (() => {
+  const asked = import.meta.env.DEV ? new URLSearchParams(window.location.search).get('wind') : null;
+  return asked && asked in WIND_STRENGTHS ? WIND_STRENGTHS[asked as keyof typeof WIND_STRENGTHS] : WIND_STRENGTHS.medium;
+})();
+
+/**
  * Plain image layer at a Figma box, object-cover like the Figma fill. Inside a Scene it can drift
  * at its own `depth` as it scrolls by (positive: further away, so slower than the page; negative:
- * nearer) and `sway`.
+ * nearer), and `sway` or bend in the `wind`.
  */
-function Img({ file, x, y, w, h, flip, alt = '', depth, sway }: { file: string; x: number; y: number; w: number; h: number; flip?: boolean; alt?: string; depth?: number; sway?: Sway }) {
+function Img({ file, x, y, w, h, flip, alt = '', depth, sway, wind }: { file: string; x: number; y: number; w: number; h: number; flip?: boolean; alt?: string; depth?: number; sway?: Sway; wind?: Wind }) {
   const swayStyle = sway && ({
     '--nb-sway': sway.deg,
     '--nb-sway-ms': `${sway.ms}ms`,
     '--nb-sway-delay': `${Math.round((Math.max(0, x) / FRAME_W) * BREEZE_MS)}ms`,
     transformOrigin: sway.origin,
   } as CSSProperties);
+  // From the middle of the foot: a flipped tree is mirrored about its middle, as without wind.
+  const windStyle = wind && ({ '--nb-wind': WIND, '--nb-wind-ms': `${wind.ms}ms`, '--nb-wind-delay': `${wind.delay}ms`, transformOrigin: '50% 100%' } as CSSProperties);
   const img = (
     <img
       alt={alt}
       src={A(file)}
-      className={`absolute max-w-none object-cover ${flip ? '-scale-x-100' : ''} ${sway ? 'nb-sway' : ''}`}
-      style={{ left: x, top: y, width: w, height: h, ...swayStyle }}
+      className={`absolute max-w-none object-cover ${flip ? '-scale-x-100' : ''} ${sway ? 'nb-sway' : ''} ${wind ? 'nb-wind' : ''}`}
+      style={{ left: x, top: y, width: w, height: h, ...swayStyle, ...windStyle }}
     />
   );
   if (!depth) return img;
@@ -875,12 +891,13 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
             Depth: the house sits furthest back and the trees a little nearer, both drifting
             slower than the page; the lake, boat and ducks are the ground and stay put; the lamps
             hang in front and drift faster. The forests behind stay put too: the Resepsi card's
-            text is drawn over them (see Scene). The trees sway from the foot of the trunk; cut
-            off just outside the frame's edges, they stay outside it as they tip. */}
+            text is drawn over them (see Scene). The trees bend in the wind, out of step: only
+            outward, so their crowns never reach the Resepsi card and the edges cut off just
+            beyond the frame stay beyond it. */}
         <Scene box={[-12, 1256, 390, 225]}>
           <Img file="house.webp" x={94} y={1349} w={207} h={132} depth={6} />
-          <Img file="tree.webp" x={-12} y={1256} w={150} h={225} depth={4} sway={{ deg: 0.6, ms: 10000, origin: '50% 100%' }} />
-          <Img file="tree.webp" x={228} y={1256} w={150} h={225} flip depth={4} sway={{ deg: 0.6, ms: 11000, origin: '50% 100%' }} />
+          <Img file="tree.webp" x={-12} y={1256} w={150} h={225} depth={4} wind={{ ms: 7300, delay: 0 }} />
+          <Img file="tree.webp" x={228} y={1256} w={150} h={225} flip depth={4} wind={{ ms: 8900, delay: 2600 }} />
         </Scene>
         <Img file="duck.webp" x={42} y={1506} w={49} h={33} />
         <Img file="duck.webp" x={8} y={1555} w={68} h={45} />
