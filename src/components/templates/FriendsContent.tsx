@@ -1,4 +1,4 @@
-import { Fragment, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useContext, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { parseIsoDate } from '../../invitations/dates';
 import { MAX_MESSAGE, MAX_NAME, timeAgo, useRsvpForm, useWishes, type Attendance, type SendError, type Wish, type WishesState } from '../../invitations/rsvp';
 import type { FriendsInvitation } from '../../invitations/types';
@@ -355,11 +355,23 @@ const bandColour = (() => {
   return `rgba(${c(251, 255)},${c(218, 252)},${c(67, 238)},${(1 - t).toFixed(3)})`;
 })();
 
-/** Layers below the wishes band, moved down by its height `by`; untouched when there is no band. */
-function ShiftDown({ by, children }: { by: number; children: ReactNode }) {
+// With no gifts at all, the whole "Gifting" stretch (the title down to the bottom of the yellow
+// frame) is left out and everything below it moves up.
+const GIFTS_TOP = 4680;
+const GIFTS_H = 5290 - GIFTS_TOP;
+// With only one gift option, it moves to the middle of the frame (its inside is 4799–5234).
+const BANK_ALONE_SHIFT = 106;
+const DELIVERY_ALONE_SHIFT = -100;
+
+/**
+ * Layers moved down by `by` frame px (or up, when negative), e.g. everything below the wishes
+ * band; their reveals move with them. No wrapper at all when `by` is 0.
+ */
+function Shift({ by, children }: { by: number; children: ReactNode }) {
+  const offset = useContext(RevealOffset);
   if (!by) return <>{children}</>;
   return (
-    <RevealOffset.Provider value={by}>
+    <RevealOffset.Provider value={offset + by}>
       <div className="absolute left-0 top-0 *:pointer-events-auto" style={{ width: FRAME_W, height: FRAME_H, transform: `translateY(${by}px)`, pointerEvents: 'none' }}>
         {children}
       </div>
@@ -422,13 +434,16 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
   // The wishes band: the couple's guests' wishes, or a demo's samples. (Without either, e.g. a
   // page with neither a slug nor demo data, the frame is Figma's exactly.)
   const shift = slug || inv.demo ? WISHES_H : 0;
-  const frameH = FRAME_H + shift;
+  const { bank, giftDelivery: gift } = inv;
+  const hasGifts = Boolean(bank || gift);
+  // Everything below the gifts: down by the band, and up by the gifts when there are none.
+  const closingShift = shift - (hasGifts ? 0 : GIFTS_H);
+  const frameH = FRAME_H + closingShift;
   const weddingDate = formatDate(inv.date);
   const photos = useMemo(() => lightboxPhotos(inv), [inv]);
   const theme = useMemo(() => lightboxTheme(inv), [inv]);
   // Polaroids are drawn bottom of the stack first.
   const [topPolaroid, middlePolaroid, bottomPolaroid] = inv.polaroids;
-  const gift = inv.giftDelivery;
   const titleFit = useFit<HTMLHeadingElement>(FIT.title);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -474,20 +489,26 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         ) : (
           <div className="absolute left-0 top-[3106px] h-[2245px] w-[376px]" style={{ backgroundImage: yellowGradient }} />
         )}
-        <ShiftDown by={shift}>
+        <Shift by={shift}>
           {shift > 0 && (
             <div className="absolute left-0 w-[376px] overflow-hidden" style={{ top: WISHES_Y, height: GRADIENT_TOP + GRADIENT_H - WISHES_Y }}>
               <div className="w-full" style={{ height: GRADIENT_H, marginTop: GRADIENT_TOP - WISHES_Y, backgroundImage: yellowGradient }} />
             </div>
           )}
+        </Shift>
+        {/* Without gifts the venue moves up with the closing; the couple photo strip then covers
+            its top, so the same part of it shows as under the gift frame. */}
+        <Shift by={closingShift}>
           <Img file="snowy-venue.webp" x={-56} y={4949} w={486} h={729} className="opacity-88" />
           <div className="absolute left-0 top-[5336px] h-[354px] w-[376px] bg-gradient-to-b from-[rgba(255,255,255,0)] to-white to-[80.288%]" />
-        </ShiftDown>
+        </Shift>
 
         {/* ===== Background doodles ===== */}
-        <ShiftDown by={shift}>
-          <Img file="gift-icons.svg" x={-8} y={4723} w={392.567} h={533.557} />
-        </ShiftDown>
+        {hasGifts && (
+          <Shift by={shift}>
+            <Img file="gift-icons.svg" x={-8} y={4723} w={392.567} h={533.557} />
+          </Shift>
+        )}
         <Reveal at={887} kind="pop" origin={[57.5, 1012]} delay={300}>
           <Img file="lily-1.webp" x={-12} y={887} w={139} h={250} />
         </Reveal>
@@ -682,69 +703,85 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         </Reveal>
         {shift > 0 && <WishesBand wishes={wishes} />}
 
-        <ShiftDown by={shift}>
         {/* ===== Gifting ===== */}
-        <Reveal at={4690} kind="fadeUp">
-          <Centered cx={189.5} cy={4699} className={`${friendsTitle} text-[18px] leading-[20px] text-[#a07eb9]`}>Gifting</Centered>
-        </Reveal>
-        <Reveal at={4715} kind="fadeUp" delay={120}>
-          <Centered cx={188.5} cy={4729} className="ff-f72-soft text-[12px] leading-[15px] tracking-[-0.017em] text-[#181719]">
-            Your prayers and good wishes mean so much to us.
-            <br />
-            If you’d like to send us a gift, you can do so here:
-          </Centered>
-        </Reveal>
+        {hasGifts && (
+          <Shift by={shift}>
+            <Reveal at={4690} kind="fadeUp">
+              <Centered cx={189.5} cy={4699} className={`${friendsTitle} text-[18px] leading-[20px] text-[#a07eb9]`}>Gifting</Centered>
+            </Reveal>
+            <Reveal at={4715} kind="fadeUp" delay={120}>
+              <Centered cx={188.5} cy={4729} className="ff-f72-soft text-[12px] leading-[15px] tracking-[-0.017em] text-[#181719]">
+                Your prayers and good wishes mean so much to us.
+                <br />
+                If you’d like to send us a gift, you can do so here:
+              </Centered>
+            </Reveal>
 
-        {/* The ornate yellow frame around both gift options */}
-        <Reveal at={4756} kind="fadeUp" delay={150}>
-          <div className="absolute left-[37px] top-[4799px] h-[435px] w-[299px] bg-[#fff1c2]" />
-          <Img file="gift-frame.webp" x={14} y={4756} w={348} h={522} />
-        </Reveal>
+            {/* The ornate yellow frame around the gift options */}
+            <Reveal at={4756} kind="fadeUp" delay={150}>
+              <div className="absolute left-[37px] top-[4799px] h-[435px] w-[299px] bg-[#fff1c2]" />
+              <Img file="gift-frame.webp" x={14} y={4756} w={348} h={522} />
+            </Reveal>
 
-        <Reveal at={4844} kind="fadeUp" delay={250}>
-          <Centered cx={189} cy={4854} className={`${friendsTitle} text-[18px] leading-[20px] text-[#cd5524]`}>Bank transfer</Centered>
-          <Centered cx={188.5} cy={4886} className="ff-fraunces font-bold text-[20px] leading-[20px] tracking-[-0.017em] text-[#363636]" fit={FIT.gift}>{inv.bank.bank}</Centered>
-          <Centered cx={187.5} cy={4914} className="ff-fraunces text-[30px] leading-[20px] text-[#363636]" fit={FIT.gift}>{inv.bank.number}</Centered>
-          {/* Copied without spaces or dashes, so it pastes straight into a banking app. */}
-          <CopyButton x={156} y={4934} label="Copy account number" text={inv.bank.number.replace(/[\s-]/g, '')} />
-          <Centered cx={188.5} cy={4968.5} className="font-['Raleway'] text-[10px] leading-[15px] tracking-[-0.17px] text-[#363636]" fit={FIT.gift}>{inv.bank.holder}</Centered>
-        </Reveal>
+            {bank && (
+              <Shift by={gift ? 0 : BANK_ALONE_SHIFT}>
+                <Reveal at={4844} kind="fadeUp" delay={250}>
+                  <Centered cx={189} cy={4854} className={`${friendsTitle} text-[18px] leading-[20px] text-[#cd5524]`}>Bank transfer</Centered>
+                  <Centered cx={188.5} cy={4886} className="ff-fraunces font-bold text-[20px] leading-[20px] tracking-[-0.017em] text-[#363636]" fit={FIT.gift}>{bank.bank}</Centered>
+                  <Centered cx={187.5} cy={4914} className="ff-fraunces text-[30px] leading-[20px] text-[#363636]" fit={FIT.gift}>{bank.number}</Centered>
+                  {/* Copied without spaces or dashes, so it pastes straight into a banking app. */}
+                  <CopyButton x={156} y={4934} label="Copy account number" text={bank.number.replace(/[\s-]/g, '')} />
+                  <Centered cx={188.5} cy={4968.5} className="font-['Raleway'] text-[10px] leading-[15px] tracking-[-0.17px] text-[#363636]" fit={FIT.gift}>{bank.holder}</Centered>
+                </Reveal>
+              </Shift>
+            )}
 
-        {/* Two lilies between the options: Figma's 22.1 × 37.2 lily, turned (and mirrored) about its box centre. */}
-        <Reveal at={4982} kind="pop" origin={[188.1, 5001.6]} delay={300}>
-          <div className="absolute" style={{ left: 205.66 - 11.054, top: 5001.621 - 18.588, width: 22.108, height: 37.176, transform: 'rotate(57.14deg)' }}>
-            <img alt="" src={A('lily-2.webp')} className={fill} />
-          </div>
-          <div className="absolute" style={{ left: 170.61 - 11.054, top: 5001.621 - 18.588, width: 22.108, height: 37.176, transform: 'rotate(-57.14deg) scaleX(-1)' }}>
-            <img alt="" src={A('lily-2.webp')} className={fill} />
-          </div>
-        </Reveal>
+            {/* Two lilies between the options: Figma's 22.1 × 37.2 lily, turned (and mirrored) about its box centre. */}
+            {bank && gift && (
+              <Reveal at={4982} kind="pop" origin={[188.1, 5001.6]} delay={300}>
+                <div className="absolute" style={{ left: 205.66 - 11.054, top: 5001.621 - 18.588, width: 22.108, height: 37.176, transform: 'rotate(57.14deg)' }}>
+                  <img alt="" src={A('lily-2.webp')} className={fill} />
+                </div>
+                <div className="absolute" style={{ left: 170.61 - 11.054, top: 5001.621 - 18.588, width: 22.108, height: 37.176, transform: 'rotate(-57.14deg) scaleX(-1)' }}>
+                  <img alt="" src={A('lily-2.webp')} className={fill} />
+                </div>
+              </Reveal>
+            )}
 
-        <Reveal at={5025} kind="fadeUp">
-          <Centered cx={189} cy={5035} className={`${friendsTitle} text-[18px] leading-[20px] text-[#cd5524]`}>Gift Delivery</Centered>
-          <Centered cx={188.5} cy={5064.5} className="ff-f72-soft text-[12px] leading-[15px] tracking-[-0.017em] text-[#181719]">
-            Want to send us a gift?
-            <br />
-            You can send it to the address below.
-          </Centered>
-        </Reveal>
-        <Reveal at={5084} kind="fadeUp" delay={150}>
-          {/* Name and address sit 10px higher than in Figma to make room above the frame's bottom
-              ornament for a Copy button like the bank one (Figma has none). */}
-          <Centered cx={189.5} cy={5094} className="ff-fraunces font-bold text-[25px] leading-[20px] tracking-[-0.017em] text-[#363636]" fit={FIT.gift}>{gift.name}</Centered>
-          <Centered cx={190} cy={5145.5} className="ff-fraunces text-[10px] leading-[15px] tracking-[-0.017em] text-[#363636]" fit={FIT.address}>
-            <Lines lines={gift.addressLines} />
-          </Centered>
-          <CopyButton x={156} y={5185} label="Copy address" text={[gift.name, ...gift.addressLines].map((l) => l.replace(/,$/, '')).join(', ')} />
-        </Reveal>
+            {gift && (
+              <Shift by={bank ? 0 : DELIVERY_ALONE_SHIFT}>
+                <Reveal at={5025} kind="fadeUp">
+                  <Centered cx={189} cy={5035} className={`${friendsTitle} text-[18px] leading-[20px] text-[#cd5524]`}>Gift Delivery</Centered>
+                  <Centered cx={188.5} cy={5064.5} className="ff-f72-soft text-[12px] leading-[15px] tracking-[-0.017em] text-[#181719]">
+                    Want to send us a gift?
+                    <br />
+                    You can send it to the address below.
+                  </Centered>
+                </Reveal>
+                <Reveal at={5084} kind="fadeUp" delay={150}>
+                  {/* Name and address sit 10px higher than in Figma to make room above the frame's bottom
+                      ornament for a Copy button like the bank one (Figma has none). */}
+                  <Centered cx={189.5} cy={5094} className="ff-fraunces font-bold text-[25px] leading-[20px] tracking-[-0.017em] text-[#363636]" fit={FIT.gift}>{gift.name}</Centered>
+                  <Centered cx={190} cy={5145.5} className="ff-fraunces text-[10px] leading-[15px] tracking-[-0.017em] text-[#363636]" fit={FIT.address}>
+                    <Lines lines={gift.addressLines} />
+                  </Centered>
+                  <CopyButton x={156} y={5185} label="Copy address" text={[gift.name, ...gift.addressLines].map((l) => l.replace(/,$/, '')).join(', ')} />
+                </Reveal>
+              </Shift>
+            )}
+          </Shift>
+        )}
 
+        <Shift by={shift}>
         {/* ===== Couple photo strip ===== */}
         <Reveal at={4276} kind="fade" delay={100}>
           <Img src={inv.couplePhoto} x={0} y={4276} w={376} h={376} alt={inv.coupleNames} />
           <Transformed m={[1, 0.006, -0.08, 0.006, -1, 4277.936]} w={375.062} h={25.936}><img alt="" src={A('scallop.svg')} className={fill} /></Transformed>
           <Transformed m={[1, 0.006, -0.08, -0.006, 1, 4647.349]} w={375.062} h={25.936}><img alt="" src={A('scallop.svg')} className={fill} /></Transformed>
         </Reveal>
+        </Shift>
 
+        <Shift by={closingShift}>
         {/* ===== Closing note on torn paper ===== */}
         <Reveal at={5496} kind="fadeUp">
           {/* Figma's 200 × 316 paper, turned 90° about the centre of its 316 × 200 box. */}
@@ -765,16 +802,16 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
             {inv.closing.signature}
           </Centered>
         </Reveal>
-        </ShiftDown>
+        </Shift>
 
         <Reveal at={666} kind="pop" origin={[187.5, 713.5]} delay={900}>
           <Img file="turkey-dance.webp" x={142} y={666} w={91} h={95} />
         </Reveal>
 
         {/* ===== Made with love by nicemice (no edge in Figma: the white gradient fades into it) ===== */}
-        <ShiftDown by={shift}>
+        <Shift by={closingShift}>
           <MadeWithLoveFooter y={5715} bgTop={5690} frameH={FRAME_H} background="#fefffa" />
-        </ShiftDown>
+        </Shift>
       </div>
 
       {galleryOpen && <PhotoLightbox photos={photos} start={0} theme={theme} onClose={() => setGalleryOpen(false)} />}

@@ -96,8 +96,10 @@ export interface FriendsInvitation extends InvitationBase {
   reception: { time: string };
   /** The square photo between the RSVP form and the gifts. */
   couplePhoto: Photo;
-  bank: BankAccount;
-  giftDelivery: GiftDelivery;
+  /** Leave out to hide "Bank transfer" (with both gifts left out, the whole "Gifting" part). */
+  bank?: BankAccount;
+  /** Leave out to hide "Gift Delivery". */
+  giftDelivery?: GiftDelivery;
   closing: { text: string; signature: string };
 }
 

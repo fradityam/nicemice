@@ -52,6 +52,8 @@ const invitation: FriendsInvitation = {
   ceremony: { time: '10.00 - 11.00 WIB' },
   reception: { time: '13.00 - 16.00 WIB' },
   couplePhoto: file('couple.webp'), // square
+  // Gifts: leave out `bank` or `giftDelivery` to hide that option (the other moves to the middle
+  // of the yellow frame); leave out both to hide the whole "Gifting" part.
   bank: { bank: 'Bank BCA', number: '123456789', holder: 'a.n. Raditya M Fadil' },
   giftDelivery: {
     name: 'Ratu R',
