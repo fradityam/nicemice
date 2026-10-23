@@ -118,20 +118,11 @@ function introStyle({ revealed, reducedMotion, done }: IntroState): CSSPropertie
 }
 
 /**
- * A plant swaying in the breeze (notebook.css): it tips `deg` (clockwise when positive) about
- * `origin` and back, once every `ms`. Only ever to one side of its Figma position, so a plant cut
- * off at the frame's edge always tips its cut away from the page.
+ * A plant in the wind (notebook.css), which blows from right to left: `keyframes` (nb-breeze, …)
+ * at `deg` (degrees of skew at a full gust, or for a nod the dip in percent), one round every
+ * `ms`, `delay` ms behind the page's clock (see Scene), bending about `origin`.
  */
-type Sway = { deg: number; ms: number; origin: string };
-
-// The breeze crosses the page from left to right: plants further right start a little later.
-const BREEZE_MS = 1200;
-
-/**
- * Wind in a tree (notebook.css), blowing from right to left: the tree it bends fully (`lead`, the
- * left one) or the right one (`rustle`), whose image is cut off just beyond the frame.
- */
-type Wind = 'lead' | 'rustle';
+type Wind = { keyframes: string; deg: number; ms: number; delay: number; origin: string };
 
 // How the wind blows in the trees: `deg` of skew at a full gust in the left tree, one round of it
 // every `ms`, as one slow, even swell (`breeze`: its crown moves about 4px per degree) or sharper
@@ -151,32 +142,45 @@ const WIND = (() => {
   return asked && asked in WIND_STRENGTHS ? WIND_STRENGTHS[asked as keyof typeof WIND_STRENGTHS] : WIND_STRENGTHS.breeze;
 })();
 
+/** The left tree's wind (`lead`) or the right one's, which it reaches first. */
+const treeWind = (lead: boolean): Wind => ({
+  // In the breeze both trees take the same swell; in the sharper gusts the right one rustles.
+  keyframes: lead || WIND.shape === 'breeze' ? `nb-${WIND.shape}` : 'nb-gust-rustle',
+  deg: lead ? WIND.deg : WIND.rustle,
+  ms: WIND.ms,
+  delay: lead ? WIND.lag : 0,
+  // From the middle of the foot: a flipped tree is mirrored about its middle, as without wind.
+  origin: '50% 100%',
+});
+
+// The lilies in the same breeze as the trees, a little lighter, from where their stems leave the
+// frame. The right one, which the wind reaches 0.4s before the left, is cut off right at the
+// frame's edge, so it only nods (its top dips 1–3px); the left one leans its top 2–7px left, out
+// over its own edge.
+const LILY_WIND = {
+  right: { keyframes: 'nb-breeze-nod', deg: 1.5, ms: WIND_STRENGTHS.breeze.ms, delay: 0, origin: '100% 81%' },
+  left: { keyframes: 'nb-breeze', deg: 1.66, ms: WIND_STRENGTHS.breeze.ms, delay: 400, origin: '0% 77%' },
+} satisfies Record<string, Wind>;
+
 /**
  * Plain image layer at a Figma box, object-cover like the Figma fill. Inside a Scene it can drift
  * at its own `depth` as it scrolls by (positive: further away, so slower than the page; negative:
- * nearer), and `sway` or bend in the `wind`.
+ * nearer), and move in the `wind`.
  */
-function Img({ file, x, y, w, h, flip, alt = '', depth, sway, wind }: { file: string; x: number; y: number; w: number; h: number; flip?: boolean; alt?: string; depth?: number; sway?: Sway; wind?: Wind }) {
-  const swayStyle = sway && ({
-    '--nb-sway': sway.deg,
-    '--nb-sway-ms': `${sway.ms}ms`,
-    '--nb-sway-delay': `${Math.round((Math.max(0, x) / FRAME_W) * BREEZE_MS)}ms`,
-    transformOrigin: sway.origin,
-  } as CSSProperties);
-  // From the middle of the foot: a flipped tree is mirrored about its middle, as without wind.
+function Img({ file, x, y, w, h, flip, alt = '', depth, wind }: { file: string; x: number; y: number; w: number; h: number; flip?: boolean; alt?: string; depth?: number; wind?: Wind }) {
   const windStyle = wind && ({
-    '--nb-wind': wind === 'lead' ? WIND.deg : WIND.rustle,
-    '--nb-wind-ms': `${WIND.ms}ms`,
-    '--nb-wind-delay': `${wind === 'lead' ? WIND.lag : 0}ms`,
-    '--nb-wind-name': `nb-${WIND.shape}${wind === 'rustle' ? '-rustle' : ''}`,
-    transformOrigin: '50% 100%',
+    '--nb-wind': wind.deg,
+    '--nb-wind-ms': `${wind.ms}ms`,
+    '--nb-wind-delay': `${wind.delay}ms`,
+    '--nb-wind-name': wind.keyframes,
+    transformOrigin: wind.origin,
   } as CSSProperties);
   const img = (
     <img
       alt={alt}
       src={A(file)}
-      className={`absolute max-w-none object-cover ${flip ? '-scale-x-100' : ''} ${sway ? 'nb-sway' : ''} ${wind ? 'nb-wind' : ''}`}
-      style={{ left: x, top: y, width: w, height: h, ...swayStyle, ...windStyle }}
+      className={`absolute max-w-none object-cover ${flip ? '-scale-x-100' : ''} ${wind ? 'nb-wind' : ''}`}
+      style={{ left: x, top: y, width: w, height: h, ...windStyle }}
     />
   );
   if (!depth) return img;
@@ -191,11 +195,11 @@ function Img({ file, x, y, w, h, flip, alt = '', depth, sway, wind }: { file: st
 const SCENE_MARGIN = 14;
 
 /**
- * Layers (Img with depth or sway) that move as one scene: each is exactly at its Figma position
- * whenever the scene's box is centred on screen, and they sway only while it is on screen. The
- * box also clips them, just around themselves: Chrome assumes a running animation may overlap
- * everything painted after it and would move that onto separate layers, so text painted later
- * would lose its sub-pixel smoothing. Keep text drawn after a Scene out of its box.
+ * Layers (Img with depth or wind) that move as one scene: each is exactly at its Figma position
+ * whenever the scene's box is centred on screen, and the wind moves them only while it is on
+ * screen. The box also clips them, just around themselves: Chrome assumes a running animation may
+ * overlap everything painted after it and would move that onto separate layers, so text painted
+ * later would lose its sub-pixel smoothing. Keep text drawn after a Scene out of its box.
  */
 function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, number]; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -207,7 +211,18 @@ function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, 
     const el = ref.current;
     const clip = el?.firstElementChild;
     if (!el || !clip) return;
-    const io = new IntersectionObserver(([entry]) => el.toggleAttribute('data-in-view', entry.isIntersecting));
+    // The wind runs on one clock for the whole page: whenever a scene comes on screen its plants
+    // carry on as if they had never stopped, so plants in different scenes keep their offsets.
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        const winds = el.getAnimations({ subtree: true }).filter((a) => a instanceof CSSAnimation && /^nb-(gust|breeze)/.test(a.animationName));
+        for (const a of winds) {
+          if (entry.isIntersecting) a.startTime = 0;
+          else a.pause();
+        }
+      },
+      { rootMargin: '100px 0px' },
+    );
     io.observe(clip);
     return () => io.disconnect();
   }, []);
@@ -912,8 +927,8 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
             only as far as keeps its edge, cut off just beyond the frame, beyond it. */}
         <Scene box={[-12, 1256, 390, 225]}>
           <Img file="house.webp" x={94} y={1349} w={207} h={132} depth={6} />
-          <Img file="tree.webp" x={-12} y={1256} w={150} h={225} depth={4} wind="lead" />
-          <Img file="tree.webp" x={228} y={1256} w={150} h={225} flip depth={4} wind="rustle" />
+          <Img file="tree.webp" x={-12} y={1256} w={150} h={225} depth={4} wind={treeWind(true)} />
+          <Img file="tree.webp" x={228} y={1256} w={150} h={225} flip depth={4} wind={treeWind(false)} />
         </Scene>
         <Img file="duck.webp" x={42} y={1506} w={49} h={33} />
         <Img file="duck.webp" x={8} y={1555} w={68} h={45} />
@@ -1077,14 +1092,14 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
           {/* ===== Closing flower arch =====
               Depth: the lilies and the bushes are nearest, drifting faster than the page; the
               arch and the forests behind it stay put. The lilies, cut off at the frame's edges,
-              sway about the point where their stems leave the frame, tipping their cut away from
-              the page. Nothing with text is drawn over the moving lilies or the arch above them (see
+              move in the same breeze as the trees (see LILY_WIND), about the point where their
+              stems leave the frame. Nothing with text is drawn over the moving lilies or the arch above them (see
               Scene): the closing words and the footer's credit come earlier, under them, where
               none of them reach. */}
           <Shift by={closingShift} from={3370}>
             <Reveal at={3389} kind="pop" origin={[309.5, 3638]} delay={300}>
               <Scene box={[244, 3389, 131, 249.393]}>
-                <Img file="lily-1.webp" x={244} y={3389} w={131} h={249.393} depth={-8} sway={{ deg: 1, ms: 7000, origin: '100% 81%' }} />
+                <Img file="lily-1.webp" x={244} y={3389} w={131} h={249.393} depth={-8} wind={LILY_WIND.right} />
               </Scene>
             </Reveal>
           </Shift>
@@ -1092,7 +1107,7 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
           {bank && (
             <Reveal at={3019} kind="pop" origin={[72.9, 3333]} delay={300}>
               <Scene box={[0, 3019, 145.808, 314.55]}>
-                <Img file="lily-2.webp" x={0} y={3019} w={145.808} h={314.55} depth={-6} sway={{ deg: -1, ms: 8500, origin: '0% 77%' }} />
+                <Img file="lily-2.webp" x={0} y={3019} w={145.808} h={314.55} depth={-6} wind={LILY_WIND.left} />
               </Scene>
             </Reveal>
           )}
