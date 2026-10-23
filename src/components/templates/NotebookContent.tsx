@@ -128,22 +128,24 @@ type Sway = { deg: number; ms: number; origin: string };
 const BREEZE_MS = 1200;
 
 /**
- * Wind in a tree (notebook.css), blowing from right to left: the tree it bends (`lead`, the left
- * one) or the one it only rustles a moment later (`rustle`, the right one).
+ * Wind in a tree (notebook.css), blowing from right to left: the tree it bends fully (`lead`, the
+ * left one) or the right one (`rustle`), whose image is cut off just beyond the frame.
  */
 type Wind = 'lead' | 'rustle';
 
-// How the wind blows in the trees: `deg` of skew at a full gust, one round of it every `ms`, as one
-// slow, even swell (`breeze`: the left tree's crown moves about 4px per degree) or sharper gusts
-// with a tilt (`gust`: about 5px per degree). The rustling tree moves RUSTLE of that. Locally,
-// ?wind=subtle, ?wind=breeze, ?wind=medium or ?wind=strong on the URL tries each.
+// How the wind blows in the trees: `deg` of skew at a full gust in the left tree, one round of it
+// every `ms`, as one slow, even swell (`breeze`: its crown moves about 4px per degree) or sharper
+// gusts with a tilt (`gust`: about 5px per degree). `rustle` is the right tree's skew: negative
+// bends it left with the wind (at most 0.68°: its cut edge, 3px beyond the frame, moves 2.5px in
+// at the top), positive only rustles it outward. The left tree starts `lag` ms after the right
+// one, which the wind reaches first. Locally, ?wind=subtle, ?wind=breeze, ?wind=medium or
+// ?wind=strong on the URL tries each.
 const WIND_STRENGTHS = {
-  subtle: { deg: 2, ms: 7300, shape: 'gust' },
-  breeze: { deg: 2.8, ms: 9000, shape: 'breeze' },
-  medium: { deg: 3.5, ms: 7300, shape: 'gust' },
-  strong: { deg: 6, ms: 7300, shape: 'gust' },
+  subtle: { deg: 2, ms: 7300, shape: 'gust', rustle: 0.44, lag: 0 },
+  breeze: { deg: 2.8, ms: 9000, shape: 'breeze', rustle: -0.68, lag: 300 },
+  medium: { deg: 3.5, ms: 7300, shape: 'gust', rustle: 0.77, lag: 0 },
+  strong: { deg: 6, ms: 7300, shape: 'gust', rustle: 1.32, lag: 0 },
 };
-const RUSTLE = 0.22;
 const WIND = (() => {
   const asked = import.meta.env.DEV ? new URLSearchParams(window.location.search).get('wind') : null;
   return asked && asked in WIND_STRENGTHS ? WIND_STRENGTHS[asked as keyof typeof WIND_STRENGTHS] : WIND_STRENGTHS.breeze;
@@ -163,8 +165,9 @@ function Img({ file, x, y, w, h, flip, alt = '', depth, sway, wind }: { file: st
   } as CSSProperties);
   // From the middle of the foot: a flipped tree is mirrored about its middle, as without wind.
   const windStyle = wind && ({
-    '--nb-wind': wind === 'lead' ? WIND.deg : WIND.deg * RUSTLE,
+    '--nb-wind': wind === 'lead' ? WIND.deg : WIND.rustle,
     '--nb-wind-ms': `${WIND.ms}ms`,
+    '--nb-wind-delay': `${wind === 'lead' ? WIND.lag : 0}ms`,
     '--nb-wind-name': `nb-${WIND.shape}${wind === 'rustle' ? '-rustle' : ''}`,
     transformOrigin: '50% 100%',
   } as CSSProperties);
@@ -904,9 +907,9 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
             Depth: the house sits furthest back and the trees a little nearer, both drifting
             slower than the page; the lake, boat and ducks are the ground and stay put; the lamps
             hang in front and drift faster. The forests behind stay put too: the Resepsi card's
-            text is drawn over them (see Scene). The wind blows from right to left: it bends the
-            left tree away from the Resepsi card and only rustles the right one, so neither crown
-            ever reaches the card, and the edges cut off just beyond the frame stay beyond it. */}
+            text is drawn over them (see Scene). The wind blows from right to left and bends both
+            trees, drawn over the Resepsi card as in Figma: the left one fully, the right one
+            only as far as keeps its edge, cut off just beyond the frame, beyond it. */}
         <Scene box={[-12, 1256, 390, 225]}>
           <Img file="house.webp" x={94} y={1349} w={207} h={132} depth={6} />
           <Img file="tree.webp" x={-12} y={1256} w={150} h={225} depth={4} wind="lead" />
