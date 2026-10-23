@@ -21,7 +21,8 @@ const invitation: FriendsInvitation = {
   music: file('music.mp3'), // or null for no music
 
   date: '2027-09-27', // YYYY-MM-DD, shown as "27 September 2027"
-  coverPhoto: file('cover.webp'), // square, the couple close up: shown as a circle
+  coverPhoto: file('cover.webp'), // square, the couple close up: shown as a circle, and as the WhatsApp link preview
+  // shareImage: file('share.jpg'), // optional, 1200×630: a large WhatsApp preview instead of the square thumbnail
   doodle: { lines: ['we can have', 'any future', 'you want!'], signature: '-Mike' }, // [3 lines of ~12]
   groom: {
     name: 'Raditya M Fadil', // [about 18 characters]

@@ -1,3 +1,4 @@
+import { slugFromFile } from './slugs';
 import type { Invitation } from './types';
 
 // Every couple is one file in src/couples/: radit-ratu.ts is nicemice.id/radit-ratu. Files
@@ -8,19 +9,10 @@ import type { Invitation } from './types';
 
 const files = import.meta.glob<Invitation>('../couples/*.ts', { import: 'default' });
 
-/** Page names the site itself uses; a couple can't have these. */
-const RESERVED = new Set(['template', 'harga', 'faq', 'blog', 'testimoni', 'couples', 'assets', 'index']);
-const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
 const loaders = new Map<string, () => Promise<Invitation>>();
 for (const [path, load] of Object.entries(files)) {
-  const slug = path.slice('../couples/'.length, -'.ts'.length);
-  if (slug.startsWith('_')) continue;
-  if (!SLUG.test(slug) || RESERVED.has(slug)) {
-    console.error(`src/couples/${slug}.ts: use lowercase letters, numbers and dashes, and not one of: ${[...RESERVED].join(', ')}`);
-    continue;
-  }
-  loaders.set(slug, load);
+  const slug = slugFromFile(path.slice('../couples/'.length, -'.ts'.length));
+  if (slug) loaders.set(slug, load);
 }
 
 /** The couple's invitation, or null when no couple has this slug. */

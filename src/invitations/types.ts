@@ -18,6 +18,11 @@ export interface InvitationBase {
   /** The song, e.g. '/couples/radit-ratu/music.mp3'; null hides the music button. */
   music: string | null;
   /**
+   * Optional: a 1200×630 photo for a large WhatsApp link preview. Without it the preview
+   * shows the cover photo as a small square thumbnail.
+   */
+  shareImage?: Photo;
+  /**
    * Demo pages only: the cover keeps its sample guest name, the RSVP form doesn't send
    * anything, and there is a link back to the nicemice homepage.
    */

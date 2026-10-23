@@ -20,6 +20,18 @@
     <title>Nice Mice - Undangan Pernikahan Digital yang Kamu Banget</title>
     <!-- The price placeholder is filled in from PRICING in src/content/homeInfo.ts (see vite.config.ts). -->
     <meta name="description" content="Undangan pernikahan digital dengan tema yang kamu banget. Pilih tema, kirim detail acara, dan tim Nice Mice siapkan sampai siap disebar. Mulai %PROMO_PRICE%." />
+    <!-- Link previews (WhatsApp, …). On a couple's page the Worker (worker/index.ts) swaps in
+         their names, date and photo. Image URLs must be absolute. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Nice Mice" />
+    <meta property="og:title" content="Nice Mice - Undangan Pernikahan Digital yang Kamu Banget" />
+    <meta property="og:description" content="Undangan pernikahan digital dengan tema yang kamu banget. Pilih tema, kirim detail acara, dan tim Nice Mice siapkan sampai siap disebar. Mulai %PROMO_PRICE%." />
+    <meta property="og:image" content="https://nicemice.id/og-default.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Nice Mice" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body class="bg-[#FAF9F6] text-zinc-800 antialiased font-sans">
     <div id="root"></div>
