@@ -128,17 +128,25 @@ type Sway = { deg: number; ms: number; origin: string };
 const BREEZE_MS = 1200;
 
 /**
- * Wind in a tree (notebook.css): gusts bend it outward from the foot of its trunk, one round of
- * gusts every `ms`, starting `delay` ms after it comes on screen (so two trees stay out of step).
+ * Wind in a tree (notebook.css), blowing from right to left: the tree it bends (`lead`, the left
+ * one) or the one it only rustles a moment later (`rustle`, the right one).
  */
-type Wind = { ms: number; delay: number };
+type Wind = 'lead' | 'rustle';
 
-// How hard the wind blows in the trees: degrees of skew at a full gust. Locally, ?wind=subtle,
-// ?wind=medium or ?wind=strong on the URL tries the others.
-const WIND_STRENGTHS = { subtle: 2, medium: 3.5, strong: 6 };
+// How the wind blows in the trees: `deg` of skew at a full gust (the left tree's crown moves about
+// 5px per degree), one round of it every `ms`, as soft swells with a constant flutter (`breeze`)
+// or sharper gusts (`gust`). The rustling tree moves RUSTLE of that. Locally, ?wind=subtle,
+// ?wind=breeze, ?wind=medium or ?wind=strong on the URL tries each.
+const WIND_STRENGTHS = {
+  subtle: { deg: 2, ms: 7300, shape: 'gust' },
+  breeze: { deg: 2.6, ms: 4400, shape: 'breeze' },
+  medium: { deg: 3.5, ms: 7300, shape: 'gust' },
+  strong: { deg: 6, ms: 7300, shape: 'gust' },
+};
+const RUSTLE = 0.22;
 const WIND = (() => {
   const asked = import.meta.env.DEV ? new URLSearchParams(window.location.search).get('wind') : null;
-  return asked && asked in WIND_STRENGTHS ? WIND_STRENGTHS[asked as keyof typeof WIND_STRENGTHS] : WIND_STRENGTHS.medium;
+  return asked && asked in WIND_STRENGTHS ? WIND_STRENGTHS[asked as keyof typeof WIND_STRENGTHS] : WIND_STRENGTHS.breeze;
 })();
 
 /**
@@ -154,7 +162,12 @@ function Img({ file, x, y, w, h, flip, alt = '', depth, sway, wind }: { file: st
     transformOrigin: sway.origin,
   } as CSSProperties);
   // From the middle of the foot: a flipped tree is mirrored about its middle, as without wind.
-  const windStyle = wind && ({ '--nb-wind': WIND, '--nb-wind-ms': `${wind.ms}ms`, '--nb-wind-delay': `${wind.delay}ms`, transformOrigin: '50% 100%' } as CSSProperties);
+  const windStyle = wind && ({
+    '--nb-wind': wind === 'lead' ? WIND.deg : WIND.deg * RUSTLE,
+    '--nb-wind-ms': `${WIND.ms}ms`,
+    '--nb-wind-name': `nb-${WIND.shape}${wind === 'rustle' ? '-rustle' : ''}`,
+    transformOrigin: '50% 100%',
+  } as CSSProperties);
   const img = (
     <img
       alt={alt}
@@ -891,13 +904,13 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
             Depth: the house sits furthest back and the trees a little nearer, both drifting
             slower than the page; the lake, boat and ducks are the ground and stay put; the lamps
             hang in front and drift faster. The forests behind stay put too: the Resepsi card's
-            text is drawn over them (see Scene). The trees bend in the wind, out of step: only
-            outward, so their crowns never reach the Resepsi card and the edges cut off just
-            beyond the frame stay beyond it. */}
+            text is drawn over them (see Scene). The wind blows from right to left: it bends the
+            left tree away from the Resepsi card and only rustles the right one, so neither crown
+            ever reaches the card, and the edges cut off just beyond the frame stay beyond it. */}
         <Scene box={[-12, 1256, 390, 225]}>
           <Img file="house.webp" x={94} y={1349} w={207} h={132} depth={6} />
-          <Img file="tree.webp" x={-12} y={1256} w={150} h={225} depth={4} wind={{ ms: 7300, delay: 0 }} />
-          <Img file="tree.webp" x={228} y={1256} w={150} h={225} flip depth={4} wind={{ ms: 8900, delay: 2600 }} />
+          <Img file="tree.webp" x={-12} y={1256} w={150} h={225} depth={4} wind="lead" />
+          <Img file="tree.webp" x={228} y={1256} w={150} h={225} flip depth={4} wind="rustle" />
         </Scene>
         <Img file="duck.webp" x={42} y={1506} w={49} h={33} />
         <Img file="duck.webp" x={8} y={1555} w={68} h={45} />
