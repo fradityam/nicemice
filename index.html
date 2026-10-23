@@ -10,13 +10,9 @@
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&family=Big+Shoulders+Display:wght@700&family=Fasthand&family=Pompiere&family=Federo&family=Raleway:wght@400;500;600;700&family=Yeseva+One&family=La+Belle+Aurore&family=Open+Sans&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..700,0..100,0..1&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Josefin+Sans:wght@300;400&family=Josefin+Slab:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <!-- Homepage fonts (DM Sans, DM Mono, Libre Caslon Text) -->
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet" />
+    <!-- This page's fonts only (src/content/fonts.ts): the homepage's here; the Worker swaps in
+         a template's on its pages. -->
+    <link data-fonts href="%HOME_FONTS%" rel="stylesheet" />
     <!-- The homepage's title and description, filled in from src/content/seo.ts (see vite.config.ts).
          On the template demos the Worker (worker/index.ts) swaps in their own and adds a canonical. -->
     <title>%HOME_TITLE%</title>

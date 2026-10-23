@@ -1,6 +1,7 @@
 import { lazy, useEffect, useState, type ComponentType } from 'react';
 import { useParams } from 'react-router-dom';
 import { trackPageView } from '../analytics';
+import { loadFonts } from '../loadFonts';
 import { loadCouple } from '../invitations/couples';
 import type { Invitation, TemplateId } from '../invitations/types';
 import NotFoundPage from './NotFoundPage';
@@ -47,6 +48,7 @@ export default function CouplePage() {
     if (!invitation) return;
     const prev = document.title;
     document.title = `Undangan Pernikahan ${invitation.coupleNames}`;
+    loadFonts(invitation.template);
     trackPageView();
     return () => {
       document.title = prev;

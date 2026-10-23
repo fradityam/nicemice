@@ -93,6 +93,7 @@ export function sharePreviews(): Plugin {
 
           const date = formatDate(inv.date, lang);
           const preview: SharePreview = {
+            template: inv.template,
             title: `${inv.coupleNames} · ${date}`,
             greeting: inv.greeting,
             guestFallback: inv.guestFallback,

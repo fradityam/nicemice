@@ -1,7 +1,11 @@
+import type { TemplateId } from '../src/invitations/types';
+
 // What the build (scripts/sharePreviews.ts) writes to worker/og-data.json for every couple:
 // everything the link preview needs, already in the couple's language.
 
 export interface SharePreview {
+  /** The couple's template, for its fonts. */
+  template: TemplateId;
   /** e.g. 'Ratu & Radit · 27 September 2027' */
   title: string;
   /** The couple's own greeting, e.g. 'Kepada' or 'Dear'. */

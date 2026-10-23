@@ -1,3 +1,4 @@
+import { fontsHref, type FontSet } from '../src/content/fonts';
 import { canonicalUrl, normalizePath, NOINDEX_PATHS, pageSeo, REDIRECTS } from '../src/content/seo';
 import { HOMEPAGE_JSON_LD } from '../src/content/structuredData';
 import { guestNameFromSearch, MAX_GUEST_NAME } from '../src/invitations/guestNameText';
@@ -14,6 +15,7 @@ import type { OgData } from './ogData';
 //     link shows their names, date and photo, and noindex;
 //   - the app's other pages (hidden templates, "Segera Hadir"): noindex;
 //   - any other address: a 404 status and noindex, and the app shows its "not found" page.
+// Each also gets only the fonts that page uses (src/content/fonts.ts).
 // Old addresses in REDIRECTS get a 301 to the right page.
 
 interface Env {
@@ -47,6 +49,7 @@ export default {
       if (site.path === '/') extra.push(`<script type="application/ld+json">${HOMEPAGE_JSON_LD}</script>`);
       return withTags(page, {
         title: site.seo.title,
+        fonts: site.seo.theme ?? 'home',
         content: {
           'og:title': site.seo.title,
           'og:description': site.seo.description,
@@ -57,11 +60,11 @@ export default {
       });
     }
 
-    if (NOINDEX_PATHS.has(path)) return withTags(page, { extra: [NOINDEX] });
+    if (NOINDEX_PATHS.has(path)) return withTags(page, { fonts: 'other', extra: [NOINDEX] });
 
     const slug = path.match(/^\/([^/]+)$/)?.[1];
     const couple = slug && Object.hasOwn(ogData, slug) ? ogData[slug] : undefined;
-    if (!couple) return withTags(page, { extra: [NOINDEX], status: 404 });
+    if (!couple) return withTags(page, { fonts: 'other', extra: [NOINDEX], status: 404 });
 
     const room = MAX_DESCRIPTION - `${couple.greeting} , ${couple.invited}`.length;
     const guest = guestNameFromSearch(url.searchParams, Math.max(10, Math.min(MAX_GUEST_NAME, room))) ?? couple.guestFallback;
@@ -84,18 +87,24 @@ export default {
         'twitter:card': couple.image.width > couple.image.height ? 'summary_large_image' : 'summary',
       });
     }
-    return withTags(page, { title: couple.title, content, extra: ['<meta name="robots" content="noindex, nofollow" />'] });
+    return withTags(page, { title: couple.title, fonts: couple.template, content, extra: ['<meta name="robots" content="noindex, nofollow" />'] });
   },
 } satisfies ExportedHandler<Env>;
 
 /**
- * index.html with its <title> replaced (when given), the <meta> tags named in `content` set
- * (og: ones by property, the rest by name), `extra` tags added at the end of <head>, and the
- * given status.
+ * index.html with its <title> replaced (when given), the page's fonts, the <meta> tags named
+ * in `content` set (og: ones by property, the rest by name), `extra` tags added at the end of
+ * <head>, and the given status.
  */
 function withTags(
   page: Response,
-  { title, content = {}, extra = [], status = page.status }: { title?: string; content?: Record<string, string>; extra?: string[]; status?: number },
+  {
+    title,
+    fonts,
+    content = {},
+    extra = [],
+    status = page.status,
+  }: { title?: string; fonts: FontSet; content?: Record<string, string>; extra?: string[]; status?: number },
 ) {
   const missing = { ...content };
   const set = (el: Element) => {
@@ -109,6 +118,7 @@ function withTags(
   let rewriter = new HTMLRewriter();
   if (title !== undefined) rewriter = rewriter.on('title', { element: (el) => void el.setInnerContent(title) });
   return rewriter
+    .on('link[data-fonts]', { element: (el) => void el.setAttribute('href', fontsHref(fonts)) })
     .on('meta[property], meta[name]', { element: set })
     .on('head', {
       // Tags index.html doesn't have (og:url, the image size…) go at the end of <head>.

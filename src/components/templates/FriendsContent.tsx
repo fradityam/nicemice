@@ -471,7 +471,8 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         <div className="absolute left-0 top-[459px] h-[1587px] w-[377px]" style={{ backgroundColor: PURPLE }} />
         <Img file="fabric-texture.webp" x={1.01} y={676.8} w={378} h={1408.1} className="opacity-10" />
         <div className="absolute left-0 top-[-236px] h-[851px] w-[375px] overflow-hidden">
-          <img alt="" src={A('city-night.webp')} className="absolute left-0 top-0 block h-[109.05%] w-full max-w-none" />
+          {/* The largest thing on screen at first (the page's LCP): fetched before the rest. */}
+          <img alt="" src={A('city-night.webp')} fetchPriority="high" className="absolute left-0 top-0 block h-[109.05%] w-full max-w-none" />
         </div>
         <Img file="grass.webp" x={-113} y={492} w={602} h={243} />
         <div className="absolute left-0 top-[2018px] h-[1059px] w-[376px] bg-[#d64f16]" />

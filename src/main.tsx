@@ -5,6 +5,7 @@ import App from './App.tsx';
 import ComingSoonPage from './components/ComingSoonPage.tsx';
 import NotFoundPage from './components/NotFoundPage.tsx';
 import {track, trackPageView} from './analytics.ts';
+import {loadFonts} from './loadFonts.ts';
 import {PAGES, normalizePath, pageSeo} from './content/seo.ts';
 import {isCouple} from './invitations/couples.ts';
 import './index.css';
@@ -12,15 +13,17 @@ import './index.css';
 // The Worker writes each page's title and description into the HTML it serves, but moving
 // between pages inside the app doesn't ask it again. This keeps the tab title (and the
 // description) in step: the page's own text from content/seo.ts, or the homepage's elsewhere,
-// and counts the page view (and a demo's demo_view). A couple's page sets its own title and
-// counts its own view once its title is known (CouplePage.tsx).
+// loads the page's fonts, and counts the page view (and a demo's demo_view). A couple's page
+// does its own once its invitation is loaded (CouplePage.tsx).
 function PageMeta() {
   const {pathname} = useLocation();
   useEffect(() => {
-    const seo = pageSeo(pathname)?.seo ?? PAGES['/'];
+    const page = pageSeo(pathname);
+    const seo = page?.seo ?? PAGES['/'];
     document.title = seo.title;
     document.querySelector('meta[name="description"]')?.setAttribute('content', seo.description);
     if (isCouple(normalizePath(pathname).slice(1))) return;
+    loadFonts(page ? (seo.theme ?? 'home') : 'other');
     trackPageView();
     if (seo.theme) track('demo_view', {theme: seo.theme});
   }, [pathname]);
