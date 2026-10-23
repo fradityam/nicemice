@@ -27,6 +27,16 @@ const REVEAL: Record<RevealKind, { from: (tilt: number) => string; ms: number; f
 };
 
 /**
+ * A template's own take on the reveals: its easing and, per kind, a different duration,
+ * starting transform or easing for the movement (e.g. a slight overshoot). Without one, the
+ * reveals are as above.
+ */
+export type RevealFeel = {
+  ease?: string;
+  kinds?: Partial<Record<RevealKind, { ms?: number; from?: (tilt: number) => string; moveEase?: string }>>;
+};
+
+/**
  * Tracks how far down the frame the viewport has reached (in frame px) and tells each
  * waiting element once it is in view. Inactive until the cover has opened.
  */
@@ -37,6 +47,7 @@ class RevealStore {
   constructor(
     readonly frameW: number,
     readonly frameH: number,
+    readonly feel: RevealFeel = {},
   ) {}
   watch(at: number, show: () => void) {
     if (this.active && this.bottom >= at + REVEAL_OFFSET) {
@@ -73,10 +84,10 @@ export const RevealOffset = createContext(0);
  * null, and every Reveal / Float renders its children untouched, when `enabled` is false or the
  * guest prefers reduced motion. Reveals start once `started` (the cover has opened).
  */
-export function useScrollReveals({ enabled, frameW, frameH, wrapRef, started }: { enabled: boolean; frameW: number; frameH: number; wrapRef: RefObject<HTMLElement | null>; started: boolean }) {
+export function useScrollReveals({ enabled, frameW, frameH, wrapRef, started, feel }: { enabled: boolean; frameW: number; frameH: number; wrapRef: RefObject<HTMLElement | null>; started: boolean; feel?: RevealFeel }) {
   // Decided once, before the first paint, so animated elements start hidden rather than flash.
   const [store] = useState(() =>
-    enabled && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? new RevealStore(frameW, frameH) : null,
+    enabled && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? new RevealStore(frameW, frameH, feel) : null,
   );
 
   // From then on the viewport's bottom edge (in frame px) is passed to the store on every
@@ -117,9 +128,9 @@ const COVER_WAIT_MS = 600;
  * straight away when there is nothing to play), for hints that should only start once the
  * cover has settled. Null reveals when `enabled` is false or the guest prefers reduced motion.
  */
-export function useCoverReveals({ enabled, frameW, frameH, rootRef, settleMs }: { enabled: boolean; frameW: number; frameH: number; rootRef: RefObject<HTMLElement | null>; settleMs: number }) {
+export function useCoverReveals({ enabled, frameW, frameH, rootRef, settleMs, feel }: { enabled: boolean; frameW: number; frameH: number; rootRef: RefObject<HTMLElement | null>; settleMs: number; feel?: RevealFeel }) {
   const [store] = useState(() =>
-    enabled && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? new RevealStore(frameW, frameH) : null,
+    enabled && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? new RevealStore(frameW, frameH, feel) : null,
   );
   const [settled, setSettled] = useState(!store);
 
@@ -170,8 +181,13 @@ export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, til
   const [state, setState] = useState<'waiting' | 'showing' | 'done'>('waiting');
   useEffect(() => store?.watch(at + offset, () => setState('showing')), [store, at, offset]);
   if (!store) return null;
-  const { from, ms, fade = true } = REVEAL[kind];
-  const t = `${ms}ms ${EASE_OUT} ${delay}ms`;
+  const own = store.feel.kinds?.[kind];
+  const { fade = true } = REVEAL[kind];
+  const from = own?.from ?? REVEAL[kind].from;
+  const ms = own?.ms ?? REVEAL[kind].ms;
+  const ease = store.feel.ease ?? EASE_OUT;
+  const t = `${ms}ms ${ease} ${delay}ms`;
+  const moveT = `${ms}ms ${own?.moveEase ?? ease} ${delay}ms`;
   // Once revealed the element drops its animation styles, so nothing stays on its own
   // compositing layer and the page renders exactly as it does without animations (text keeps
   // its sub-pixel smoothing).
@@ -182,7 +198,7 @@ export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, til
           transformOrigin: origin ? `${origin[0]}px ${origin[1]}px` : undefined,
           opacity: fade ? (state === 'showing' ? 1 : 0) : undefined,
           transform: state === 'showing' ? 'none' : from(tilt),
-          transition: state === 'showing' ? `opacity ${t}, transform ${t}` : 'none',
+          transition: state === 'showing' ? `opacity ${t}, transform ${moveT}` : 'none',
         };
   const onTransitionEnd = (e: TransitionEvent<HTMLElement>) => {
     if (e.target === e.currentTarget && e.propertyName === (fade ? 'opacity' : 'transform')) setState('done');

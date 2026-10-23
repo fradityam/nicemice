@@ -1,11 +1,13 @@
-import { Fragment, useContext, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Children, Fragment, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatIsoDate } from '../../invitations/dates';
 import { MAX_MESSAGE, MAX_NAME, timeAgo, useRsvpForm, useWishes, type Attendance, type SendError, type Wish, type WishesState } from '../../invitations/rsvp';
 import type { GalleryPhoto, NotebookInvitation, StoryMoment, Venue } from '../../invitations/types';
 import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
+import { OPENING } from './notebookOpening';
 import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
-import { Float, Reveal, RevealOffset, RevealProvider, useScrollReveals } from './scrollReveal';
+import { Float, Reveal, RevealOffset, RevealProvider, useScrollReveals, type RevealFeel, type RevealKind } from './scrollReveal';
+import './notebook.css';
 
 // Every layer is placed at its position in the Figma "Content" frame, in Figma's layer order,
 // and the whole frame is scaled to the column width. The frame is 375 × 4010 with the
@@ -36,8 +38,44 @@ const mask = (file: string, position: string, size: string): CSSProperties => {
   };
 };
 
-/** Subtle one-time reveals on the cover and as sections scroll into view. Set to false to turn them all off. */
+/**
+ * Subtle one-time reveals on the cover and as sections scroll into view, the cover lifting off
+ * the letter, and the scenes' depth and breeze. Set to false to turn them all off.
+ */
 export const ENABLE_ANIMATIONS = true;
+
+/**
+ * How The Notebook's reveals move: arrivals with some weight, a fast start and a long gentle
+ * landing, a little further and slower than the other templates'; photos land with the
+ * faintest overshoot, as if placed on a table.
+ */
+export const NOTEBOOK_FEEL: RevealFeel = {
+  ease: 'cubic-bezier(0.22, 1, 0.36, 1)',
+  kinds: {
+    fade: { ms: 900 },
+    fadeUp: { ms: 900, from: () => 'translateY(20px)' },
+    fromLeft: { ms: 900, from: () => 'translateX(-20px)' },
+    fromRight: { ms: 900, from: () => 'translateX(20px)' },
+    pop: { ms: 700 },
+    settle: { ms: 1000, moveEase: 'cubic-bezier(0.34, 1.25, 0.64, 1)' },
+  },
+};
+
+/** The parts of a section arriving one after another: each this many ms after the previous one. */
+const STAGGER_MS = 80;
+
+/** Reveals each child in turn, STAGGER_MS apart, from `delay` ms after frame y `at` comes into view. */
+function Staggered({ at, kind = 'fadeUp', delay = 0, children }: { at: number; kind?: RevealKind; delay?: number; children: ReactNode }) {
+  return (
+    <>
+      {Children.toArray(children).map((child, i) => (
+        <Reveal key={i} at={at} kind={kind} delay={delay + i * STAGGER_MS}>
+          {child}
+        </Reveal>
+      ))}
+    </>
+  );
+}
 
 /** The design's date styles, from the couple's 'YYYY-MM-DD'. */
 const dateIdLong = (iso: string) => formatIsoDate(iso, 'id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); // Minggu, 16 Agustus 2026
@@ -65,36 +103,93 @@ const FIT = {
   signature: { w: 200 },
 } satisfies Record<string, FitBox>;
 
-/** Cover → content transition (shared with the template). */
-export const INTRO = {
-  EASE_OUT: 'cubic-bezier(0.33, 1, 0.68, 1)',
-  COVER_FADE_MS: 1000,
-  CONTENT_DELAY_MS: 150,
-  CONTENT_MS: 900,
-  CONTENT_RISE_PX: 24,
-  REDUCED_FADE_MS: 300,
-  get TOTAL_MS() {
-    return Math.max(this.COVER_FADE_MS, this.CONTENT_DELAY_MS + this.CONTENT_MS);
-  },
-};
-export type IntroState = { revealed: boolean; reducedMotion: boolean };
+/**
+ * The cover → content transition, from the template: `revealed` once the guest has tapped the
+ * cover, `done` once the cover has gone.
+ */
+export type IntroState = { revealed: boolean; reducedMotion: boolean; done: boolean };
 
-function introStyle({ revealed, reducedMotion }: IntroState): CSSProperties {
-  if (reducedMotion) return {};
-  if (!revealed) return { opacity: 0, transform: `translateY(${INTRO.CONTENT_RISE_PX}px)` };
-  const t = `${INTRO.CONTENT_MS}ms ${INTRO.EASE_OUT} ${INTRO.CONTENT_DELAY_MS}ms`;
-  return { opacity: 1, transform: 'translateY(0)', transition: `opacity ${t}, transform ${t}` };
+/** The letter waits under the cover a little lower and smaller, and settles as it lifts away. */
+function introStyle({ revealed, reducedMotion, done }: IntroState): CSSProperties {
+  if (!ENABLE_ANIMATIONS || reducedMotion || done) return {};
+  const { from, origin, delayMs, ms, ease } = OPENING.letter;
+  if (!revealed) return { transform: from, transformOrigin: origin };
+  return { transform: 'none', transformOrigin: origin, transition: `transform ${ms}ms ${ease} ${delayMs}ms` };
 }
 
-/** Plain image layer at a Figma box, object-cover like the Figma fill. */
-function Img({ file, x, y, w, h, flip, alt = '' }: { file: string; x: number; y: number; w: number; h: number; flip?: boolean; alt?: string }) {
-  return (
+/**
+ * A plant swaying in the breeze (notebook.css): it tips `deg` (clockwise when positive) about
+ * `origin` and back, once every `ms`. Only ever to one side of its Figma position, so a plant cut
+ * off at the frame's edge always tips its cut away from the page.
+ */
+type Sway = { deg: number; ms: number; origin: string };
+
+// The breeze crosses the page from left to right: plants further right start a little later.
+const BREEZE_MS = 1200;
+
+/**
+ * Plain image layer at a Figma box, object-cover like the Figma fill. Inside a Scene it can drift
+ * at its own `depth` as it scrolls by (positive: further away, so slower than the page; negative:
+ * nearer) and `sway`.
+ */
+function Img({ file, x, y, w, h, flip, alt = '', depth, sway }: { file: string; x: number; y: number; w: number; h: number; flip?: boolean; alt?: string; depth?: number; sway?: Sway }) {
+  const swayStyle = sway && ({
+    '--nb-sway': sway.deg,
+    '--nb-sway-ms': `${sway.ms}ms`,
+    '--nb-sway-delay': `${Math.round((Math.max(0, x) / FRAME_W) * BREEZE_MS)}ms`,
+    transformOrigin: sway.origin,
+  } as CSSProperties);
+  const img = (
     <img
       alt={alt}
       src={A(file)}
-      className={`absolute max-w-none object-cover ${flip ? '-scale-x-100' : ''}`}
-      style={{ left: x, top: y, width: w, height: h }}
+      className={`absolute max-w-none object-cover ${flip ? '-scale-x-100' : ''} ${sway ? 'nb-sway' : ''}`}
+      style={{ left: x, top: y, width: w, height: h, ...swayStyle }}
     />
+  );
+  if (!depth) return img;
+  return (
+    <div className="nb-depth absolute left-0 top-0" style={{ '--nb-depth': depth } as CSSProperties}>
+      {img}
+    </div>
+  );
+}
+
+// Room around a Scene's layers for them to move in.
+const SCENE_MARGIN = 14;
+
+/**
+ * Layers (Img with depth or sway) that move as one scene: each is exactly at its Figma position
+ * whenever the scene's box is centred on screen, and they sway only while it is on screen. The
+ * box also clips them, just around themselves: Chrome assumes a running animation may overlap
+ * everything painted after it and would move that onto separate layers, so text painted later
+ * would lose its sub-pixel smoothing. Keep text drawn after a Scene out of its box.
+ */
+function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, number]; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // How far a Shift has moved the scene down. A Shift moves it with a transform, which the
+  // scroll position the depth follows doesn't see, so the box it follows (.nb-scene) is placed
+  // that much lower itself; the clip inside it is moved back up to where the layers are.
+  const offset = useContext(RevealOffset);
+  useEffect(() => {
+    const el = ref.current;
+    const clip = el?.firstElementChild;
+    if (!el || !clip) return;
+    const io = new IntersectionObserver(([entry]) => el.toggleAttribute('data-in-view', entry.isIntersecting));
+    io.observe(clip);
+    return () => io.disconnect();
+  }, []);
+  if (!ENABLE_ANIMATIONS) return <>{children}</>;
+  const m = SCENE_MARGIN;
+  // The boxes themselves let taps through, as before; the images in them take them as usual.
+  return (
+    <div ref={ref} className="nb-scene pointer-events-none absolute" style={{ left: x - m, top: y - m + offset, width: w + 2 * m, height: h + 2 * m }}>
+      <div className="absolute inset-x-0 h-full overflow-clip [&_img]:pointer-events-auto" style={{ top: -offset }}>
+        <div className="absolute" style={{ left: m - x, top: m - y }}>
+          {children}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -166,14 +261,19 @@ const Lines = ({ lines }: { lines: readonly string[] }) => (
 /**
  * Layers moved down by `by` frame px (or up, when negative), and sideways by `x`, e.g.
  * everything below the wishes band; their reveals move with them. No wrapper at all when
- * nothing moves, so layers that stay put render exactly as laid out.
+ * nothing moves, so layers that stay put render exactly as laid out. `from` is the frame y
+ * (before moving) where the layers inside start: the wrapper is the size of the frame, and
+ * Chrome would take it as overlapping any animation higher up the page and put it, and all the
+ * text drawn after it, on a layer of its own, losing that text's sub-pixel smoothing. So it is
+ * cut off above `from`.
  */
-function Shift({ by, x = 0, children }: { by: number; x?: number; children: ReactNode }) {
+function Shift({ by, x = 0, from, children }: { by: number; x?: number; from: number; children: ReactNode }) {
   const offset = useContext(RevealOffset);
   if (!by && !x) return <>{children}</>;
+  const clipPath = `inset(${from}px -${FRAME_W}px -${FRAME_H}px)`;
   return (
     <RevealOffset.Provider value={offset + by}>
-      <div className="absolute left-0 top-0 *:pointer-events-auto" style={{ width: FRAME_W, height: FRAME_H, transform: `translate(${x}px, ${by}px)`, pointerEvents: 'none' }}>
+      <div className="absolute left-0 top-0 *:pointer-events-auto" style={{ width: FRAME_W, height: FRAME_H, transform: `translate(${x}px, ${by}px)`, clipPath, pointerEvents: 'none' }}>
         {children}
       </div>
     </RevealOffset.Provider>
@@ -270,6 +370,8 @@ function MaskedPhoto({ box, boxMask: [file, x, y, w, h], src, alt, figmaClass = 
 // ---------- Photo collage + gallery ----------
 
 const MAX_GALLERY = 4;
+// Where the collage starts: its highest frame, less room for a photo settling into place.
+const COLLAGE_TOP = 1680;
 // Each frame and its photo settle into place together. Frames: tall, square, square, wide.
 const COLLAGE = [
   {
@@ -354,7 +456,7 @@ function Collage({ photos, coupleNames, onOpen }: { photos: GalleryPhoto[]; coup
       {photos.map((p, i) => {
         const slot = COLLAGE[i];
         return (
-          <Shift key={i} x={moves[i][0]} by={moves[i][1]}>
+          <Shift key={i} x={moves[i][0]} by={moves[i][1]} from={COLLAGE_TOP}>
             <Reveal at={slot.reveal.at} kind="settle" origin={slot.reveal.origin} tilt={slot.reveal.tilt} delay={slot.reveal.delay}>
               {slot.frame}
               <MaskedPhoto box={slot.box} boxMask={slot.mask} src={p.photo} alt="" figmaClass={slot.figmaClass} />
@@ -363,7 +465,7 @@ function Collage({ photos, coupleNames, onOpen }: { photos: GalleryPhoto[]; coup
         );
       })}
       {photos.map((_, i) => (
-        <Shift key={i} x={moves[i][0]} by={moves[i][1]}>
+        <Shift key={i} x={moves[i][0]} by={moves[i][1]} from={COLLAGE_TOP}>
           <button
             type="button"
             aria-label={`Perbesar foto pre-wedding ${coupleNames} ${i + 1}`}
@@ -630,14 +732,16 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
     return () => ro.disconnect();
   }, []);
 
-  const reveals = useScrollReveals({ enabled: ENABLE_ANIMATIONS, frameW: FRAME_W, frameH: FRAME_H, wrapRef, started: intro.revealed });
+  const reveals = useScrollReveals({ enabled: ENABLE_ANIMATIONS, frameW: FRAME_W, frameH: FRAME_H, wrapRef, started: intro.revealed, feel: NOTEBOOK_FEEL });
 
   const eventLine = "font-['Raleway'] text-[15px] leading-[20px] tracking-[-0.255px] text-black";
   const eventLabel = "font-['La_Belle_Aurore'] text-[20px] leading-[20px] tracking-[-0.34px] text-[#324532]";
 
   return (
     <RevealProvider value={reveals}>
-    <div ref={wrapRef} className="relative w-full overflow-hidden bg-[#fefffa]" style={{ aspectRatio: `${FRAME_W} / ${pageH}` }}>
+    {/* `overflow: clip` rather than hidden, which would make this box the scroller the scenes'
+        depth follows (and it never scrolls). */}
+    <div ref={wrapRef} className="relative w-full overflow-clip bg-[#fefffa]" style={{ aspectRatio: `${FRAME_W} / ${pageH}` }}>
       <div className="absolute left-0 top-0" style={{ width: FRAME_W, height: FRAME_H, zoom: scale }}>
         {/* ===== BG ===== */}
         <div className="absolute left-0 top-0 h-[667px] w-[375px] bg-[#fefffa]" />
@@ -647,7 +751,7 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
         <div className="absolute inset-[41.61%_0_54.35%_0]"><img alt="" src={A('drip.svg')} className="absolute block inset-0 max-w-none size-full" /></div>
         <div className="absolute left-0 top-[2481px] w-[375px] bg-[#ddedf8]" style={{ height: 489 + bandH }} />
         <div className="absolute inset-[59.25%_0_36.72%_0]"><img alt="" src={A('drip-1.svg')} className="absolute block inset-0 max-w-none size-full" /></div>
-        <Shift by={bandH}>
+        <Shift by={bandH} from={2860}>
           <div className="absolute inset-[73%_0_22.96%_0]"><img alt="" src={A('drip-2.svg')} className="absolute block inset-0 max-w-none size-full" /></div>
         </Shift>
 
@@ -657,11 +761,11 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
         <Img file="forest.webp" x={-45} y={1183} w={423} h={201} />
         <Img file="forest.webp" x={-45} y={1183} w={423} h={201} />
 
-        {/* ===== Envelope letter (first section, rises in from the cover; then the quote and
-            the doodle appear on it) ===== */}
+        {/* ===== Envelope letter (first section, settles in as the cover lifts off it; then the
+            quote and the doodle appear on it) ===== */}
         <div className="absolute left-0 top-0 h-[480px] w-[375px]" style={introStyle(intro)}>
           <Img file="letter.webp" x={30.33} y={92} w={313.211} h={376} />
-          <Reveal at={0} kind="fade" delay={750}>
+          <Reveal at={0} kind="fade" delay={OPENING.letterContentDelayMs[0]}>
             <div className="-translate-y-1/2 absolute font-['La_Belle_Aurore'] text-[13px] leading-[20px] tracking-[-0.221px] text-black whitespace-nowrap" style={{ left: 177, top: 240 }}>
               “I want all of you,
               <br />
@@ -675,7 +779,7 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
               -The Notebook
             </Centered>
           </Reveal>
-          <Reveal at={0} kind="fade" delay={950}>
+          <Reveal at={0} kind="fade" delay={OPENING.letterContentDelayMs[1]}>
             <Img file="doodle-couple.webp" x={90} y={173} w={83} h={123} alt="Ilustrasi pasangan dari film The Notebook" />
           </Reveal>
         </div>
@@ -711,29 +815,29 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
             </div>
           </Reveal>
         ))}
-        <Reveal at={881} kind="fadeUp" delay={300}>
+        {/* Each name, then their parents, the groom's first. */}
+        <Staggered at={881} delay={300}>
           {[
             { person: inv.groom, x: 44 },
             { person: inv.bride, x: 218 },
-          ].map(({ person, x }) => (
-            <Fragment key={x}>
-              <Centered x={x} y={881} w={113} h={18} fit={FIT.name} className="font-['Yeseva_One'] text-[14px] leading-[18px] tracking-[-0.238px] text-[#324532]">
-                {person.name}
-              </Centered>
-              {/* Wraps in Figma's 113px column (two lines for the sample), growing downwards. */}
-              <Fit
-                fit={FIT.parents}
-                className="-translate-x-1/2 absolute w-[113px] text-center font-['Raleway'] text-[10px] leading-[12px] tracking-[-0.17px] text-black"
-                style={{ left: x + 113 / 2, top: 902.5 }}
-              >
-                <KeepHyphenated text={`${person.parentsLabel} ${person.parents}`} />
-              </Fit>
-            </Fragment>
-          ))}
-        </Reveal>
+          ].flatMap(({ person, x }) => [
+            <Centered key={`name-${x}`} x={x} y={881} w={113} h={18} fit={FIT.name} className="font-['Yeseva_One'] text-[14px] leading-[18px] tracking-[-0.238px] text-[#324532]">
+              {person.name}
+            </Centered>,
+            // Wraps in Figma's 113px column (two lines for the sample), growing downwards.
+            <Fit
+              key={`parents-${x}`}
+              fit={FIT.parents}
+              className="-translate-x-1/2 absolute w-[113px] text-center font-['Raleway'] text-[10px] leading-[12px] tracking-[-0.17px] text-black"
+              style={{ left: x + 113 / 2, top: 902.5 }}
+            >
+              <KeepHyphenated text={`${person.parentsLabel} ${person.parents}`} />
+            </Fit>,
+          ])}
+        </Staggered>
 
-        {/* ===== Akad Nikah ===== */}
-        <Reveal at={968} kind="fadeUp">
+        {/* ===== Akad Nikah (the card, then its lines one by one) ===== */}
+        <Staggered at={968}>
           <StampCard outer="inset-[24.56%_14.17%_70.62%_14.93%]" inner="inset-[25.04%_18.95%_71.13%_19.6%]" outerFile="akad-stamp.svg" innerFile="akad-inner.svg" />
           <Centered x={0} y={1005} w={376} h={20} fit={FIT.event} className={eventLabel}>
             {inv.ceremony.label ?? 'Akad Nikah'}
@@ -742,10 +846,10 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
           <Centered x={0} y={1048} w={376} h={20} fit={FIT.event} className={eventLine}>{inv.ceremony.time}</Centered>
           <Centered x={0} y={1068} w={376} h={20} fit={FIT.event} className={eventLine}>{inv.venue.name}</Centered>
           <LihatLokasi top={1098} color="#aba935" venue={inv.venue} />
-        </Reveal>
+        </Staggered>
 
         {/* ===== Resepsi (card is rotated -87.52° in Figma) ===== */}
-        <Reveal at={1168} kind="fadeUp" delay={120}>
+        <Staggered at={1168} delay={120}>
           {[
             ['inset-[29.64%_13.11%_65.26%_13.87%]', 'resepsi-stamp.svg', 'h-[hypot(97.0033cqw,5.70429cqh)] w-[hypot(2.99669cqw,-94.2957cqh)]'],
             ['inset-[30.13%_18.1%_65.79%_18.77%]', 'resepsi-inner.svg', 'h-[hypot(97.2496cqw,6.19821cqh)] w-[hypot(2.75041cqw,-93.8018cqh)]'],
@@ -765,16 +869,26 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
           <Centered x={0} y={1253.65} w={376} h={20} fit={FIT.event} className={eventLine}>{inv.reception.time}</Centered>
           <Centered x={0} y={1273.65} w={376} h={20} fit={FIT.event} className={eventLine}>{receptionVenue.name}</Centered>
           <LihatLokasi top={1303.65} color="#4e769a" venue={receptionVenue} />
-        </Reveal>
+        </Staggered>
 
-        {/* ===== House & boat ===== */}
-        <Img file="house.webp" x={94} y={1349} w={207} h={132} />
-        <Img file="tree.webp" x={-12} y={1256} w={150} h={225} />
-        <Img file="tree.webp" x={228} y={1256} w={150} h={225} flip />
+        {/* ===== House & boat =====
+            Depth: the house sits furthest back and the trees a little nearer, both drifting
+            slower than the page; the lake, boat and ducks are the ground and stay put; the lamps
+            hang in front and drift faster. The forests behind stay put too: the Resepsi card's
+            text is drawn over them (see Scene). The trees sway from the foot of the trunk; cut
+            off just outside the frame's edges, they stay outside it as they tip. */}
+        <Scene box={[-12, 1256, 390, 225]}>
+          <Img file="house.webp" x={94} y={1349} w={207} h={132} depth={6} />
+          <Img file="tree.webp" x={-12} y={1256} w={150} h={225} depth={4} sway={{ deg: 0.6, ms: 10000, origin: '50% 100%' }} />
+          <Img file="tree.webp" x={228} y={1256} w={150} h={225} flip depth={4} sway={{ deg: 0.6, ms: 11000, origin: '50% 100%' }} />
+        </Scene>
         <Img file="duck.webp" x={42} y={1506} w={49} h={33} />
         <Img file="duck.webp" x={8} y={1555} w={68} h={45} />
-        <Img file="lamp.webp" x={326} y={952} w={45} h={66} />
-        <Img file="lamp.webp" x={6} y={1114} w={45} h={66} />
+        {[[326, 952], [6, 1114]].map(([x, y]) => (
+          <Scene key={y} box={[x, y, 45, 66]}>
+            <Img file="lamp.webp" x={x} y={y} w={45} h={66} depth={-6} />
+          </Scene>
+        ))}
         <Img file="couple-boat.webp" x={42} y={1436} w={274} h={205} alt="Ilustrasi pasangan di perahu" />
         <Img file="duck.webp" x={290} y={1573} w={119} h={80} flip />
 
@@ -829,7 +943,7 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
         </Reveal>
         {bandH > 0 && <WishesBand wishes={wishes} />}
 
-        <Shift by={bandH}>
+        <Shift by={bandH} from={2950}>
           {/* ===== Tanda Kasih & Bingkisan Fisik ===== */}
           {bank && (
             <Reveal at={2986} kind="fadeUp" delay={120}>
@@ -842,13 +956,31 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
               </Centered>
             </Reveal>
           )}
-          <Shift by={closingShift}>
+          <Shift by={closingShift} from={3390}>
             <Img file="forest.webp" x={-137} y={3402} w={677} h={321} />
             <Img file="forest.webp" x={-159} y={3599} w={721} h={342} />
+            {/* The closing words, inside the flower arch below. Drawn here, under the lilies,
+                bushes and arch (none of which reach them), so that while those plants move the
+                words stay on the page's own layer and keep their sub-pixel smoothing (see Scene). */}
+            <Staggered at={3723} delay={150}>
+              <Fit
+                fit={FIT.closing}
+                className="-translate-x-1/2 -translate-y-1/2 absolute w-max max-w-[150px] text-center whitespace-pre-line font-['La_Belle_Aurore'] text-[17px] leading-[20px] tracking-[-0.289px] text-white"
+                style={{ left: 195, top: 3743 }}
+              >
+                {inv.closing.text ?? DEFAULT_CLOSING}
+              </Fit>
+              <Centered x={141} y={3774} w={108} h={20} fit={FIT.signature} className="font-['La_Belle_Aurore'] text-[20px] leading-[20px] tracking-[-0.34px] text-white">
+                {inv.closing.signature}
+              </Centered>
+            </Staggered>
+            {/* ===== Made with love by nicemice: background and credit (its scalloped edge is
+                drawn at the very end, over the arch) ===== */}
+            <MadeWithLoveFooter y={3965} bgTop={3937} frameH={PAGE_H} background="#fefffa" />
           </Shift>
 
           {bank && (
-            <Reveal at={3055} kind="fadeUp" delay={150}>
+            <Staggered at={3055} delay={150}>
               <StampCard outer="inset-[77.52%_15.24%_17.66%_13.87%]" inner="inset-[78%_20.02%_18.18%_18.53%]" outerFile="card-stamp.svg" innerFile="card-inner.svg" />
               <Centered x={1} y={3099} w={375} h={20} fit={FIT.gift} className="font-['Raleway'] font-bold text-[25px] leading-[20px] tracking-[-0.425px] text-[#29567f]">
                 {bank.bank}
@@ -861,12 +993,12 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
               <Centered x={138} y={3195} w={100} h={15} fit={FIT.gift} className="font-['Raleway'] text-[10px] leading-[15px] tracking-[-0.17px] text-[#29567f]">
                 {bank.holder}
               </Centered>
-            </Reveal>
+            </Staggered>
           )}
 
           {gift && (
-            <Shift by={addressShift}>
-              <Reveal at={3354} kind="fadeUp" delay={150}>
+            <Shift by={addressShift} from={3340}>
+              <Staggered at={3354} delay={150}>
                 {/* Address card: 26px taller than in Figma (Figma's card has no Salin button and no
                     room for one), with the text moved up 8px so name, address and button sit evenly. */}
                 <StampCard
@@ -881,7 +1013,7 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
                 <Centered x={88} y={3424} w={200} h={75} fit={FIT.giftAddress} className="font-['Raleway'] text-[10px] leading-[15px] tracking-[-0.17px] text-[#29567f]">
                   <Lines lines={gift.addressLines} />
                 </Centered>
-              </Reveal>
+              </Staggered>
             </Shift>
           )}
 
@@ -893,7 +1025,7 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
             </Reveal>
           )}
           {gift && (
-            <Shift by={addressShift}>
+            <Shift by={addressShift} from={3265}>
               <Reveal at={3280} kind="fadeUp" delay={120}>
                 <Centered x={43} y={3296} w={289} h={61} className="font-['Raleway'] text-[12px] leading-[15px] tracking-[-0.204px] text-black">
                   Jika Anda ingin mengirimkan tanda kasih dalam
@@ -909,57 +1041,52 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
             </Shift>
           )}
 
-          {/* ===== Closing flower arch ===== */}
-          <Shift by={closingShift}>
+          {/* ===== Closing flower arch =====
+              Depth: the lilies and the bushes are nearest, drifting faster than the page; the
+              arch and the forests behind it stay put. The lilies, cut off at the frame's edges,
+              sway about the point where their stems leave the frame, tipping their cut away from
+              the page. Nothing with text is drawn over the moving lilies or the arch above them (see
+              Scene): the closing words and the footer's credit come earlier, under them, where
+              none of them reach. */}
+          <Shift by={closingShift} from={3370}>
             <Reveal at={3389} kind="pop" origin={[309.5, 3638]} delay={300}>
-              <Img file="lily-1.webp" x={244} y={3389} w={131} h={249.393} />
+              <Scene box={[244, 3389, 131, 249.393]}>
+                <Img file="lily-1.webp" x={244} y={3389} w={131} h={249.393} depth={-8} sway={{ deg: 1, ms: 7000, origin: '100% 81%' }} />
+              </Scene>
             </Reveal>
           </Shift>
           {/* The lily beside the bank card goes with it. */}
           {bank && (
             <Reveal at={3019} kind="pop" origin={[72.9, 3333]} delay={300}>
-              <Img file="lily-2.webp" x={0} y={3019} w={145.808} h={314.55} />
+              <Scene box={[0, 3019, 145.808, 314.55]}>
+                <Img file="lily-2.webp" x={0} y={3019} w={145.808} h={314.55} depth={-6} sway={{ deg: -1, ms: 8500, origin: '0% 77%' }} />
+              </Scene>
             </Reveal>
           )}
-          <Shift by={closingShift}>
+          <Shift by={closingShift} from={3400}>
+            {/* The bushes stay still: the address card's Salin button is drawn over them (so no
+                leaf can cover it), and over a moving layer its label would lose its sub-pixel
+                smoothing (see Scene). */}
             <Img file="bushes-flower.webp" x={-9} y={3418} w={256} h={171} />
             <Img file="gapura.webp" x={2} y={3546} w={372} h={391} />
-            <Reveal at={3723} kind="fadeUp" delay={150}>
-              <Fit
-                fit={FIT.closing}
-                className="-translate-x-1/2 -translate-y-1/2 absolute w-max max-w-[150px] text-center whitespace-pre-line font-['La_Belle_Aurore'] text-[17px] leading-[20px] tracking-[-0.289px] text-white"
-                style={{ left: 195, top: 3743 }}
-              >
-                {inv.closing.text ?? DEFAULT_CLOSING}
-              </Fit>
-              <Centered x={141} y={3774} w={108} h={20} fit={FIT.signature} className="font-['La_Belle_Aurore'] text-[20px] leading-[20px] tracking-[-0.34px] text-white">
-                {inv.closing.signature}
-              </Centered>
-            </Reveal>
           </Shift>
 
-          {/* Drawn last so the foliage around the address card can't cover it. */}
+          {/* ===== Made with love by nicemice: its scalloped edge, over the arch (its background
+              and credit are drawn earlier, see above) ===== */}
+          <Shift by={closingShift} from={3925}>
+            {/* Figma's 447.07 × 33.70 box holds the 446.885 × 30.903 scallop, centred. */}
+            <img alt="" src={A('footer-scallop.svg')} className="absolute block max-w-none" style={{ left: -60.85, top: 3931.2, width: 446.885, height: 30.903 }} />
+          </Shift>
+
+          {/* Drawn last so the foliage around the address card can't cover it; it arrives after the
+              card's name and address. */}
           {gift && (
-            <Shift by={addressShift}>
-              <Reveal at={3354} kind="fadeUp" delay={150}>
+            <Shift by={addressShift} from={3495}>
+              <Reveal at={3354} kind="fadeUp" delay={150 + 3 * STAGGER_MS}>
                 <SalinButton top={3509} label="Salin alamat" text={oneLine([gift.name, ...gift.addressLines])} />
               </Reveal>
             </Shift>
           )}
-
-          {/* ===== Made with love by nicemice ===== */}
-          <Shift by={closingShift}>
-            <MadeWithLoveFooter
-              y={3965}
-              bgTop={3937}
-              frameH={PAGE_H}
-              background="#fefffa"
-              edge={
-                // Figma's 447.07 × 33.70 box holds the 446.885 × 30.903 scallop, centred.
-                <img alt="" src={A('footer-scallop.svg')} className="absolute block max-w-none" style={{ left: -60.85, top: 3931.2, width: 446.885, height: 30.903 }} />
-              }
-            />
-          </Shift>
         </Shift>
       </div>
 

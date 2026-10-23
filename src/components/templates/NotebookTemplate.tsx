@@ -1,10 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 import coverBg from '../../assets/images/notebook/cover-bg.webp';
 import coverArrow from '../../assets/images/notebook/arrow.svg';
-import NotebookContent, { ENABLE_ANIMATIONS, FitSpan, INTRO } from './NotebookContent';
+import NotebookContent, { ENABLE_ANIMATIONS, FitSpan, NOTEBOOK_FEEL } from './NotebookContent';
+import { OPENING, REDUCED_FADE_MS } from './notebookOpening';
 import { Reveal, RevealProvider, RevealSpan, useCoverReveals, useReveal } from './scrollReveal';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import { STAGE_BG, coverTextLayout, useStageVisible } from './templateStage';
@@ -59,8 +60,11 @@ function CoverPainting() {
 // the viewport height when that's tighter). Tapping anywhere opens the invitation; the
 // hand-drawn arrow is the visual cue and nudges gently to invite the tap. On load it settles
 // in: the greeting fades in, the names rise line by line, then the date and the arrow, which
-// starts nudging once everything is in place. A tap works from the first moment.
-function NotebookCover({ invitation: inv, guest, onOpen }: { invitation: NotebookInvitation; guest: string; onOpen: () => void }) {
+// starts nudging once everything is in place. A tap works from the first moment. `parts` are the
+// layers the opening animates (see notebookOpening.ts).
+type CoverParts = { painting: RefObject<HTMLDivElement | null>; text: RefObject<HTMLDivElement | null>; arrow: RefObject<HTMLDivElement | null> };
+
+function NotebookCover({ invitation: inv, guest, parts, onOpen }: { invitation: NotebookInvitation; guest: string; parts: CoverParts; onOpen: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const greetingFit = useFit<HTMLParagraphElement>(LINE_FIT);
   const guestFit = useFit<HTMLParagraphElement>(LINE_FIT);
@@ -68,7 +72,7 @@ function NotebookCover({ invitation: inv, guest, onOpen }: { invitation: Noteboo
   const lang = greetingLanguage(inv.greeting);
   const arrowRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ w: COVER_W, h: COVER_H });
-  const { reveals, settled } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1400 });
+  const { reveals, settled } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1600, feel: NOTEBOOK_FEEL });
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -120,15 +124,17 @@ function NotebookCover({ invitation: inv, guest, onOpen }: { invitation: Noteboo
           Cropping keeps the house and the lake (about 45% down the painting) in view. The
           text keeps its Figma positions. */}
       <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 overflow-hidden" style={{ width: columnW }}>
-        <CoverPainting />
-        <div className="absolute inset-0" style={{ backgroundImage: coverGradient }} />
+        <div ref={parts.painting} className="absolute inset-0">
+          <CoverPainting />
+          <div className="absolute inset-0" style={{ backgroundImage: coverGradient }} />
+        </div>
       </div>
       <div
         className="absolute left-1/2"
         style={{ top, width: COVER_W, height: COVER_H, transform: `translateX(-50%) scale(${scale})`, transformOrigin: '50% 0' }}
       >
 
-        <div className="text-white" style={{ textShadow: coverTextShadow }}>
+        <div ref={parts.text} className="text-white" style={{ textShadow: coverTextShadow }}>
           <Reveal at={0} kind="fade">
             <p
               ref={greetingFit.ref}
@@ -176,6 +182,7 @@ function NotebookCover({ invitation: inv, guest, onOpen }: { invitation: Noteboo
       {/* The arrow keeps its Figma distance from the bottom-right corner, so on screens taller
           than the frame it stays at the bottom instead of floating mid-painting. */}
       <div
+        ref={parts.arrow}
         className="absolute bottom-0 left-1/2"
         style={{ width: COVER_W, height: COVER_H, transform: `translateX(-50%) scale(${scale})`, transformOrigin: '50% 100%' }}
       >
@@ -224,19 +231,31 @@ export default function NotebookTemplate({ invitation = notebookDemo, slug }: Pa
 
   useEffect(() => {
     if (phase !== 'opening') return;
-    const t = setTimeout(() => setPhase('open'), reducedMotion ? INTRO.REDUCED_FADE_MS : INTRO.TOTAL_MS);
+    const t = setTimeout(() => setPhase('open'), reducedMotion ? REDUCED_FADE_MS : OPENING.totalMs);
     return () => clearTimeout(t);
   }, [phase, reducedMotion]);
+
+  const columnRef = useRef<HTMLDivElement>(null);
+  // The cover column goes on a layer of its own as soon as a finger (or mouse button) is down,
+  // a moment before the tap, so the lift doesn't start by making that layer and painting it
+  // (a noticeable hitch on slow phones). Not from the start: on a layer the cover's text would
+  // lose its sub-pixel smoothing.
+  const prepareLift = () => {
+    if (ENABLE_ANIMATIONS && phase === 'cover' && columnRef.current) columnRef.current.style.willChange = 'transform';
+  };
+  const parts: CoverParts = { painting: useRef(null), text: useRef(null), arrow: useRef(null) };
 
   const open = () => {
     if (phase !== 'cover') return;
     music.start(); // inside the tap: the gesture is what lets the browser start audio
     window.scrollTo({ top: 0, behavior: 'instant' });
-    setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    // Without animations the cover simply fades.
+    const fade = !ENABLE_ANIMATIONS || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const [column, painting, text, arrow] = [columnRef.current, parts.painting.current, parts.text.current, parts.arrow.current];
+    if (!fade && column && painting && text && arrow) OPENING.play({ column, painting, text, arrow });
+    setReducedMotion(fade);
     setPhase('opening');
   };
-
-  const coverFadeMs = reducedMotion ? INTRO.REDUCED_FADE_MS : INTRO.COVER_FADE_MS;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: STAGE_BG }}>
@@ -254,17 +273,25 @@ export default function NotebookTemplate({ invitation = notebookDemo, slug }: Pa
       {phase !== 'open' && (
         <div
           className={`fixed inset-0 z-50 ${phase === 'opening' ? 'pointer-events-none' : ''}`}
-          style={{ backgroundColor: STAGE_BG, opacity: phase === 'cover' ? 1 : 0, transition: `opacity ${coverFadeMs}ms ${INTRO.EASE_OUT}` }}
+          style={{
+            // Once opening, the page's own stage shows around the cover as it lifts away.
+            backgroundColor: phase === 'cover' ? STAGE_BG : 'transparent',
+            opacity: phase !== 'cover' && reducedMotion ? 0 : 1,
+            transition: `opacity ${REDUCED_FADE_MS}ms ease-out`,
+          }}
         >
           {/* The cover keeps to the invitation column; the stage shows around it on desktop. */}
-          <div className="absolute inset-0 mx-auto max-w-[430px]" style={{ backgroundColor: PAGE_BG }}>
-            <NotebookCover invitation={invitation} guest={guest} onOpen={open} />
+          <div ref={columnRef} className="absolute inset-0 mx-auto max-w-[430px]" style={{ backgroundColor: PAGE_BG }} onPointerDown={prepareLift}>
+            <NotebookCover invitation={invitation} guest={guest} parts={parts} onOpen={open} />
+            {/* The soft shadow the lifted cover casts on the letter, just below its bottom edge
+                (off screen until the cover lifts). */}
+            <div aria-hidden className="absolute inset-x-0 top-full h-[44px]" style={{ backgroundImage: 'linear-gradient(rgba(35,48,31,0.22), rgba(35,48,31,0))' }} />
           </div>
         </div>
       )}
 
       <div className="relative max-w-[430px] mx-auto">
-        <NotebookContent invitation={invitation} slug={slug} intro={{ revealed: phase !== 'cover', reducedMotion }} />
+        <NotebookContent invitation={invitation} slug={slug} intro={{ revealed: phase !== 'cover', reducedMotion, done: phase === 'open' }} />
       </div>
 
       {invitation.music && phase !== 'cover' && (
