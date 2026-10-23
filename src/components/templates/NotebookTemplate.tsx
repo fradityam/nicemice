@@ -4,21 +4,34 @@ import { ArrowLeft } from 'lucide-react';
 
 import coverBg from '../../assets/images/notebook/cover-bg.webp';
 import coverArrow from '../../assets/images/notebook/arrow.svg';
-import NotebookContent, { ENABLE_ANIMATIONS, INTRO } from './NotebookContent';
+import NotebookContent, { ENABLE_ANIMATIONS, FitSpan, INTRO } from './NotebookContent';
 import { Reveal, RevealProvider, RevealSpan, useCoverReveals, useReveal } from './scrollReveal';
-import { weddingDateCover } from './notebookWeddingDate';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import { STAGE_BG, coverTextLayout, useStageVisible } from './templateStage';
-
-// The couple's song, served from public/. Swap the file to give each couple their own
-// music; set to null to hide the player.
-const MUSIC_SRC: string | null = `${import.meta.env.BASE_URL}notebook-music.mp3`;
+import { useFit, type FitBox } from './fitText';
+import type { TemplateProps } from '../CouplePage';
+import { formatIsoDate } from '../../invitations/dates';
+import { notebookDemo } from '../../invitations/demo/notebook';
+import { useGuestName } from '../../invitations/guestName';
+import { greetingLanguage, type Language } from '../../invitations/language';
+import type { NotebookInvitation } from '../../invitations/types';
 
 const PAGE_BG = '#fefffa';
 const COVER_W = 375;
 const COVER_H = 667;
 const MAX_COLUMN_W = 430;
 const coverTextShadow = '2px 4px 4px rgba(0,0,0,0.25)';
+// The couple's names, the guest's and the invitation line shrink to stay inside the frame.
+const NAME_FIT: FitBox = { w: 315, origin: '0 50%' };
+const LINE_FIT: FitBox = { w: 320, origin: '0 50%' };
+
+// The cover speaks the couple's greeting language: 'Dear' keeps the design's English,
+// 'Kepada' (or anything else) is Indonesian.
+const INVITED: Record<Language, string> = { en: 'You’re invited to the wedding of', id: 'Kami mengundang Anda ke pernikahan' };
+const coverDate = (iso: string, lang: Language) =>
+  lang === 'en'
+    ? `${formatIsoDate(iso, 'en-GB', { weekday: 'long' })}, ${formatIsoDate(iso, 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}` // Sunday, 16 August 2026
+    : formatIsoDate(iso, 'id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); // Minggu, 16 Agustus 2026
 
 // Figma's right-to-left rgba(113,120,76,0) → rgba(115,116,95,0.5) overlay, interpolated
 // non-premultiplied like Figma (a plain CSS gradient would drop the olive tint mid-way).
@@ -47,8 +60,12 @@ function CoverPainting() {
 // hand-drawn arrow is the visual cue and nudges gently to invite the tap. On load it settles
 // in: the greeting fades in, the names rise line by line, then the date and the arrow, which
 // starts nudging once everything is in place. A tap works from the first moment.
-function NotebookCover({ onOpen }: { onOpen: () => void }) {
+function NotebookCover({ invitation: inv, guest, onOpen }: { invitation: NotebookInvitation; guest: string; onOpen: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const greetingFit = useFit<HTMLParagraphElement>(LINE_FIT);
+  const guestFit = useFit<HTMLParagraphElement>(LINE_FIT);
+  const invitedFit = useFit<HTMLParagraphElement>(LINE_FIT);
+  const lang = greetingLanguage(inv.greeting);
   const arrowRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ w: COVER_W, h: COVER_H });
   const { reveals, settled } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1400 });
@@ -113,28 +130,43 @@ function NotebookCover({ onOpen }: { onOpen: () => void }) {
 
         <div className="text-white" style={{ textShadow: coverTextShadow }}>
           <Reveal at={0} kind="fade">
-            <p className="-translate-y-1/2 absolute left-[28.14px] top-[67.16px] font-['Raleway'] text-[15px] leading-[normal] tracking-[-0.255px] whitespace-nowrap">
-              Dear
+            <p
+              ref={greetingFit.ref}
+              className="-translate-y-1/2 absolute left-[28.14px] top-[67.16px] font-['Raleway'] text-[15px] leading-[normal] tracking-[-0.255px] whitespace-nowrap"
+              style={greetingFit.style}
+            >
+              {inv.greeting}
+              {greetingFit.probe}
             </p>
           </Reveal>
           <Reveal at={0} kind="fade" delay={100}>
-            <p className="-translate-y-1/2 absolute left-[28.14px] top-[91.16px] font-['Raleway'] font-bold text-[20px] leading-[normal] tracking-[-0.34px] underline decoration-solid [text-underline-position:from-font] whitespace-nowrap">
-              Pevita Pearce
+            <p
+              ref={guestFit.ref}
+              className="-translate-y-1/2 absolute left-[28.14px] top-[91.16px] font-['Raleway'] font-bold text-[20px] leading-[normal] tracking-[-0.34px] underline decoration-solid [text-underline-position:from-font] whitespace-nowrap"
+              style={guestFit.style}
+            >
+              {guest}
+              {guestFit.probe}
             </p>
           </Reveal>
           <Reveal at={0} kind="fade" delay={200}>
-            <p className="-translate-y-1/2 absolute left-[28px] top-[119.5px] font-['Raleway'] text-[15px] leading-[normal] tracking-[-0.255px] whitespace-nowrap">
-              You’re invited to the wedding of
+            <p
+              ref={invitedFit.ref}
+              className="-translate-y-1/2 absolute left-[28px] top-[119.5px] font-['Raleway'] text-[15px] leading-[normal] tracking-[-0.255px] whitespace-nowrap"
+              style={invitedFit.style}
+            >
+              {INVITED[lang]}
+              {invitedFit.probe}
             </p>
           </Reveal>
           <h1 className="font-['Yeseva_One'] font-normal text-[70px] leading-[normal] tracking-[-1.19px]">
-            <RevealSpan at={0} kind="fadeUp" delay={350} className="-translate-y-1/2 absolute left-[30.94px] top-[266.2px] whitespace-nowrap">Noah</RevealSpan>
+            <RevealSpan at={0} kind="fadeUp" delay={350} className="-translate-y-1/2 absolute left-[30.94px] top-[266.2px] whitespace-nowrap"><FitSpan fit={NAME_FIT}>{inv.coverNames[0]}</FitSpan></RevealSpan>
             <RevealSpan at={0} kind="fadeUp" delay={450} className="-translate-y-1/2 absolute left-[30.94px] top-[342.98px] whitespace-nowrap">&amp;</RevealSpan>
-            <RevealSpan at={0} kind="fadeUp" delay={550} className="-translate-y-1/2 absolute left-[30.94px] top-[419.75px] whitespace-nowrap">Allie</RevealSpan>
+            <RevealSpan at={0} kind="fadeUp" delay={550} className="-translate-y-1/2 absolute left-[30.94px] top-[419.75px] whitespace-nowrap"><FitSpan fit={NAME_FIT}>{inv.coverNames[1]}</FitSpan></RevealSpan>
           </h1>
           <Reveal at={0} kind="fadeUp" delay={700}>
             <p className="-translate-y-1/2 absolute left-[28.14px] top-[479.92px] font-['Raleway'] font-bold text-[15px] leading-[normal] tracking-[-0.255px] whitespace-nowrap">
-              {weddingDateCover}
+              {coverDate(inv.date, lang)}
             </p>
           </Reveal>
         </div>
@@ -164,10 +196,14 @@ function NotebookCover({ onOpen }: { onOpen: () => void }) {
 
 type Phase = 'cover' | 'opening' | 'open';
 
-export default function NotebookTemplate() {
+/** A couple's invitation, or (with no props, at /template/notebook) the demo. */
+export default function NotebookTemplate({ invitation = notebookDemo, slug }: Partial<TemplateProps<NotebookInvitation>>) {
   const [phase, setPhase] = useState<Phase>('cover');
   const [reducedMotion, setReducedMotion] = useState(false);
-  const music = useBackgroundMusic(MUSIC_SRC);
+  const music = useBackgroundMusic(invitation.music);
+  // Demo pages show their sample guest unless the link names one, so a demo can be tried with
+  // any name too.
+  const guest = useGuestName(invitation.demo?.sampleGuest ?? invitation.guestFallback);
 
   // The site sets `scroll-behavior: smooth` on <html>, so scrolls here are explicitly instant.
   useLayoutEffect(() => {
@@ -204,13 +240,16 @@ export default function NotebookTemplate() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: STAGE_BG }}>
-      <Link
-        to="/"
-        className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        nicemice
-      </Link>
+      {/* Back to site link (demo only) */}
+      {invitation.demo && (
+        <Link
+          to="/"
+          className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          nicemice
+        </Link>
+      )}
 
       {phase !== 'open' && (
         <div
@@ -219,16 +258,16 @@ export default function NotebookTemplate() {
         >
           {/* The cover keeps to the invitation column; the stage shows around it on desktop. */}
           <div className="absolute inset-0 mx-auto max-w-[430px]" style={{ backgroundColor: PAGE_BG }}>
-            <NotebookCover onOpen={open} />
+            <NotebookCover invitation={invitation} guest={guest} onOpen={open} />
           </div>
         </div>
       )}
 
       <div className="relative max-w-[430px] mx-auto">
-        <NotebookContent intro={{ revealed: phase !== 'cover', reducedMotion }} />
+        <NotebookContent invitation={invitation} slug={slug} intro={{ revealed: phase !== 'cover', reducedMotion }} />
       </div>
 
-      {MUSIC_SRC && phase !== 'cover' && (
+      {invitation.music && phase !== 'cover' && (
         <MusicToggle playing={music.playing} onToggle={music.toggle} background="#324532" iconColor="#fefffa" />
       )}
     </div>

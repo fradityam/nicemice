@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 import { createServer, type Plugin, type ResolvedConfig } from 'vite';
+import { greetingLanguage } from '../src/invitations/language';
 import { slugFromFile } from '../src/invitations/slugs';
 import type { Invitation } from '../src/invitations/types';
 import type { OgData, SharePreview } from '../worker/ogData';
@@ -23,9 +24,6 @@ const MONTHS = {
   id: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
   en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
 };
-
-/** English when the couple greets in English ('Dear', 'To', …); Indonesian otherwise. */
-const language = (greeting: string) => (/^(dear|to|for|hi|hello)$/i.test(greeting.trim()) ? 'en' : 'id');
 
 /** '2027-09-27' → '27 September 2027' (or '27 Agustus 2027' style in Indonesian). */
 function formatDate(iso: string, lang: keyof typeof MONTHS) {
@@ -74,7 +72,7 @@ export function sharePreviews(): Plugin {
           if (!slug) continue;
           const mod = await server.ssrLoadModule(path.join(dir, name));
           const inv = mod.default as Invitation;
-          const lang = language(inv.greeting);
+          const lang = greetingLanguage(inv.greeting);
 
           const [photo, width, height] = inv.shareImage ? [inv.shareImage, 1200, 630] : [inv.coverPhoto, 600, 600];
           const source = photoFile(photo, config);

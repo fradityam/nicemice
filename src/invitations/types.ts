@@ -24,8 +24,8 @@ export interface InvitationBase {
   date: IsoDate;
   /**
    * The couple's main photo, which each design places in its own way (Friends: through the
-   * peephole on the cover; La La Land: in the opening card). Also the WhatsApp link preview,
-   * cropped to a square from the centre.
+   * peephole on the cover; La La Land: in the opening card; The Notebook: nowhere, it is only
+   * the preview). Also the WhatsApp link preview, cropped to a square from the centre.
    */
   coverPhoto: Photo;
   /**
@@ -139,5 +139,45 @@ export interface LaLaLandInvitation extends InvitationBase {
   closing: { text: string; signature: string };
 }
 
-export type Invitation = FriendsInvitation | LaLaLandInvitation;
+export interface Venue {
+  name: string;
+  /** Google Maps link; when left out, a search for the venue name. */
+  mapsUrl?: string;
+}
+
+export interface NotebookInvitation extends InvitationBase {
+  template: 'notebook';
+  /** The two names in large letters on the cover, one above and one below the "&", e.g. ['Noah', 'Allie']. */
+  coverNames: [string, string];
+  /**
+   * The line above the intro, e.g. 'Salam Sejahtera'; 'Assalamu’alaikum Wr. Wb.' unless given.
+   * (The cover follows `greeting` instead: English with 'Dear', Indonesian with 'Kepada'.)
+   */
+  salutation?: string;
+  groom: Person;
+  bride: Person;
+  /**
+   * The photo collage, 1 to 4 photos (more are left out), each in its own frame: the first
+   * tall, the second and third square, the fourth wide. Fewer photos are centred.
+   */
+  gallery: [GalleryPhoto, ...GalleryPhoto[]];
+  /**
+   * "Cerita Kami": 1 to 4 moments in order (more are left out), down the timeline. `title`
+   * is the bold first line, usually a date. A line break (\n) in `text` breaks the line there.
+   */
+  story: [StoryMoment, ...StoryMoment[]];
+  /** Where the ceremony is; also the reception's, unless `reception.venue` says otherwise. */
+  venue: Venue;
+  /** Times as shown, e.g. '10.00 WIB'. Both events are on `date`. `label` is 'Akad Nikah' unless given, e.g. 'Pemberkatan'. */
+  ceremony: { time: string; label?: string };
+  reception: { time: string; venue?: Venue };
+  /** Leave out to hide the bank card (with both gifts left out, the whole "Tanda Kasih" part). */
+  bank?: BankAccount;
+  /** Leave out to hide "Bingkisan Fisik" and its address card. */
+  giftDelivery?: GiftDelivery;
+  /** On the flower arch: `text` is 'Sampai Jumpa di Hari Bahagia Kami' unless given. */
+  closing: { text?: string; signature: string };
+}
+
+export type Invitation = FriendsInvitation | LaLaLandInvitation | NotebookInvitation;
 export type TemplateId = Invitation['template'];
