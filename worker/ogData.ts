@@ -8,7 +8,7 @@ export interface SharePreview {
   greeting: string;
   /** Shown when the link has no ?to=, e.g. 'Bapak/Ibu/Saudara/i'. */
   guestFallback: string;
-  /** What follows "<greeting> <guest>, ", e.g. 'kamu diundang ke pernikahan Ratu & Radit.' */
+  /** What follows "<greeting> <guest>, ", e.g. 'undangan pernikahan Ratu & Radit, 27 September 2027.' */
   invited: string;
   /** Site path of the JPEG, e.g. '/couples/radit-ratu/og.jpg?v=1a2b3c4d'. */
   image: { path: string; width: number; height: number };

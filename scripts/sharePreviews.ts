@@ -89,11 +89,13 @@ export function sharePreviews(): Plugin {
           // ?v= changes with the photo, so a new photo isn't hidden behind an old cached one.
           const version = crypto.createHash('sha256').update(jpeg).digest('hex').slice(0, 8);
 
+          const date = formatDate(inv.date, lang);
           const preview: SharePreview = {
-            title: `${inv.coupleNames} · ${formatDate(inv.date, lang)}`,
+            title: `${inv.coupleNames} · ${date}`,
             greeting: inv.greeting,
             guestFallback: inv.guestFallback,
-            invited: lang === 'en' ? `you’re invited to the wedding of ${inv.coupleNames}.` : `kamu diundang ke pernikahan ${inv.coupleNames}.`,
+            // No "kamu" in Indonesian: the guest may be an older Bapak/Ibu.
+            invited: lang === 'en' ? `you’re invited to the wedding of ${inv.coupleNames}, ${date}.` : `undangan pernikahan ${inv.coupleNames}, ${date}.`,
             image: { path: `${config.base}couples/${slug}/og.jpg?v=${version}`, width, height },
           };
           data[slug] = preview;
