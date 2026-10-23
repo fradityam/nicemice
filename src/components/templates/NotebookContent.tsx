@@ -136,6 +136,22 @@ export function FitSpan({ fit, children }: { fit: FitBox; children: ReactNode })
 }
 
 /** Lines of text with a <br /> between them. */
+/** Text that wraps between words but never at a hyphen inside one: "Pura-pura" stays whole. */
+const KeepHyphenated = ({ text }: { text: string }) => (
+  <>
+    {text.split(/(\S*-\S*)/).map((part, i) =>
+      // Odd parts are the hyphenated words the split captured.
+      i % 2 ? (
+        <span key={i} className="whitespace-nowrap">
+          {part}
+        </span>
+      ) : (
+        part
+      ),
+    )}
+  </>
+);
+
 const Lines = ({ lines }: { lines: readonly string[] }) => (
   <>
     {lines.map((line, i) => (
@@ -315,7 +331,16 @@ const COLLAGE_MOVES: Record<number, [number, number][]> = {
   4: [[0, 0], [0, 0], [0, 0], [0, 0]],
 };
 
-const LIGHTBOX_THEME = (coupleNames: string): LightboxTheme => ({
+// The two lamps by the collage, [x, y] each, where Figma has them. With three photos the squares
+// come down beside the right lamp and nothing sits under them, so it hangs below them instead;
+// the left lamp, which would touch the tall frame's corner and has no free spot (above it is
+// the lake), is left out. Neither then covers a corner of a photo.
+const COLLAGE_LAMPS: Record<number, [number, number][]> = {
+  3: [[307, 1880]],
+  4: [[-3, 1705], [307, 1840]],
+};
+
+const LIGHTBOX_THEME =(coupleNames: string): LightboxTheme => ({
   arrowBg: '#aba935',
   arrowFg: '#fefffa',
   counterClass: "font-['Raleway'] font-semibold text-[14px] leading-none tracking-[0.12em] text-[#fefffa]",
@@ -701,7 +726,7 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
                 className="-translate-x-1/2 absolute w-[113px] text-center font-['Raleway'] text-[10px] leading-[12px] tracking-[-0.17px] text-black"
                 style={{ left: x + 113 / 2, top: 902.5 }}
               >
-                {`${person.parentsLabel} ${person.parents}`}
+                <KeepHyphenated text={`${person.parentsLabel} ${person.parents}`} />
               </Fit>
             </Fragment>
           ))}
@@ -794,8 +819,9 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
         <Reveal at={2005} kind="pop" origin={[289.3, 2016.5]} delay={500}>
           <Img file="heart-3.svg" x={279} y={2005} w={20.57} h={23} />
         </Reveal>
-        <Img file="lamp.webp" x={-3} y={1705} w={56} h={82} />
-        <Img file="lamp.webp" x={307} y={1840} w={56} h={82} />
+        {(COLLAGE_LAMPS[gallery.length] ?? COLLAGE_LAMPS[MAX_GALLERY]).map(([x, y]) => (
+          <Img key={x} file="lamp.webp" x={x} y={y} w={56} h={82} />
+        ))}
 
         {/* ===== Konfirmasi Kehadiran ===== */}
         <Reveal at={2416} kind="fadeUp">

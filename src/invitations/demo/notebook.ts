@@ -20,7 +20,7 @@ export const notebookDemo: NotebookInvitation = {
   guestFallback: 'Bapak/Ibu/Saudara/i',
   music: `${import.meta.env.BASE_URL}notebook-music.mp3`,
   demo: {
-    sampleGuest: 'Nadia Kusuma',
+    sampleGuest: 'Pevita Pearce',
     sampleWishes: [
       { name: 'Fin (sahabat Noah)', message: 'Akhirnya, kawan! Dari dulu aku sudah bilang kalian berdua memang ditakdirkan bersama. Selamat ya! 🛶', minutesAgo: 2 },
       { name: 'Tante Martha', message: 'Selamat menempuh hidup baru, Noah & Allie. Semoga cinta kalian tetap sehangat surat-surat yang dulu ditulis setiap hari.', minutesAgo: 120 },
