@@ -179,5 +179,53 @@ export interface NotebookInvitation extends InvitationBase {
   closing: { text?: string; signature: string };
 }
 
-export type Invitation = FriendsInvitation | LaLaLandInvitation | NotebookInvitation;
+export interface CrazyLoveVenue extends Venue {
+  /** 1 or 2 short lines; the event card shows the first after the name, "Lokasi Acara" all of them. */
+  addressLines: string[];
+  /**
+   * The picture of the map in "Lokasi Acara", e.g. a screenshot of the venue in Google Maps;
+   * it opens the Maps link. Left out, there is no picture (only the "Lihat Lokasi" button).
+   */
+  mapImage?: Photo;
+}
+
+export interface CrazyLoveInvitation extends InvitationBase {
+  template: 'crazylove';
+  /** Replaces the Bismillah drawing above the intro with this line, e.g. 'Salam Sejahtera'. */
+  salutation?: string;
+  groom: Person;
+  bride: Person;
+  /**
+   * 1 to 8 photos (more are left out): the first 3 in the collage at the top, the next 5 in
+   * the photo grid (one wide, then four small). With 3 or fewer there is no grid.
+   */
+  gallery: [GalleryPhoto, ...GalleryPhoto[]];
+  /** "Cerita Kami": 1 to 4 moments in order (more are left out). A \n in `text` breaks the line there. */
+  story: [StoryMoment, ...StoryMoment[]];
+  /** Where the ceremony is; also the reception's, unless `reception.venue` says otherwise. */
+  venue: CrazyLoveVenue;
+  /**
+   * Times as shown, e.g. '08.00 - selesai'. Both events are on `date`; the countdown runs to
+   * the ceremony's start time. `label` is 'Akad Nikah' unless given, e.g. 'Pemberkatan'.
+   */
+  ceremony: { time: string; label?: string };
+  /** "Lokasi Acara" in the journal shows the reception's venue. */
+  reception: { time: string; venue?: CrazyLoveVenue };
+  /**
+   * The journal's "Dresscode": `text` wraps in a narrow column; `illustration: false` hides the
+   * batik and kebaya drawing beside it. Leave out to hide the whole dresscode.
+   */
+  dresscode?: { text: string; illustration?: boolean };
+  /** Leave out to hide the bank card (with both gifts left out, the whole "Tanda Kasih" part). */
+  bank?: BankAccount;
+  /** Leave out to hide the gift address card. */
+  giftDelivery?: GiftDelivery;
+  /**
+   * `text` is 'Sampai Jumpa di Hari Bahagia Kami' unless given. The " & " in `signature`
+   * ('Ratu & Radit') is drawn as the design's heart.
+   */
+  closing: { text?: string; signature: string };
+}
+
+export type Invitation = FriendsInvitation | LaLaLandInvitation | NotebookInvitation | CrazyLoveInvitation;
 export type TemplateId = Invitation['template'];

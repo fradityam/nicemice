@@ -12,6 +12,7 @@ const TEMPLATES: Record<TemplateId, ComponentType<TemplateProps<any>>> = {
   friends: lazy(() => import('./templates/FriendsTemplate')),
   lalaland: lazy(() => import('./templates/LaLaLandTemplate')),
   notebook: lazy(() => import('./templates/NotebookTemplate')),
+  crazylove: lazy(() => import('./templates/CrazyLoveTemplate')),
 };
 
 /** Keeps the page out of search engines while it is open. */

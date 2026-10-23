@@ -1,10 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 import paper from '../../assets/images/crazylove/paper.webp';
 import scallopFrame from '../../assets/images/crazylove/scallop-frame.webp';
-import coverPhoto from '../../assets/images/crazylove/cover-photo.webp';
 import coverFrame from '../../assets/images/crazylove/cover-frame.svg';
 import coverMask from '../../assets/images/crazylove/cover-mask.svg';
 import bouquet1 from '../../assets/images/crazylove/bouquet-1.webp';
@@ -14,10 +13,12 @@ import CrazyLoveContent, { ENABLE_ANIMATIONS, INTRO } from './CrazyLoveContent';
 import { Reveal, RevealProvider, useCoverReveals } from './scrollReveal';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import { STAGE_BG } from './templateStage';
-
-// The couple's song, served from public/. Swap the file to give each couple their own
-// music; set to null to hide the player.
-const MUSIC_SRC: string | null = `${import.meta.env.BASE_URL}crazy-love-music.mp3`;
+import { useFit, type FitBox } from './fitText';
+import type { TemplateProps } from '../CouplePage';
+import { crazyLoveDemo } from '../../invitations/demo/crazylove';
+import { useGuestName } from '../../invitations/guestName';
+import { greetingLanguage, type Language } from '../../invitations/language';
+import type { CrazyLoveInvitation } from '../../invitations/types';
 
 const CREAM = '#fff4e8';
 const BROWN = '#70564b';
@@ -29,6 +30,25 @@ const MAX_COLUMN_W = 430;
 const SAFE_W = 351;
 
 const mask = `url("${coverMask}")`;
+
+// The cover speaks the couple's greeting language: 'Dear' keeps the design's English button,
+// 'Kepada' (or anything else) is Indonesian. "said “I do!”" is part of the design either way.
+const OPEN_LABEL: Record<Language, string> = { en: 'Open the Invitation', id: 'Buka Undangan' };
+// The couple's names on the polaroid, and the greeting and guest's name under it, shrink to
+// stay inside their slots.
+const NAMES_FIT: FitBox = { w: 200 };
+const LINE_FIT: FitBox = { w: 330 };
+
+/** A line of the cover that shrinks (towards its centre) when it is longer than its slot. */
+function FitLine({ fit, as: Tag = 'p', className, style, children }: { fit: FitBox; as?: 'p' | 'span'; className: string; style?: CSSProperties; children: ReactNode }) {
+  const f = useFit<HTMLElement>(fit);
+  return (
+    <Tag ref={f.ref as never} className={className} style={{ ...style, ...f.style }}>
+      {children}
+      {f.probe}
+    </Tag>
+  );
+}
 
 /** A layer centred in Figma's bounding box [x, y, w, h] and rotated about its centre. */
 function Rot({ box, w, h, deg, children }: { box: [number, number, number, number]; w: number; h: number; deg: number; children: ReactNode }) {
@@ -65,8 +85,9 @@ function useCoverScale() {
 // Figma "Cover" frame (375 × 667) at its own coordinates, scaled to fit the column. On load
 // it settles in: the card fades in, the polaroid drops onto it, the flowers and the kids pop
 // in, then the guest's name and the button rise; the button works from the start.
-function CrazyLoveCover({ onOpen }: { onOpen: () => void }) {
+function CrazyLoveCover({ invitation: inv, guest, onOpen }: { invitation: CrazyLoveInvitation; guest: string; onOpen: () => void }) {
   const { ref, scale, top } = useCoverScale();
+  const lang = greetingLanguage(inv.greeting);
   const { reveals } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1500 });
   return (
     <RevealProvider value={reveals}>
@@ -93,12 +114,14 @@ function CrazyLoveCover({ onOpen }: { onOpen: () => void }) {
                 className="absolute inset-0"
                 style={{ maskImage: mask, WebkitMaskImage: mask, maskPosition: '2.45px 1.742px', WebkitMaskPosition: '2.45px 1.742px', maskSize: '216.109px 217.552px', WebkitMaskSize: '216.109px 217.552px', maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat' }}
               >
-                <img alt="Ratu & Radit membaca buku di tempat tidur" src={coverPhoto} className={`${fill} rounded-[8px]`} />
+                <img alt={`Foto ${inv.coupleNames}`} src={inv.coverPhoto} className={`${fill} rounded-[8px]`} />
               </div>
             </Rot>
             <Rot box={[78, 395.53, 210.6, 66.875]} w={207.41} h={52.273} deg={4.07}>
               <h1 className="font-['Nanum_Pen_Script'] font-normal text-center text-[#e58f9b]">
-                <span className="block text-[30px] leading-[26px]">Ratu &amp; Radit</span>
+                <FitLine as="span" fit={NAMES_FIT} className="mx-auto block w-max whitespace-nowrap text-[30px] leading-[26px]">
+                  {inv.coupleNames}
+                </FitLine>
                 <span className="block text-[26px] leading-[26px]">said “I do!”</span>
               </h1>
             </Rot>
@@ -122,14 +145,14 @@ function CrazyLoveCover({ onOpen }: { onOpen: () => void }) {
         </Reveal>
 
         <Reveal at={0} kind="fadeUp" delay={650}>
-          <p className="-translate-x-1/2 absolute left-1/2 top-[519px] font-['Josefin_Slab'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
-            Dear
-          </p>
+          <FitLine fit={LINE_FIT} className="-translate-x-1/2 absolute left-1/2 top-[519px] font-['Josefin_Slab'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
+            {inv.greeting}
+          </FitLine>
         </Reveal>
         <Reveal at={0} kind="fadeUp" delay={730}>
-          <p className="-translate-x-1/2 absolute left-1/2 top-[549px] font-['Josefin_Sans'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
-            Chon &amp; Nam
-          </p>
+          <FitLine fit={LINE_FIT} className="-translate-x-1/2 absolute left-1/2 top-[549px] font-['Josefin_Sans'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
+            {guest}
+          </FitLine>
         </Reveal>
         <Reveal at={0} kind="fadeUp" delay={800}>
           <button
@@ -138,7 +161,7 @@ function CrazyLoveCover({ onOpen }: { onOpen: () => void }) {
             className="absolute left-[98px] top-[584px] h-[32px] w-[179px] cursor-pointer rounded-[17px] bg-[#a9c6d8] transition-[filter] hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#519ac8]"
           >
             <span className="-translate-x-1/2 absolute left-1/2 top-[3px] font-['Josefin_Sans'] text-[17px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
-              Open the Invitation
+              {OPEN_LABEL[lang]}
             </span>
           </button>
         </Reveal>
@@ -156,10 +179,14 @@ function CrazyLoveCover({ onOpen }: { onOpen: () => void }) {
 
 type Phase = 'cover' | 'opening' | 'open';
 
-export default function CrazyLoveTemplate() {
+/** A couple's invitation, or (with no props, at /template/crazy-little-thing) the demo. */
+export default function CrazyLoveTemplate({ invitation = crazyLoveDemo, slug }: Partial<TemplateProps<CrazyLoveInvitation>>) {
   const [phase, setPhase] = useState<Phase>('cover');
   const [reducedMotion, setReducedMotion] = useState(false);
-  const music = useBackgroundMusic(MUSIC_SRC);
+  const music = useBackgroundMusic(invitation.music);
+  // Demo pages show their sample guest unless the link names one, so a demo can be tried with
+  // any name too.
+  const guest = useGuestName(invitation.demo?.sampleGuest ?? invitation.guestFallback);
 
   // The site sets `scroll-behavior: smooth` on <html>, so scrolls here are explicitly instant.
   useLayoutEffect(() => {
@@ -198,13 +225,16 @@ export default function CrazyLoveTemplate() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: STAGE_BG }}>
-      <Link
-        to="/"
-        className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        nicemice
-      </Link>
+      {/* Back to site link (demo only) */}
+      {invitation.demo && (
+        <Link
+          to="/"
+          className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          nicemice
+        </Link>
+      )}
 
       {phase !== 'open' && (
         <div
@@ -219,16 +249,16 @@ export default function CrazyLoveTemplate() {
               The cover layer itself is transparent so the cream content shows through as it
               dissolves, instead of flashing the dark stage. */}
           <div className="absolute inset-0 mx-auto max-w-[430px]">
-            <CrazyLoveCover onOpen={open} />
+            <CrazyLoveCover invitation={invitation} guest={guest} onOpen={open} />
           </div>
         </div>
       )}
 
       <div className="relative max-w-[430px] mx-auto">
-        <CrazyLoveContent intro={{ revealed: phase !== 'cover', reducedMotion }} />
+        <CrazyLoveContent invitation={invitation} slug={slug} intro={{ revealed: phase !== 'cover', reducedMotion }} />
       </div>
 
-      {MUSIC_SRC && phase !== 'cover' && (
+      {invitation.music && phase !== 'cover' && (
         <MusicToggle playing={music.playing} onToggle={music.toggle} background="#e58f9b" iconColor="#fff4e8" />
       )}
     </div>
