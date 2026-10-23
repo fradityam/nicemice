@@ -1,10 +1,25 @@
-import {StrictMode, Suspense, lazy} from 'react';
+import {StrictMode, Suspense, lazy, useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
-import {BrowserRouter, Routes, Route} from 'react-router-dom';
+import {BrowserRouter, Routes, Route, useLocation} from 'react-router-dom';
 import App from './App.tsx';
 import ComingSoonPage from './components/ComingSoonPage.tsx';
 import NotFoundPage from './components/NotFoundPage.tsx';
+import {PAGES, pageSeo} from './content/seo.ts';
 import './index.css';
+
+// The Worker writes each page's title and description into the HTML it serves, but moving
+// between pages inside the app doesn't ask it again. This keeps the tab title (and the
+// description) in step: the page's own text from content/seo.ts, or the homepage's elsewhere.
+// A couple's page then sets its own title (CouplePage.tsx).
+function PageMeta() {
+  const {pathname} = useLocation();
+  useEffect(() => {
+    const seo = pageSeo(pathname)?.seo ?? PAGES['/'];
+    document.title = seo.title;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', seo.description);
+  }, [pathname]);
+  return null;
+}
 
 // Each template is its own chunk, downloaded only when its route is opened, so the
 // homepage doesn't pay for template code.
@@ -24,6 +39,7 @@ const CouplePage = lazy(() => import('./components/CouplePage.tsx'));
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
+      <PageMeta />
       <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<App />} />

@@ -17,15 +17,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Josefin+Sans:wght@300;400&family=Josefin+Slab:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <!-- Homepage fonts (DM Sans, DM Mono, Libre Caslon Text) -->
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet" />
-    <title>Nice Mice - Undangan Pernikahan Digital yang Kamu Banget</title>
-    <!-- The price placeholder is filled in from PRICING in src/content/homeInfo.ts (see vite.config.ts). -->
-    <meta name="description" content="Undangan pernikahan digital dengan tema yang kamu banget. Pilih tema, kirim detail acara, dan tim Nice Mice siapkan sampai siap disebar. Mulai %PROMO_PRICE%." />
+    <!-- The homepage's title and description, filled in from src/content/seo.ts (see vite.config.ts).
+         On the template demos the Worker (worker/index.ts) swaps in their own and adds a canonical. -->
+    <title>%HOME_TITLE%</title>
+    <meta name="description" content="%HOME_DESCRIPTION%" />
     <!-- Link previews (WhatsApp, …). On a couple's page the Worker (worker/index.ts) swaps in
          their names, date and photo. Image URLs must be absolute. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Nice Mice" />
-    <meta property="og:title" content="Nice Mice - Undangan Pernikahan Digital yang Kamu Banget" />
-    <meta property="og:description" content="Undangan pernikahan digital dengan tema yang kamu banget. Pilih tema, kirim detail acara, dan tim Nice Mice siapkan sampai siap disebar. Mulai %PROMO_PRICE%." />
+    <meta property="og:title" content="%HOME_TITLE%" />
+    <meta property="og:description" content="%HOME_DESCRIPTION%" />
     <meta property="og:image" content="https://nicemice.id/og-default.jpg" />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
