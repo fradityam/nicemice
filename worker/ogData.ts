@@ -1,4 +1,4 @@
-// What the build (scripts/sharePreviews.ts) writes to worker/og-data.json for each couple:
+// What the build (scripts/sharePreviews.ts) writes to worker/og-data.json for every couple:
 // everything the link preview needs, already in the couple's language.
 
 export interface SharePreview {
@@ -10,8 +10,8 @@ export interface SharePreview {
   guestFallback: string;
   /** What follows "<greeting> <guest>, ", e.g. 'undangan pernikahan Ratu & Radit, 27 September 2027.' */
   invited: string;
-  /** Site path of the JPEG, e.g. '/couples/radit-ratu/og.jpg?v=1a2b3c4d'. */
-  image: { path: string; width: number; height: number };
+  /** Site path of the JPEG, e.g. '/couples/radit-ratu/og.jpg?v=1a2b3c4d'; none when the photo is missing. */
+  image?: { path: string; width: number; height: number };
 }
 
 export type OgData = Record<string, SharePreview>;

@@ -4,23 +4,29 @@ import path from 'path';
 import {defineConfig, type Plugin} from 'vite';
 import {sharePreviews} from './scripts/sharePreviews';
 import {sitemap} from './scripts/sitemap';
+import {notFoundPage} from './scripts/notFoundPage';
+import {GA_MEASUREMENT_ID} from './src/config';
 import {PAGES} from './src/content/seo';
 
 const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 // Fills %HOME_TITLE% and %HOME_DESCRIPTION% in index.html with the homepage's text from
-// src/content/seo.ts, so the default tags match it (and its price follows PRICING).
+// src/content/seo.ts, so the default tags match it (and its price follows PRICING), and
+// %GA_ID% with the Analytics ID from src/config.ts.
 function homeMeta(): Plugin {
   return {
     name: 'nicemice-home-meta',
     transformIndexHtml: (html) =>
-      html.replaceAll('%HOME_TITLE%', escapeHtml(PAGES['/'].title)).replaceAll('%HOME_DESCRIPTION%', escapeHtml(PAGES['/'].description)),
+      html
+        .replaceAll('%HOME_TITLE%', escapeHtml(PAGES['/'].title))
+        .replaceAll('%HOME_DESCRIPTION%', escapeHtml(PAGES['/'].description))
+        .replaceAll('%GA_ID%', escapeHtml(GA_MEASUREMENT_ID)),
   };
 }
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), homeMeta(), sharePreviews(), sitemap()],
+    plugins: [react(), tailwindcss(), homeMeta(), sharePreviews(), sitemap(), notFoundPage()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

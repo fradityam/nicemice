@@ -70,7 +70,7 @@ export default function Pricing() {
                 </div>
               ))}
             </dl>
-            <OrderLink className="text-link" message={custom.whatsappMessage}>
+            <OrderLink className="text-link" message={custom.whatsappMessage} button="pricing_custom">
               Ceritakan idemu <ArrowIcon />
             </OrderLink>
           </article>
@@ -96,7 +96,7 @@ export default function Pricing() {
           <h3>{partner.title}</h3>
           <p>{partner.description}</p>
         </div>
-        <OrderLink className="button button-outline" message={partner.whatsappMessage}>
+        <OrderLink className="button button-outline" message={partner.whatsappMessage} button="partner">
           Jadi partner kami
           <ArrowIcon />
         </OrderLink>

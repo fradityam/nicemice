@@ -1,3 +1,4 @@
+import { track } from '../../analytics';
 import { ORDER_MESSAGE, whatsappLink } from '../../config';
 import { WhatsAppIcon } from './icons';
 
@@ -13,6 +14,7 @@ export default function WhatsAppFloat() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Ngobrol dengan Nice Mice lewat WhatsApp"
+      onClick={() => track('whatsapp_click', { button: 'floating' })}
     >
       <WhatsAppIcon />
       <span>Ngobrol Yuk</span>

@@ -15,6 +15,12 @@ export const CONTACT_INSTAGRAM = '';
  */
 export const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzljiDOOhcevTP-pWQ23ywSeuQSSoz8jcrbe1YO64qMKf9ovg6h8KhvEsjqDmrS4Y57gw/exec';
 
+/**
+ * Google Analytics 4 Measurement ID. index.html loads GA with it (see vite.config.ts), on
+ * nicemice.id only; src/analytics.ts sends the events.
+ */
+export const GA_MEASUREMENT_ID = 'G-27HKTD21EM';
+
 /** Prefilled WhatsApp message for general order buttons (announcement bar, final CTA, floating button). */
 export const ORDER_MESSAGE = 'Halo Nice Mice, saya ingin pesan undangan digital.';
 

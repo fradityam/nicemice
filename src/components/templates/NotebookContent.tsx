@@ -456,7 +456,7 @@ const THANKS: Record<Attendance, string> = {
  * card, which is also what the guest sees on reopening the invitation on the same phone.
  */
 function Rsvp({ inv, slug, onWish }: { inv: NotebookInvitation; slug?: string; onWish: (wish: Wish) => void }) {
-  const { attendance, setAttendance, sent, sending, error, submit, sendAnother } = useRsvpForm(slug, onWish);
+  const { attendance, setAttendance, sent, sending, error, submit, sendAnother } = useRsvpForm(slug, 'notebook', onWish);
 
   const title = (
     <Centered x={0} y={2416} w={376} h={20} className="font-['La_Belle_Aurore'] text-[18px] leading-[20px] tracking-[-0.306px] text-[#324532]">

@@ -1,7 +1,7 @@
 // Homepage text that changes from time to time: prices, FAQ and testimonials.
 // Edit here; the components in src/components/home only handle layout.
-// The FAQ also feeds the FAQPage structured data (src/components/home/Faq.tsx), so what
-// Google reads always matches what's on the page.
+// Prices and the FAQ also feed the homepage's structured data (src/content/structuredData.ts),
+// so what Google reads always matches what's on the page.
 
 export const PRICING = {
   regular: {

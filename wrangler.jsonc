@@ -1,10 +1,10 @@
 // Cloudflare Worker "nicemice" (nicemice.id). Workers Builds deploys it from GitHub main.
 // The site is a static single-page app: Vite builds it into dist/ and the Worker serves
-// those files. Any path that isn't a file (a couple's /radit-ratu, /template/friends, …)
-// gets index.html, and the app's router shows the right page or its own "not found".
-//
-// worker/index.ts runs first for page URLs so a couple's page gets their own link-preview
-// tags (WhatsApp doesn't run JavaScript). Built files, couple photos and music skip it.
+// those files. Page URLs (a couple's /radit-ratu, /template/friends, …) go to worker/index.ts
+// first, which answers with index.html and that page's tags (WhatsApp and search engines
+// don't run JavaScript), or a 404 for an address that isn't a page. Built files, couple
+// photos and music skip it; a missing file gets dist/404.html with a 404 status
+// (scripts/notFoundPage.ts), where the app shows its own "not found".
 {
   "name": "nicemice",
   "compatibility_date": "2026-10-01",
@@ -15,7 +15,7 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
+    "not_found_handling": "404-page",
     "run_worker_first": ["/*", "!/assets/*", "!/couples/*", "!/*.*"]
   }
 }

@@ -1,22 +1,11 @@
 import { FAQS } from '../../content/homeInfo';
 
-// FAQPage structured data, built from the same list as the accordion. It renders only here,
-// so it exists on the homepage alone. React 19 leaves <script> tags in place in the body,
-// where Google reads JSON-LD fine.
-const FAQ_JSON_LD = JSON.stringify({
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: FAQS.map((faq) => ({
-    '@type': 'Question',
-    name: faq.question,
-    acceptedAnswer: { '@type': 'Answer', text: faq.answer },
-  })),
-}).replace(/</g, '\\u003c');
+// The FAQ's structured data (FAQPage) is in the homepage's <head>, written by the Worker from
+// the same list (src/content/structuredData.ts).
 
 export default function Faq() {
   return (
     <section className="faq" id="faq">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: FAQ_JSON_LD }} />
       <div className="faq-heading">
         <p className="section-kicker">Pertanyaan umum</p>
         <h2>Hal yang mungkin ingin kamu tanyakan</h2>

@@ -16,6 +16,7 @@ export default function FinalCta() {
       <OrderLink
         className="button button-primary button-large"
         message={ORDER_MESSAGE}
+        button="final_cta"
       >
         Ngobrol Gratis, Yuk!
         <ArrowIcon />

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { track } from '../analytics';
 import { RSVP_ENDPOINT } from '../config';
-import type { SampleWish } from './types';
+import type { SampleWish, TemplateId } from './types';
 
 // Talks to the RSVP Apps Script (apps-script/rsvp.gs): sends a guest's reply and reads back
 // the couple's wishes. Every template uses these; only the look of the form is its own.
@@ -109,8 +110,10 @@ export function timeAgo(iso: string | null, lang: keyof typeof TIME_WORDS) {
  * page (`slug`) a reply goes to the RSVP script; on a demo nothing is sent: it shows the
  * thank-you, and the wish joins the sample wishes on the visitor's screen only.
  * `sent` is also what the guest sees on reopening the invitation on the same phone.
+ * A reply that arrives is counted in Analytics as rsvp_submit, with the template and the
+ * attendance only: never the guest's name or message.
  */
-export function useRsvpForm(slug: string | undefined, onWish: (wish: Wish) => void) {
+export function useRsvpForm(slug: string | undefined, template: TemplateId, onWish: (wish: Wish) => void) {
   const [attendance, setAttendance] = useState<Attendance>('hadir');
   const [sent, setSent] = useState<{ name: string; attendance: Attendance } | null>(() => (slug ? sentBefore(slug) : null));
   const [sending, setSending] = useState(false);
@@ -134,6 +137,7 @@ export function useRsvpForm(slug: string | undefined, onWish: (wish: Wish) => vo
       setSending(false);
       if (result !== 'ok') return setError(result);
       rememberSent(slug, { name: reply.name, attendance });
+      track('rsvp_submit', { template, attendance });
     }
     setSent(reply);
     if (reply.message) onWish({ name: reply.name, message: reply.message, time: new Date().toISOString() });

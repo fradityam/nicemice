@@ -600,7 +600,7 @@ const THANKS: Record<Attendance, string> = {
  * card, which is also what the guest sees on reopening the invitation on the same phone.
  */
 function Rsvp({ inv, slug, onWish }: { inv: CrazyLoveInvitation; slug?: string; onWish: (wish: Wish) => void }) {
-  const { attendance, setAttendance, sent, sending, error, submit, sendAnother } = useRsvpForm(slug, onWish);
+  const { attendance, setAttendance, sent, sending, error, submit, sendAnother } = useRsvpForm(slug, 'crazylove', onWish);
 
   if (sent)
     return (

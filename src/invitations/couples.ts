@@ -15,6 +15,9 @@ for (const [path, load] of Object.entries(files)) {
   if (slug) loaders.set(slug, load);
 }
 
+/** Whether nicemice.id/<slug> is a couple's page. */
+export const isCouple = (slug: string) => loaders.has(slug);
+
 /** The couple's invitation, or null when no couple has this slug. */
 export function loadCouple(slug: string): Promise<Invitation | null> {
   return loaders.get(slug)?.() ?? Promise.resolve(null);

@@ -255,7 +255,7 @@ const THANKS: Record<Attendance, string> = {
  * is also what the guest sees when they reopen the invitation on the same phone.
  */
 function Rsvp({ inv, slug, onWish }: { inv: FriendsInvitation; slug?: string; onWish: (wish: Wish) => void }) {
-  const { attendance, setAttendance, sent, sending, error, submit, sendAnother } = useRsvpForm(slug, onWish);
+  const { attendance, setAttendance, sent, sending, error, submit, sendAnother } = useRsvpForm(slug, 'friends', onWish);
 
   const title = (
     <Centered cx={188.5} cy={3800} className={`${friendsTitle} text-[18px] leading-[20px] text-[#a07eb9]`}>
@@ -560,12 +560,13 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           <Img file="lamp.webp" x={264} y={389} w={157} h={236} />
           <Img file="lamp.webp" x={-47} y={389} w={157} h={236} />
           <Img file="orange-couch.webp" x={24} y={472} w={327} h={164} alt="The orange couch in front of the fountain" />
-          <h1 ref={titleFit.ref} className={`-translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-[116.5px] text-center ${friendsTitle} leading-[35px] text-white`} style={titleFit.style}>
+          {/* h2: the cover's title (FriendsTemplate.tsx) is the page's one h1. */}
+          <h2 ref={titleFit.ref} className={`-translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-[116.5px] text-center ${friendsTitle} leading-[35px] text-white`} style={titleFit.style}>
             <span className="block text-[20px]">The one with</span>
             <span className="block text-[27px]">{inv.coupleNames}</span>
             <span className="block text-[27px]">Wedding</span>
             {titleFit.probe}
-          </h1>
+          </h2>
           <Centered cx={187.5} cy={185} className={`${friendsTitle} text-[17px] leading-[42px] text-white`}>
             {weddingDate}
           </Centered>

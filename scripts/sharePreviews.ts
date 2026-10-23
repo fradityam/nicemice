@@ -11,7 +11,8 @@ import type { OgData, SharePreview } from '../worker/ogData';
 // WhatsApp link previews for couple pages. WhatsApp's crawler doesn't run JavaScript, so the
 // Worker (worker/index.ts) writes each couple's og: tags into the HTML. After `vite build` this
 // reads every src/couples/<slug>.ts, writes the preview text to worker/og-data.json (bundled
-// into the Worker, not public), and makes the preview photo dist/couples/<slug>/og.jpg:
+// into the Worker, not public; also the Worker's list of couples: an address not in it gets a
+// 404), and makes the preview photo dist/couples/<slug>/og.jpg:
 //   - shareImage, when the couple has one: 1200×630, WhatsApp's large card;
 //   - otherwise coverPhoto: 600×600, a square thumbnail beside the text.
 // JPEG, since WhatsApp doesn't reliably show WebP, and kept under 300 KB, above which it often
@@ -76,16 +77,19 @@ export function sharePreviews(): Plugin {
 
           const [photo, width, height] = inv.shareImage ? [inv.shareImage, 1200, 630] : [inv.coverPhoto, 600, 600];
           const source = photoFile(photo, config);
-          if (!fs.existsSync(source)) {
+          let image: SharePreview['image'];
+          if (fs.existsSync(source)) {
+            const jpeg = await previewJpeg(source, width, height);
+            const out = path.join(config.root, config.build.outDir, 'couples', slug, 'og.jpg');
+            fs.mkdirSync(path.dirname(out), { recursive: true });
+            fs.writeFileSync(out, jpeg);
+            // ?v= changes with the photo, so a new photo isn't hidden behind an old cached one.
+            const version = crypto.createHash('sha256').update(jpeg).digest('hex').slice(0, 8);
+            image = { path: `${config.base}couples/${slug}/og.jpg?v=${version}`, width, height };
+          } else {
+            // Still listed: the Worker needs every couple, or their page would get a 404.
             this.warn(`src/couples/${name}: ${photo} not found (${source}); its WhatsApp preview uses the default image`);
-            continue;
           }
-          const jpeg = await previewJpeg(source, width, height);
-          const out = path.join(config.root, config.build.outDir, 'couples', slug, 'og.jpg');
-          fs.mkdirSync(path.dirname(out), { recursive: true });
-          fs.writeFileSync(out, jpeg);
-          // ?v= changes with the photo, so a new photo isn't hidden behind an old cached one.
-          const version = crypto.createHash('sha256').update(jpeg).digest('hex').slice(0, 8);
 
           const date = formatDate(inv.date, lang);
           const preview: SharePreview = {
@@ -94,7 +98,7 @@ export function sharePreviews(): Plugin {
             guestFallback: inv.guestFallback,
             // No "kamu" in Indonesian: the guest may be an older Bapak/Ibu.
             invited: lang === 'en' ? `you’re invited to the wedding of ${inv.coupleNames}, ${date}.` : `undangan pernikahan ${inv.coupleNames}, ${date}.`,
-            image: { path: `${config.base}couples/${slug}/og.jpg?v=${version}`, width, height },
+            image,
           };
           data[slug] = preview;
         }

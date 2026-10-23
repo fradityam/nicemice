@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CATALOG_TEMPLATES } from '../../data';
 import type { Template } from '../../types';
+import type { TemplateId } from '../../invitations/types';
 import lalalandThumbnail from '../../assets/images/lalaland/lalaland-thumbnail.webp';
 import notebookThumbnail from '../../assets/images/notebook/notebook-thumbnail.webp';
 import friendsThumbnail from '../../assets/images/friends/friends-thumbnail.webp';
@@ -28,6 +29,14 @@ const ROUTES: Record<string, string> = {
   'tema-batik': '/template/batik',
   'tema-noir': '/template/noir',
   'tema-indigo': '/template/indigo',
+};
+
+// The theme sent to Analytics with a card's "Pesan" click, the same names as demo_view.
+const THEME_IDS: Record<string, TemplateId> = {
+  'tema-lalaland': 'lalaland',
+  'tema-notebook': 'notebook',
+  'tema-friends': 'friends',
+  'tema-crazy-little-thing': 'crazylove',
 };
 
 const CATEGORY_LABELS: Record<Template['category'], string> = {
@@ -109,7 +118,11 @@ export default function Catalog() {
                 <p>{tpl.subtitle}</p>
                 <div className="template-actions">
                   <Link to={ROUTES[tpl.id]}>Lihat contoh</Link>
-                  <OrderLink message={`Halo Nice Mice, saya ingin pesan undangan digital Tema ${name}.`}>
+                  <OrderLink
+                    message={`Halo Nice Mice, saya ingin pesan undangan digital Tema ${name}.`}
+                    button="catalog_card"
+                    theme={THEME_IDS[tpl.id]}
+                  >
                     Pesan
                     <ArrowIcon />
                   </OrderLink>

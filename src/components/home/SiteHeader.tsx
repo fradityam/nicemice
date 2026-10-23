@@ -30,7 +30,7 @@ export default function SiteHeader() {
       <div className="announcement">
         <span>50 Pasangan Pertama, PROMO {PRICING.regular.price}</span>
         <span className="announcement-dot" aria-hidden="true">•</span>
-        <OrderLink className="announcement-link" message={ORDER_MESSAGE}>
+        <OrderLink className="announcement-link" message={ORDER_MESSAGE} button="top_bar">
           Pesan Sekarang!
         </OrderLink>
       </div>
