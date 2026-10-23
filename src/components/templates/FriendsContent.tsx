@@ -250,8 +250,8 @@ const THANKS: Record<Attendance, string> = {
 };
 
 /**
- * The attendance form. On a couple's page (`slug`) it sends to the RSVP script; on the demo
- * it only shows the thank-you. After sending, the fields give way to a thank-you card, which
+ * The attendance form (see useRsvpForm). On a couple's page (`slug`) it sends to the RSVP
+ * script; on the demo nothing is sent, and the wish only joins the samples on screen. After sending, the fields give way to a thank-you card, which
  * is also what the guest sees when they reopen the invitation on the same phone.
  */
 function Rsvp({ inv, slug, onWish }: { inv: FriendsInvitation; slug?: string; onWish: (wish: Wish) => void }) {
@@ -343,7 +343,7 @@ function Rsvp({ inv, slug, onWish }: { inv: FriendsInvitation; slug?: string; on
 // ---------- Wishes ----------
 
 // On a couple's page the guests' wishes get their own band under the form: everything below
-// it moves down by WISHES_H. The demo has no band and keeps Figma's layout exactly.
+// it moves down by WISHES_H. On a demo it shows sample wishes from the demo data.
 const WISHES_Y = 4256;
 const WISHES_H = 470;
 // The yellow gradient behind the form, at the band's top, continues as the band's colour.
@@ -418,9 +418,10 @@ const STORY_SLOTS = [
 ];
 
 export default function FriendsContent({ invitation: inv, slug, intro }: { invitation: FriendsInvitation; slug?: string; intro: IntroState }) {
-  const wishes = useWishes(slug);
-  // Couple pages get the wishes band; the demo keeps Figma's frame exactly.
-  const shift = slug ? WISHES_H : 0;
+  const wishes = useWishes(slug, inv.demo?.sampleWishes);
+  // The wishes band: the couple's guests' wishes, or a demo's samples. (Without either, e.g. a
+  // page with neither a slug nor demo data, the frame is Figma's exactly.)
+  const shift = slug || inv.demo ? WISHES_H : 0;
   const frameH = FRAME_H + shift;
   const weddingDate = formatDate(inv.date);
   const photos = useMemo(() => lightboxPhotos(inv), [inv]);

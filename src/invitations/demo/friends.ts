@@ -18,7 +18,14 @@ export const friendsDemo: FriendsInvitation = {
   greeting: 'Dear',
   guestFallback: 'Bapak/Ibu/Saudara/i',
   music: `${import.meta.env.BASE_URL}friends-music.mp3`,
-  demo: { sampleGuest: 'Phoebe & Mike' },
+  demo: {
+    sampleGuest: 'Phoebe & Mike',
+    sampleWishes: [
+      { name: 'Joey (best friend)', message: 'How you doin’? Congrats, you two! So happy for you. Save me a seat near the cake 🍰', minutesAgo: 2 },
+      { name: 'Monica from the office', message: 'Congratulations, Ratu & Radit! Wishing you a lifetime of love, laughter and a very tidy home.', minutesAgo: 120 },
+      { name: 'Aunt Gladys', message: 'So proud of you both, sweethearts. May your home always be full of love. Big hugs from far away 🤍', minutesAgo: 26 * 60 },
+    ],
+  },
 
   date: isoDateFromToday(30),
   coverPhoto,

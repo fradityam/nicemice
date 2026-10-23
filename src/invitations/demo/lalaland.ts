@@ -22,7 +22,14 @@ export const lalalandDemo: LaLaLandInvitation = {
   greeting: 'Kepada',
   guestFallback: 'Bapak/Ibu/Saudara/i',
   music: `${import.meta.env.BASE_URL}lalaland-music.m4a`,
-  demo: { sampleGuest: 'Emma & Ryan' },
+  demo: {
+    sampleGuest: 'Emma & Ryan',
+    sampleWishes: [
+      { name: 'Keith (teman band)', message: 'Akhirnya! Selamat ya kalian berdua, ikut senang banget. Sampai ketemu di hari H, siap nyanyi di resepsi! 🎶', minutesAgo: 2 },
+      { name: 'Bu Greta & tim kantor', message: 'Selamat menempuh hidup baru, Mia & Sebastian. Semoga menjadi keluarga yang sakinah, mawaddah, warahmah.', minutesAgo: 120 },
+      { name: 'Tante Laura', message: 'Selamat ya, sayang. Tante doakan rukun selalu dan langgeng sampai kakek nenek. Peluk dari jauh 🤍', minutesAgo: 26 * 60 },
+    ],
+  },
 
   date,
   coverPhoto,

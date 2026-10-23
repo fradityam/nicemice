@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { RSVP_ENDPOINT } from '../config';
+import type { SampleWish } from './types';
 
 // Talks to the RSVP Apps Script (apps-script/rsvp.gs): sends a guest's reply and reads back
 // the couple's wishes. Every template uses these; only the look of the form is its own.
@@ -55,9 +56,14 @@ async function fetchWishes(slug: string): Promise<Wish[] | null> {
 
 export type WishesState = { status: 'loading' | 'ready' | 'error'; wishes: Wish[] };
 
-/** The couple's wishes, newest first; `add` puts the guest's own just-sent wish on top. */
-export function useWishes(slug: string | undefined) {
-  const [state, setState] = useState<WishesState>({ status: 'loading', wishes: [] });
+const fromSample = ({ name, message, minutesAgo }: SampleWish): Wish => ({ name, message, time: new Date(Date.now() - minutesAgo * 60_000).toISOString() });
+
+/**
+ * The couple's wishes, newest first; `add` puts the guest's own just-sent wish on top. A demo
+ * passes its `samples` instead of a slug: they show straight away and nothing is fetched.
+ */
+export function useWishes(slug: string | undefined, samples?: SampleWish[]) {
+  const [state, setState] = useState<WishesState>(() => (samples ? { status: 'ready', wishes: samples.map(fromSample) } : { status: 'loading', wishes: [] }));
   useEffect(() => {
     if (!slug) return;
     let cancelled = false;
@@ -100,7 +106,8 @@ export function timeAgo(iso: string | null, lang: keyof typeof TIME_WORDS) {
 /**
  * The attendance form's state, the same in every template. The form's fields are named
  * `name`, `message` and (the hidden bot trap, only on couple pages) `website`. On a couple's
- * page (`slug`) a reply goes to the RSVP script; on a demo it only shows the thank-you.
+ * page (`slug`) a reply goes to the RSVP script; on a demo nothing is sent: it shows the
+ * thank-you, and the wish joins the sample wishes on the visitor's screen only.
  * `sent` is also what the guest sees on reopening the invitation on the same phone.
  */
 export function useRsvpForm(slug: string | undefined, onWish: (wish: Wish) => void) {
@@ -120,13 +127,14 @@ export function useRsvpForm(slug: string | undefined, onWish: (wish: Wish) => vo
       website: String(form.get('website') ?? ''),
     };
     if (!reply.name) return;
-    if (!slug) return setSent(reply);
-    setSending(true);
-    setError(null);
-    const result = await sendRsvp(slug, reply);
-    setSending(false);
-    if (result !== 'ok') return setError(result);
-    rememberSent(slug, { name: reply.name, attendance });
+    if (slug) {
+      setSending(true);
+      setError(null);
+      const result = await sendRsvp(slug, reply);
+      setSending(false);
+      if (result !== 'ok') return setError(result);
+      rememberSent(slug, { name: reply.name, attendance });
+    }
     setSent(reply);
     if (reply.message) onWish({ name: reply.name, message: reply.message, time: new Date().toISOString() });
   };

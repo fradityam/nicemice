@@ -34,10 +34,18 @@ export interface InvitationBase {
    */
   shareImage?: Photo;
   /**
-   * Demo pages only: the cover keeps its sample guest name, the RSVP form doesn't send
+   * Demo pages only: the cover keeps its sample guest name, the wishes band shows the sample
+   * wishes (a visitor's own goes on top, on their screen only), the RSVP form doesn't send
    * anything, and there is a link back to the nicemice homepage.
    */
-  demo?: { sampleGuest: string };
+  demo?: { sampleGuest: string; sampleWishes: SampleWish[] };
+}
+
+/** A made-up wish for a demo's wishes band, sent `minutesAgo` before the page was opened. */
+export interface SampleWish {
+  name: string;
+  message: string;
+  minutesAgo: number;
 }
 
 export interface Person {

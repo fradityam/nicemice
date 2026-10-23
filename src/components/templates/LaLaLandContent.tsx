@@ -138,8 +138,8 @@ const Lines = ({ lines }: { lines: readonly string[] }) => (
 
 /**
  * Layers moved down by `by` frame px (or up, when negative), e.g. everything below the wishes
- * band; their reveals move with them. No wrapper at all when `by` is 0, so the demo's layers
- * render exactly as laid out.
+ * band; their reveals move with them. No wrapper at all when `by` is 0, so layers that don't
+ * move render exactly as laid out.
  */
 function Shift({ by, children }: { by: number; children: ReactNode }) {
   const offset = useContext(RevealOffset);
@@ -614,7 +614,7 @@ function Rsvp({ inv, slug, onWish }: { inv: LaLaLandInvitation; slug?: string; o
 // ---------- Wishes ----------
 
 // On a couple's page the guests' wishes get their own band under the form: everything below
-// it moves down by WISHES_H. The demo has no band and keeps Figma's layout exactly.
+// it moves down by WISHES_H. On a demo it shows sample wishes from the demo data.
 const WISHES_Y = 3740;
 const WISHES_H = 470;
 // The sky's stars stop just below the form, so the band shows the stars from behind the form.
@@ -671,10 +671,11 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
   const introStyle = quotesIntroStyle(intro);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const wishes = useWishes(slug);
+  const wishes = useWishes(slug, inv.demo?.sampleWishes);
 
-  // Couple pages get the wishes band; the demo keeps Figma's frame exactly.
-  const bandH = slug ? WISHES_H : 0;
+  // The wishes band: the couple's guests' wishes, or a demo's samples. (Without either, e.g. a
+  // page with neither a slug nor demo data, the frame is Figma's exactly.)
+  const bandH = slug || inv.demo ? WISHES_H : 0;
   const { bank, giftDelivery: gift } = inv;
   const hasGifts = Boolean(bank || gift);
   const giftsShift = bandH;
