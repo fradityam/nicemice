@@ -133,13 +133,13 @@ const BREEZE_MS = 1200;
  */
 type Wind = 'lead' | 'rustle';
 
-// How the wind blows in the trees: `deg` of skew at a full gust (the left tree's crown moves about
-// 5px per degree), one round of it every `ms`, as soft swells with a constant flutter (`breeze`)
-// or sharper gusts (`gust`). The rustling tree moves RUSTLE of that. Locally, ?wind=subtle,
-// ?wind=breeze, ?wind=medium or ?wind=strong on the URL tries each.
+// How the wind blows in the trees: `deg` of skew at a full gust, one round of it every `ms`, as one
+// slow, even swell (`breeze`: the left tree's crown moves about 4px per degree) or sharper gusts
+// with a tilt (`gust`: about 5px per degree). The rustling tree moves RUSTLE of that. Locally,
+// ?wind=subtle, ?wind=breeze, ?wind=medium or ?wind=strong on the URL tries each.
 const WIND_STRENGTHS = {
   subtle: { deg: 2, ms: 7300, shape: 'gust' },
-  breeze: { deg: 2.6, ms: 4400, shape: 'breeze' },
+  breeze: { deg: 2.8, ms: 9000, shape: 'breeze' },
   medium: { deg: 3.5, ms: 7300, shape: 'gust' },
   strong: { deg: 6, ms: 7300, shape: 'gust' },
 };

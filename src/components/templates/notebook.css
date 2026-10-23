@@ -31,7 +31,7 @@
    would bend towards the card, so it only rustles a moment after each gust, its crown going the
    other way, also out over its edge (a flipped tree is mirrored after this transform, so the same
    keyframes bend it right). Each stop is a share of a full gust: a skew of --nb-wind degrees,
-   and a tilt of 0.3 of that. */
+   spread evenly from the foot to the crown, and for the sharper gusts a tilt of 0.3 of that. */
 @keyframes nb-gust {
   0%,
   100% {
@@ -128,88 +128,39 @@
 @keyframes nb-breeze {
   0%,
   100% {
-    transform: rotate(calc(var(--nb-wind) * -0.075deg)) skewX(calc(var(--nb-wind) * 0.25deg));
+    transform: skewX(calc(var(--nb-wind) * 0.3deg));
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
   }
-  7% {
-    transform: rotate(calc(var(--nb-wind) * -0.114deg)) skewX(calc(var(--nb-wind) * 0.38deg));
+  46% {
+    transform: skewX(calc(var(--nb-wind) * 1deg));
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
   }
-  14% {
-    transform: rotate(calc(var(--nb-wind) * -0.09deg)) skewX(calc(var(--nb-wind) * 0.3deg));
+  58% {
+    transform: skewX(calc(var(--nb-wind) * 0.88deg));
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
   }
-  22% {
-    transform: rotate(calc(var(--nb-wind) * -0.165deg)) skewX(calc(var(--nb-wind) * 0.55deg));
-  }
-  30% {
-    transform: rotate(calc(var(--nb-wind) * -0.234deg)) skewX(calc(var(--nb-wind) * 0.78deg));
-  }
-  38% {
-    transform: rotate(calc(var(--nb-wind) * -0.285deg)) skewX(calc(var(--nb-wind) * 0.95deg));
-  }
-  44% {
-    transform: rotate(calc(var(--nb-wind) * -0.3deg)) skewX(calc(var(--nb-wind) * 1deg));
-  }
-  50% {
-    transform: rotate(calc(var(--nb-wind) * -0.258deg)) skewX(calc(var(--nb-wind) * 0.86deg));
-  }
-  57% {
-    transform: rotate(calc(var(--nb-wind) * -0.279deg)) skewX(calc(var(--nb-wind) * 0.93deg));
-  }
-  64% {
-    transform: rotate(calc(var(--nb-wind) * -0.198deg)) skewX(calc(var(--nb-wind) * 0.66deg));
-  }
-  71% {
-    transform: rotate(calc(var(--nb-wind) * -0.156deg)) skewX(calc(var(--nb-wind) * 0.52deg));
-  }
-  78% {
-    transform: rotate(calc(var(--nb-wind) * -0.174deg)) skewX(calc(var(--nb-wind) * 0.58deg));
-  }
-  86% {
-    transform: rotate(calc(var(--nb-wind) * -0.108deg)) skewX(calc(var(--nb-wind) * 0.36deg));
-  }
-  93% {
-    transform: rotate(calc(var(--nb-wind) * -0.126deg)) skewX(calc(var(--nb-wind) * 0.42deg));
+  68% {
+    transform: skewX(calc(var(--nb-wind) * 0.93deg));
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
   }
 }
 @keyframes nb-breeze-rustle {
   0%,
   100% {
-    transform: rotate(calc(var(--nb-wind) * -0.06deg)) skewX(calc(var(--nb-wind) * 0.2deg));
+    transform: skewX(calc(var(--nb-wind) * 0.3deg));
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
   }
-  8% {
-    transform: rotate(calc(var(--nb-wind) * -0.15deg)) skewX(calc(var(--nb-wind) * 0.5deg));
+  52% {
+    transform: skewX(calc(var(--nb-wind) * 1deg));
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
   }
-  15% {
-    transform: rotate(calc(var(--nb-wind) * -0.075deg)) skewX(calc(var(--nb-wind) * 0.25deg));
-  }
-  24% {
-    transform: rotate(calc(var(--nb-wind) * -0.135deg)) skewX(calc(var(--nb-wind) * 0.45deg));
-  }
-  33% {
-    transform: rotate(calc(var(--nb-wind) * -0.09deg)) skewX(calc(var(--nb-wind) * 0.3deg));
-  }
-  42% {
-    transform: rotate(calc(var(--nb-wind) * -0.165deg)) skewX(calc(var(--nb-wind) * 0.55deg));
-  }
-  50% {
-    transform: rotate(calc(var(--nb-wind) * -0.27deg)) skewX(calc(var(--nb-wind) * 0.9deg));
-  }
-  54% {
-    transform: rotate(calc(var(--nb-wind) * -0.3deg)) skewX(calc(var(--nb-wind) * 1deg));
-  }
-  60% {
-    transform: rotate(calc(var(--nb-wind) * -0.18deg)) skewX(calc(var(--nb-wind) * 0.6deg));
-  }
-  66% {
-    transform: rotate(calc(var(--nb-wind) * -0.255deg)) skewX(calc(var(--nb-wind) * 0.85deg));
+  64% {
+    transform: skewX(calc(var(--nb-wind) * 0.86deg));
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
   }
   74% {
-    transform: rotate(calc(var(--nb-wind) * -0.12deg)) skewX(calc(var(--nb-wind) * 0.4deg));
-  }
-  82% {
-    transform: rotate(calc(var(--nb-wind) * -0.165deg)) skewX(calc(var(--nb-wind) * 0.55deg));
-  }
-  90% {
-    transform: rotate(calc(var(--nb-wind) * -0.075deg)) skewX(calc(var(--nb-wind) * 0.25deg));
+    transform: skewX(calc(var(--nb-wind) * 0.9deg));
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
   }
 }
 
