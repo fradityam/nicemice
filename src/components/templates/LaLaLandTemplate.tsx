@@ -3,14 +3,15 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 import coverBg from '../../assets/images/lalaland/figma/cover-bg.webp';
-import LaLaLandContent, { ENABLE_ANIMATIONS, INTRO, NAVY_FADE } from './LaLaLandContent';
+import LaLaLandContent, { ENABLE_ANIMATIONS, FitSpan, INTRO, NAVY_FADE, dateId } from './LaLaLandContent';
 import { Reveal, RevealProvider, RevealSpan, useCoverReveals } from './scrollReveal';
-import { weddingDateId } from './lalalandWeddingDate';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import { STAGE_BG, coverTextLayout, useStageVisible } from './templateStage';
-
-// The couple's song. Swap this file (in public/) to give each couple their own music.
-const MUSIC_SRC = `${import.meta.env.BASE_URL}lalaland-music.m4a`;
+import { useFit, type FitBox } from './fitText';
+import type { TemplateProps } from '../CouplePage';
+import { lalalandDemo } from '../../invitations/demo/lalaland';
+import { useGuestName } from '../../invitations/guestName';
+import type { LaLaLandInvitation } from '../../invitations/types';
 
 const NAVY = '#081a51';
 const COVER_W = 375;
@@ -20,6 +21,9 @@ const MAX_COLUMN_W = 430;
 const TITLE_ANCHOR_Y = 245;
 const GUEST_ANCHOR_Y = 548;
 const textShadow = '0px 4px 4px rgba(0,0,0,0.25)';
+// The couple's names and the guest's shrink to stay inside the frame.
+const NAME_FIT: FitBox = { w: 331 };
+const GUEST_FIT: FitBox = { w: 300 };
 // Figma Content frame fill (top → bottom).
 const SKY_GRADIENT = 'linear-gradient(to bottom, #000433 0%, #181065 50%, #672dc1 100%)';
 
@@ -33,8 +37,10 @@ const SKY_GRADIENT = 'linear-gradient(to bottom, #000433 0%, #181065 50%, #672dc
 // of the painting it sits on (the title on the sky, the guest and button on the hills).
 // On load it settles in: the painting eases back a touch, the title line drifts down, the
 // names rise one by one, then the guest's name and the button; the button works from the start.
-function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
+function LaLaLandCover({ invitation: inv, guest, onOpen }: { invitation: LaLaLandInvitation; guest: string; onOpen: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const greetingFit = useFit<HTMLParagraphElement>(GUEST_FIT);
+  const guestFit = useFit<HTMLParagraphElement>(GUEST_FIT);
   const [viewport, setViewport] = useState({ w: COVER_W, h: COVER_H });
   const { reveals } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1500 });
 
@@ -96,32 +102,37 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
         </Reveal>
         <Reveal at={0} kind="fadeDown" delay={250}>
           <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+1px)] text-[16px] text-center text-white top-[139px] whitespace-nowrap">
-            {weddingDateId}
+            {dateId(inv.date)}
           </p>
         </Reveal>
 
         <h1 className="font-['Fasthand'] leading-[normal] text-center text-white">
-          <RevealSpan at={0} kind="fadeUp" delay={400} className="-translate-x-1/2 absolute left-1/2 text-[80px] top-[147px] w-[331px]">Sebastian</RevealSpan>
+          <RevealSpan at={0} kind="fadeUp" delay={400} className="-translate-x-1/2 absolute left-1/2 text-[80px] top-[147px] w-[331px]"><FitSpan fit={NAME_FIT}>{inv.coverNames[0]}</FitSpan></RevealSpan>
           <RevealSpan at={0} kind="fadeUp" delay={480} className="-translate-x-1/2 absolute left-[calc(50%-12.5px)] text-[50px] top-[235px] w-[42px]">&amp;</RevealSpan>
-          <RevealSpan at={0} kind="fadeUp" delay={560} className="-translate-x-1/2 absolute left-[calc(50%+0.5px)] text-[80px] top-[269px] w-[146px]">Mia</RevealSpan>
+          {/* Centred where Figma centres "Mia" (in a 146px box), with room for a longer name. */}
+          <RevealSpan at={0} kind="fadeUp" delay={560} className="-translate-x-1/2 absolute left-[calc(50%+0.5px)] text-[80px] top-[269px] w-[331px]"><FitSpan fit={NAME_FIT}>{inv.coverNames[1]}</FitSpan></RevealSpan>
         </h1>
         </div>
 
         <div className="absolute inset-0" style={shift(GUEST_ANCHOR_Y)}>
         <Reveal at={0} kind="fadeUp" delay={700}>
           <p
+            ref={greetingFit.ref}
             className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[17px] text-center text-white top-[499px] whitespace-nowrap"
-            style={{ textShadow }}
+            style={{ textShadow, ...greetingFit.style }}
           >
-            Kepada
+            {inv.greeting}
+            {greetingFit.probe}
           </p>
         </Reveal>
         <Reveal at={0} kind="fadeUp" delay={770}>
           <p
+            ref={guestFit.ref}
             className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%+0.5px)] text-[25px] text-center text-white top-[523px] whitespace-nowrap"
-            style={{ textShadow }}
+            style={{ textShadow, ...guestFit.style }}
           >
-            Emma &amp; Ryan
+            {guest}
+            {guestFit.probe}
           </p>
         </Reveal>
 
@@ -145,9 +156,13 @@ function LaLaLandCover({ onOpen }: { onOpen: () => void }) {
 
 type Phase = 'cover' | 'opening' | 'open';
 
-export default function LaLaLandTemplate() {
+/** A couple's invitation, or (with no props, at /template/lalaland) the demo. */
+export default function LaLaLandTemplate({ invitation = lalalandDemo, slug }: Partial<TemplateProps<LaLaLandInvitation>>) {
   const [phase, setPhase] = useState<Phase>('cover');
   const [reducedMotion, setReducedMotion] = useState(false);
+  // Demo pages show their sample guest unless the link names one, so a demo can be tried with
+  // any name too.
+  const guest = useGuestName(invitation.demo?.sampleGuest ?? invitation.guestFallback);
 
   // The site sets `scroll-behavior: smooth` on <html>, so every scroll here must be
   // explicitly instant — otherwise the reset animates visibly from wherever the browser
@@ -175,7 +190,7 @@ export default function LaLaLandTemplate() {
     return () => clearTimeout(t);
   }, [phase, reducedMotion]);
 
-  const music = useBackgroundMusic(MUSIC_SRC);
+  const music = useBackgroundMusic(invitation.music);
 
   const open = () => {
     if (phase !== 'cover') return;
@@ -193,14 +208,16 @@ export default function LaLaLandTemplate() {
     <div className="relative min-h-screen" style={{ backgroundColor: STAGE_BG }}>
       {/* The invitation column's navy, under the fixed sky, for anything the sky doesn't reach. */}
       <div aria-hidden="true" className="absolute inset-y-0 inset-x-0 mx-auto w-full max-w-[430px]" style={{ backgroundColor: NAVY }} />
-      {/* Back to site link */}
-      <Link
-        to="/"
-        className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        nicemice
-      </Link>
+      {/* Back to site link (demo only) */}
+      {invitation.demo && (
+        <Link
+          to="/"
+          className="fixed top-4 left-4 z-[60] flex items-center gap-1.5 bg-white/80 hover:bg-white text-[#3D1F1F] backdrop-blur-sm text-[10px] tracking-widest uppercase font-semibold px-3 py-2 rounded-full shadow-sm transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          nicemice
+        </Link>
+      )}
 
       {/* ============ COVER ============ */}
       {phase !== 'open' && (
@@ -214,7 +231,7 @@ export default function LaLaLandTemplate() {
         >
           {/* The cover keeps to the invitation column; the stage shows around it on desktop. */}
           <div className="absolute inset-0 mx-auto max-w-[430px]" style={{ backgroundColor: NAVY }}>
-            <LaLaLandCover onOpen={open} />
+            <LaLaLandCover invitation={invitation} guest={guest} onOpen={open} />
           </div>
         </div>
       )}
@@ -231,10 +248,10 @@ export default function LaLaLandTemplate() {
         style={{ backgroundImage: SKY_GRADIENT }}
       />
       <div className="relative max-w-[430px] mx-auto">
-        <LaLaLandContent intro={{ revealed: phase !== 'cover', reducedMotion }} />
+        <LaLaLandContent invitation={invitation} slug={slug} intro={{ revealed: phase !== 'cover', reducedMotion }} />
       </div>
 
-      {phase !== 'cover' && <MusicToggle playing={music.playing} onToggle={music.toggle} />}
+      {invitation.music && phase !== 'cover' && <MusicToggle playing={music.playing} onToggle={music.toggle} />}
     </div>
   );
 }

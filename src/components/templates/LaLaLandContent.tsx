@@ -1,7 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { WEDDING_DATE, weddingDateEn, weddingDateId, weddingDateIdLong } from './lalalandWeddingDate';
+import { Fragment, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { formatIsoDate, parseIsoDate } from '../../invitations/dates';
+import { MAX_MESSAGE, MAX_NAME, timeAgo, useRsvpForm, useWishes, type Attendance, type SendError, type Wish, type WishesState } from '../../invitations/rsvp';
+import type { GalleryPhoto, LaLaLandInvitation, StoryMoment } from '../../invitations/types';
+import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
-import { Float, Reveal, RevealProvider, useReveal, useScrollReveals } from './scrollReveal';
+import { Float, Reveal, RevealOffset, RevealProvider, useReveal, useScrollReveals } from './scrollReveal';
 
 // Every layer below is laid out in the Figma "Content" frame's own coordinate space. The
 // whole frame is then scaled uniformly to the column width, so the composition stays
@@ -63,6 +66,93 @@ function quotesIntroStyle({ revealed, reducedMotion }: IntroState): CSSPropertie
 /** Subtle one-time reveals on the cover and as sections scroll into view. Set to false to turn them all off. */
 export const ENABLE_ANIMATIONS = true;
 
+/** The design's date styles, from the couple's 'YYYY-MM-DD'. */
+export const dateId = (iso: string) => formatIsoDate(iso, 'id-ID', { day: 'numeric', month: 'long', year: 'numeric' }); // 23 Agustus 2026
+const dateIdLong = (iso: string) => formatIsoDate(iso, 'id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); // Minggu, 23 Agustus 2026
+const dateEn = (iso: string) => formatIsoDate(iso, 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); // 23 August 2026
+
+/** The wedding day at the ceremony's start ('08.00 - 11.00' → 08:00), or midnight without a time. */
+function ceremonyStart(inv: LaLaLandInvitation) {
+  const d = parseIsoDate(inv.date);
+  const time = inv.ceremony.time.match(/(\d{1,2})[.:](\d{2})/);
+  if (time) d.setHours(Number(time[1]), Number(time[2]));
+  return d;
+}
+
+const mapsSearch = (place: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`;
+/** Address lines joined into one, for Maps and for copying: 'Jl. Cempaka No. 18, Kota Bogor'. */
+const oneLine = (lines: string[]) => lines.map((l) => l.trim().replace(/,$/, '')).join(', ');
+
+// The room each piece of the couple's text has (see FitBox). Text longer than the sample
+// shrinks to fit rather than running out of its slot.
+const FIT = {
+  coverName: { w: 331 },
+  coverGuest: { w: 300 },
+  name: { w: 335 },
+  parents: { w: 345 },
+  eventLabel: { w: 140 },
+  time: { w: 98, origin: '0 50%' },
+  venue: { w: 160, origin: '0 50%' },
+  venueAddress: { w: 160, h: 26, origin: '0 0' },
+  storyLeft: { w: 150, h: 110, origin: '100% 50%' },
+  storyRight: { w: 150, h: 110, origin: '0 50%' },
+  gift: { w: 260 },
+  giftAddress: { w: 260, h: 100 },
+  closing: { w: 260, h: 80 },
+  signature: { w: 280 },
+} satisfies Record<string, FitBox>;
+
+/** One of the couple's texts: exactly as before when it fits, shrunk to `fit` when it's longer. */
+function Fit({ fit, className, style, children }: { fit: FitBox; className: string; style?: CSSProperties; children: ReactNode }) {
+  const f = useFit<HTMLDivElement>(fit);
+  return (
+    <div ref={f.ref} className={className} style={{ ...style, ...f.style }}>
+      {children}
+      {f.probe}
+    </div>
+  );
+}
+
+/** Inline version of Fit, for a line inside a heading (e.g. a name on the cover). */
+export function FitSpan({ fit, children }: { fit: FitBox; children: ReactNode }) {
+  const f = useFit<HTMLSpanElement>(fit);
+  return (
+    <span ref={f.ref} className="relative inline-block whitespace-nowrap" style={f.style}>
+      {children}
+      {f.probe}
+    </span>
+  );
+}
+
+/** Lines of text with a <br /> between them. */
+const Lines = ({ lines }: { lines: readonly string[] }) => (
+  <>
+    {lines.map((line, i) => (
+      <Fragment key={i}>
+        {i > 0 && <br />}
+        {line}
+      </Fragment>
+    ))}
+  </>
+);
+
+/**
+ * Layers moved down by `by` frame px (or up, when negative), e.g. everything below the wishes
+ * band; their reveals move with them. No wrapper at all when `by` is 0, so the demo's layers
+ * render exactly as laid out.
+ */
+function Shift({ by, children }: { by: number; children: ReactNode }) {
+  const offset = useContext(RevealOffset);
+  if (!by) return <>{children}</>;
+  return (
+    <RevealOffset.Provider value={offset + by}>
+      <div className="absolute left-0 top-0 *:pointer-events-auto" style={{ width: FRAME_W, height: FRAME_H, transform: `translateY(${by}px)`, pointerEvents: 'none' }}>
+        {children}
+      </div>
+    </RevealOffset.Provider>
+  );
+}
+
 // Figma render bounds (Content-frame px) of each starfield's COLOR_DODGE group.
 const FLARES = [
   { file: 'flare-665.webp', top: 687.3, w: 369.7, h: 446.16 },
@@ -89,7 +179,8 @@ function Flare({ file, top, w, h }: { file: string; top: number; w: number; h: n
 
 const BG_ILLUSTRATIONS = [
   { file: 'piano-1.webp', top: 2756, h: 448 },
-  { file: 'piano-2.webp', top: 3767, h: 683 },
+  // The piano under the gifts: part of the "Tanda Kasih" stretch, gone with it.
+  { file: 'piano-2.webp', top: 3767, h: 683, gifts: true },
   { file: 'bg-pool.webp', top: 1692, h: 573 },
 ];
 
@@ -159,11 +250,6 @@ function SalinButton({ top, label, text }: { top: number; label: string; text: s
   );
 }
 
-// Placeholder location: a Maps search for the venue address shown in the design.
-const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-  'Gedung Serbaguna ABC, Jl. Cempaka No. 18, Kota Bogor, Jawa Barat',
-)}`;
-
 // Figma's rgba(144,105,165,0) → #081a51 gradient, interpolated the way Figma does it
 // (non-premultiplied, so the purple tint carries through the middle). A plain CSS
 // gradient interpolates premultiplied and comes out noticeably darker mid-way. Used by
@@ -176,14 +262,14 @@ export const NAVY_FADE = `linear-gradient(to bottom, ${Array.from({ length: 11 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
-function CountdownNumbers() {
+function CountdownNumbers({ target }: { target: Date }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const total = Math.max(0, Math.floor((WEDDING_DATE.getTime() - now) / 1000));
+  const total = Math.max(0, Math.floor((target.getTime() - now) / 1000));
   const days = Math.floor(total / 86400);
   const hours = Math.floor(total / 3600) % 24;
   const minutes = Math.floor(total / 60) % 60;
@@ -208,26 +294,34 @@ function CountdownNumbers() {
   );
 }
 
-const PREWED_SLIDES = [
-  { file: '498fb.webp' },
-  { file: '1a1e9-lg.webp', thumb: '1a1e9.webp', left: 30, w: 70 },
-  { file: '6e588-lg.webp', thumb: '6e588.webp', left: 112, w: 69 },
-  { file: '200d5-lg.webp', thumb: '200d5.webp', left: 194, w: 69 },
-  { file: '5b958-lg.webp', thumb: '5b958.webp', left: 275, w: 70 },
+// ---------- Pre-wedding gallery ----------
+
+const MAX_GALLERY = 5;
+// The thumbnail row (slides 2–5): Figma's four slots; fewer thumbnails are centred instead.
+const THUMBS_4 = [
+  { left: 30, w: 70 },
+  { left: 112, w: 69 },
+  { left: 194, w: 69 },
+  { left: 275, w: 70 },
 ];
-const SLIDE_COUNT = PREWED_SLIDES.length;
+const THUMB_W = 70;
+const THUMB_GAP = 12;
+const thumbSlots = (count: number) =>
+  count === THUMBS_4.length
+    ? THUMBS_4
+    : Array.from({ length: count }, (_, i) => ({ left: (FRAME_W - (count * THUMB_W + (count - 1) * THUMB_GAP)) / 2 + i * (THUMB_W + THUMB_GAP), w: THUMB_W }));
+// The demo's first slide keeps Figma's own crop of its hero photo; every other photo fills the frame.
+const FIGMA_CROPS: Record<string, string> = {
+  [A('498fb.webp')]: 'absolute h-[114.03%] left-[-2.27%] max-w-none top-[-14.03%] w-[103.02%]',
+};
 const AUTOPLAY_MS = 4000;
 const FADE_MS = 800;
 const SWIPE_MIN_PX = 40;
 
-function SlideImage({ index }: { index: number }) {
-  const alt = `Foto pre-wedding Sebastian & Mia (${index + 1} dari ${SLIDE_COUNT})`;
-  // Slide 1 keeps Figma's own crop of the hero photo; the others fill the frame.
-  const className =
-    index === 0
-      ? 'absolute h-[114.03%] left-[-2.27%] max-w-none top-[-14.03%] w-[103.02%]'
-      : 'absolute inset-0 size-full max-w-none object-cover';
-  return <img alt={alt} src={A(PREWED_SLIDES[index].file)} className={className} draggable={false} />;
+function SlideImage({ photos, index, coupleNames }: { photos: GalleryPhoto[]; index: number; coupleNames: string }) {
+  const src = photos[index].large ?? photos[index].photo;
+  const alt = `Foto pre-wedding ${coupleNames} (${index + 1} dari ${photos.length})`;
+  return <img alt={alt} src={src} className={FIGMA_CROPS[src] ?? 'absolute inset-0 size-full max-w-none object-cover'} draggable={false} />;
 }
 
 function FadeInLayer({ animate, children }: { animate: boolean; children: React.ReactNode }) {
@@ -242,7 +336,8 @@ function FadeInLayer({ animate, children }: { animate: boolean; children: React.
   );
 }
 
-function PrewedGallery() {
+function PrewedGallery({ photos, coupleNames }: { photos: GalleryPhoto[]; coupleNames: string }) {
+  const count = photos.length;
   const frameRef = useRef<HTMLDivElement>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   // `prev` stays fully opaque underneath while `active` fades in on top, so the crossfade
@@ -253,19 +348,19 @@ function PrewedGallery() {
 
   const show = (target: (current: number) => number) =>
     setSlides((s) => {
-      const next = (((target(s.active)) % SLIDE_COUNT) + SLIDE_COUNT) % SLIDE_COUNT;
+      const next = (((target(s.active)) % count) + count) % count;
       return next === s.active
         ? { ...s, tick: s.tick + 1 }
         : { active: next, prev: s.active, fadeId: s.fadeId + 1, tick: s.tick + 1 };
     });
 
   useEffect(() => {
-    for (const s of PREWED_SLIDES) {
+    for (const p of photos) {
       const img = new Image();
-      img.src = A(s.file);
+      img.src = p.large ?? p.photo;
       img.decode().catch(() => {});
     }
-  }, []);
+  }, [photos]);
 
   useEffect(() => {
     const el = frameRef.current;
@@ -281,10 +376,12 @@ function PrewedGallery() {
   }, []);
 
   useEffect(() => {
-    if (!inView || !pageVisible) return;
+    if (count < 2 || !inView || !pageVisible) return;
     const t = setTimeout(() => show((a) => a + 1), AUTOPLAY_MS);
     return () => clearTimeout(t);
-  }, [slides.tick, inView, pageVisible]);
+  }, [slides.tick, inView, pageVisible, count]);
+
+  const thumbs = thumbSlots(count - 1);
 
   return (
     <>
@@ -307,53 +404,290 @@ function PrewedGallery() {
       >
         {slides.prev !== slides.active && (
           <div key={`prev-${slides.prev}`} className="absolute inset-0" aria-hidden="true">
-            <SlideImage index={slides.prev} />
+            <SlideImage photos={photos} index={slides.prev} coupleNames={coupleNames} />
           </div>
         )}
         <FadeInLayer key={slides.fadeId} animate={slides.fadeId > 0}>
-          <SlideImage index={slides.active} />
+          <SlideImage photos={photos} index={slides.active} coupleNames={coupleNames} />
         </FadeInLayer>
       </div>
 
-      {PREWED_SLIDES.map((s, i) =>
-        s.thumb ? (
+      {/* Slide 1 has no thumbnail (as in Figma): the row is slides 2 onwards. */}
+      {photos.slice(1).map((p, j) => {
+        const i = j + 1;
+        return (
           <button
-            key={s.thumb}
+            key={i}
             type="button"
-            aria-label={`Tampilkan foto ${i + 1} dari ${SLIDE_COUNT}`}
+            aria-label={`Tampilkan foto ${i + 1} dari ${count}`}
             aria-current={slides.active === i}
             onClick={() => show(() => i)}
             className="absolute top-[2159px] h-[70px] overflow-hidden rounded-[10px] cursor-pointer"
-            style={{ left: s.left, width: s.w }}
+            style={{ left: thumbs[j].left, width: thumbs[j].w }}
           >
-            <img alt="" src={A(s.thumb)} className="absolute inset-0 size-full max-w-none object-cover" draggable={false} />
+            <img alt="" src={p.photo} className="absolute inset-0 size-full max-w-none object-cover" draggable={false} />
             <span
               className={`pointer-events-none absolute inset-0 rounded-[10px] border-[1.5px] border-[#FFFF00] transition-opacity duration-300 ${
                 slides.active === i ? 'opacity-100' : 'opacity-0'
               }`}
             />
           </button>
-        ) : null,
-      )}
+        );
+      })}
     </>
   );
 }
 
-const ATTENDANCE = [
+// ---------- Cerita Kami (story timeline) ----------
+
+const MAX_STORY = 4;
+// Where each moment sits by the timeline: left of it (right-aligned) or right of it, in order.
+// Figma lays out these mixed line-heights (15px first word, 12px rest, 9px or 12px title in one
+// block) lower than CSS does, so the body carries a small measured offset (`nudge`). `minH` is
+// Figma's box height: the text is centred in it exactly as in the design, and a longer text
+// grows it evenly up and down.
+const STORY_SLOTS = [
+  { at: 2842, top: 2883.5, minH: 83, left: true, titleLeading: 12, nudge: 1.5, tracking: -0.17 },
+  { at: 2919, top: 2962, minH: 86, left: false, titleLeading: 9, nudge: 3, tracking: -0.119 },
+  { at: 2993, top: 3035.5, minH: 85, left: true, titleLeading: 12, nudge: 1.5, tracking: -0.17 },
+  { at: 3066, top: 3112.5, minH: 93, left: false, titleLeading: 12, nudge: 1.5, tracking: -0.17 },
+];
+
+function StoryText({ moment, slot }: { moment: StoryMoment; slot: (typeof STORY_SLOTS)[number] }) {
+  // The first word sits in its own 15px-line span, as in Figma; the rest follows at 12px.
+  const [, first = '', rest = ''] = moment.text.match(/^(\S*)([\s\S]*)$/) ?? [];
+  const side = slot.left ? '-translate-x-full left-[159.78px] text-right' : 'left-[209.78px]';
+  return (
+    <Fit
+      fit={slot.left ? FIT.storyLeft : FIT.storyRight}
+      className={`${side} -translate-y-1/2 absolute flex flex-col font-['Raleway'] font-normal justify-center leading-[0] text-[0px] text-white w-max max-w-[150px] whitespace-nowrap`}
+      style={{ top: slot.top, minHeight: slot.minH, letterSpacing: slot.tracking }}
+    >
+      <p className="font-bold text-[12px]" style={{ lineHeight: `${slot.titleLeading}px` }}>{moment.title}</p>
+      <p className="relative text-[10px] whitespace-pre-line" style={{ top: slot.nudge }}>
+        <span className="leading-[15px]">{first}</span>
+        <span className="leading-[12px]">{rest}</span>
+      </p>
+    </Fit>
+  );
+}
+
+// The timeline drawing (Figma 331.55 × 336 at 19.99, 2830.13) has the four bullets drawn in.
+// With fewer moments it is cut below the last one used, and its bottom end cap drawn there.
+const TIMELINE = { x: 19.99, y: 2830.13, w: 331.55, h: 336 };
+const BULLET_BOTTOMS = [66, 142.3, 211.5, 292.8];
+const CAP_TOP = 326;
+
+function Timeline({ count }: { count: number }) {
+  if (count >= MAX_STORY)
+    return (
+      <div className="absolute inset-[60.98%_6.25%_31.78%_5.33%]">
+        <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('22121.svg')} />
+      </div>
+    );
+  const cut = BULLET_BOTTOMS[count - 1] + 26;
+  const img = (top: number) => <img alt="" className="absolute left-0 block max-w-none" style={{ top, width: TIMELINE.w, height: TIMELINE.h }} src={A('22121.svg')} />;
+  return (
+    <>
+      <div className="absolute overflow-hidden" style={{ left: TIMELINE.x, top: TIMELINE.y, width: TIMELINE.w, height: cut }}>{img(0)}</div>
+      <div className="absolute overflow-hidden" style={{ left: TIMELINE.x, top: TIMELINE.y + cut, width: TIMELINE.w, height: TIMELINE.h - CAP_TOP }}>{img(-CAP_TOP)}</div>
+    </>
+  );
+}
+
+// ---------- RSVP ----------
+
+const ATTENDANCE: { value: Attendance; label: string; top: number }[] = [
   { value: 'hadir', label: 'Akan Hadir', top: 3404 },
   { value: 'mungkin', label: 'Mungkin Hadir', top: 3447 },
-  { value: 'berhalangan', label: 'Berhalangan Hadir', top: 3490 },
+  { value: 'tidak', label: 'Berhalangan Hadir', top: 3490 },
 ];
 
 const fieldLabel = "-translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[44px] text-[15px] text-[#f1e9dd] tracking-[-0.255px] whitespace-nowrap";
 const fieldBox = "absolute left-[37px] w-[302px] bg-white border border-[#fade20] border-solid rounded-[10px]";
 const fieldText = "font-['Raleway'] text-[13px] leading-[20px] tracking-[-0.221px] text-black placeholder:text-[rgba(0,0,0,0.2)] outline-none";
 
-export default function LaLaLandContent({ intro }: { intro: IntroState }) {
+const SEND_ERRORS: Record<SendError, string> = {
+  failed: 'Balasan belum terkirim. Periksa koneksi internet Anda, lalu coba lagi.',
+  busy: 'Sedang banyak balasan masuk. Silakan coba lagi sebentar lagi.',
+  closed: 'Konfirmasi kehadiran untuk undangan ini sudah ditutup.',
+  unavailable: 'Balasan belum bisa dikirim saat ini. Silakan coba lagi nanti.',
+};
+const THANKS: Record<Attendance, string> = {
+  hadir: 'Sampai jumpa di hari bahagia kami!',
+  tidak: 'Terima kasih sudah memberi kabar. Doa Anda sangat berarti bagi kami.',
+  mungkin: 'Kabari kami lagi jika sudah pasti, ya.',
+};
+
+/**
+ * The attendance form (see useRsvpForm). After sending, the fields give way to a thank-you
+ * card, which is also what the guest sees on reopening the invitation on the same phone.
+ */
+function Rsvp({ inv, slug, onWish }: { inv: LaLaLandInvitation; slug?: string; onWish: (wish: Wish) => void }) {
+  const { attendance, setAttendance, sent, sending, error, submit, sendAnother } = useRsvpForm(slug, onWish);
+
+  if (sent)
+    return (
+      <div role="status" className={`${fieldBox} top-[3328px] flex h-[390px] flex-col items-center justify-center gap-[10px] px-[24px] text-center`}>
+        <img alt="" src={A('71976.webp')} className="block h-[96px] w-[120px] max-w-none object-contain" />
+        <p className="font-['Fasthand'] text-[34px] leading-[44px] text-[#081a51]">Terima kasih!</p>
+        <p className="font-['Raleway'] text-[13px] leading-[19px] tracking-[-0.221px] text-[#181719]">
+          Balasan Anda sudah terkirim kepada {inv.coupleNames}.
+          <br />
+          {THANKS[sent.attendance]}
+        </p>
+        {!slug && <p className="font-['Raleway'] text-[11px] leading-[15px] text-[#6b6f8f]">(Ini hanya demo, jadi tidak ada yang terkirim.)</p>}
+        <button type="button" onClick={sendAnother} className="mt-[4px] cursor-pointer font-['Raleway'] text-[12px] leading-[20px] text-[#29567f] underline underline-offset-2">
+          kirim balasan lain
+        </button>
+      </div>
+    );
+
+  return (
+    <form onSubmit={submit}>
+      <div className={fieldLabel} style={{ top: 3313 }}>
+        <label htmlFor="rsvp-nama" className="leading-[20px]">Nama</label>
+      </div>
+      <input
+        id="rsvp-nama"
+        name="name"
+        required
+        maxLength={MAX_NAME}
+        autoComplete="name"
+        placeholder="Nama Anda"
+        className={`${fieldBox} ${fieldText} h-[38px] top-[3328px] pl-[14px] pr-[14px]`}
+      />
+      {/* Hidden from guests (off the frame): only bots fill it in, and the script then drops the reply. */}
+      {slug && <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-1000px] top-[3328px] h-px w-px" />}
+
+      <div className={fieldLabel} style={{ top: 3389 }}>
+        <p className="leading-[20px]">Konfirmasi Kehadiran</p>
+      </div>
+      {ATTENDANCE.map((opt) => (
+        <label key={opt.value} className={`${fieldBox} h-[38px] cursor-pointer`} style={{ top: opt.top }}>
+          <input
+            type="radio"
+            name="kehadiran"
+            value={opt.value}
+            checked={attendance === opt.value}
+            onChange={() => setAttendance(opt.value)}
+            className="peer sr-only"
+          />
+          <span className="absolute left-[9px] top-[8px] size-[19px] rounded-full border-2 border-[#324532] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#081a51]">
+            {attendance === opt.value && <span className="absolute left-[3px] top-[3px] size-[9px] rounded-full bg-[#324532]" />}
+          </span>
+          <span className="-translate-y-1/2 absolute left-[39px] top-[18px] font-['Raleway'] text-[13px] leading-[20px] tracking-[-0.221px] text-black whitespace-nowrap">
+            {opt.label}
+          </span>
+        </label>
+      ))}
+
+      <div className={fieldLabel} style={{ top: 3552 }}>
+        <label htmlFor="rsvp-pesan" className="leading-[20px]">Pesan/Ucapan</label>
+      </div>
+      <textarea
+        id="rsvp-pesan"
+        name="message"
+        maxLength={MAX_MESSAGE}
+        placeholder="Tulis doa & ucapan Anda..."
+        className={`${fieldBox} ${fieldText} h-[104px] top-[3567px] pl-[14px] pr-[14px] pt-[8px] resize-none`}
+      />
+
+      <button
+        type="submit"
+        disabled={sending}
+        className="-translate-x-1/2 absolute bg-[#f9de1f] h-[38px] left-[calc(50%+0.5px)] rounded-[10px] top-[3680px] w-[302px] cursor-pointer disabled:cursor-wait disabled:opacity-70"
+      >
+        <span className="-translate-x-1/2 -translate-y-1/2 absolute left-[calc(50%-1px)] top-1/2 font-['Raleway'] text-[20px] leading-[20px] text-[#000433] tracking-[2px] whitespace-nowrap">
+          {sending ? 'MENGIRIM…' : 'KIRIM UCAPAN'}
+        </span>
+      </button>
+      {error && (
+        <p role="alert" className="-translate-x-1/2 absolute left-1/2 top-[3724px] w-[302px] font-['Raleway'] text-center text-[11px] leading-[14px] text-[#fade20]">
+          {SEND_ERRORS[error]}
+        </p>
+      )}
+    </form>
+  );
+}
+
+// ---------- Wishes ----------
+
+// On a couple's page the guests' wishes get their own band under the form: everything below
+// it moves down by WISHES_H. The demo has no band and keeps Figma's layout exactly.
+const WISHES_Y = 3740;
+const WISHES_H = 470;
+// The sky's stars stop just below the form, so the band shows the stars from behind the form.
+const BAND_STARS_FROM = 3290;
+// With no gifts at all, the whole "Tanda Kasih" stretch (paper rip at 3749 down to the rip at
+// 4438) is left out and everything below it moves up.
+const GIFTS_TOP = 3749;
+const GIFTS_H = 4438 - GIFTS_TOP;
+// With only one gift card, it moves to the middle of where the two were.
+const GIFT_CARD_STEP = 4175 - 3921;
+
+function WishesBand({ wishes }: { wishes: WishesState }) {
+  const note = "px-[10px] py-[24px] text-center font-['Raleway'] text-[12px] leading-[17px] text-[#6b6f8f]";
+  return (
+    <>
+      <div className="absolute left-0 overflow-hidden" style={{ top: WISHES_Y, width: FRAME_W, height: WISHES_H }}>
+        <img alt="" src={A('content-bg.webp')} className="absolute left-0 block max-w-none" style={{ top: -BAND_STARS_FROM, width: 375, height: 4450 }} />
+      </div>
+      <Reveal at={WISHES_Y + 20} kind="fadeUp">
+        <p className="-translate-x-1/2 absolute font-['Federo'] leading-[normal] left-1/2 text-[25px] text-center text-white whitespace-nowrap" style={{ top: WISHES_Y + 20 }}>
+          Ucapan &amp; Doa{wishes.wishes.length > 0 && ` (${wishes.wishes.length})`}
+        </p>
+        <div className={`${fieldBox} overflow-y-auto px-[16px]`} style={{ top: WISHES_Y + 68, height: WISHES_H - 98 }}>
+          {wishes.wishes.length > 0 ? (
+            <ul>
+              {wishes.wishes.map((w, i) => (
+                <li key={`${i}-${w.time}`} className="border-b border-dashed border-[#accadd] py-[12px] last:border-b-0">
+                  <p className="flex items-baseline justify-between gap-[8px] font-['Raleway'] text-[13px] leading-[18px] text-[#081a51]">
+                    <span className="min-w-0 break-words font-semibold">{w.name}</span>
+                    <span className="shrink-0 text-[10px] text-[#6b6f8f]">{timeAgo(w.time, 'id')}</span>
+                  </p>
+                  <p className="mt-[4px] whitespace-pre-line break-words font-['Raleway'] text-[12px] leading-[17px] text-[#363636]">{w.message}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={note}>
+              {wishes.status === 'loading'
+                ? 'Memuat ucapan…'
+                : wishes.status === 'error'
+                  ? 'Ucapan belum bisa ditampilkan saat ini.'
+                  : 'Belum ada ucapan. Jadilah yang pertama!'}
+            </p>
+          )}
+        </div>
+      </Reveal>
+    </>
+  );
+}
+
+// ---------- Page ----------
+
+export default function LaLaLandContent({ invitation: inv, slug, intro }: { invitation: LaLaLandInvitation; slug?: string; intro: IntroState }) {
   const introStyle = quotesIntroStyle(intro);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [attendance, setAttendance] = useState('hadir');
+  const wishes = useWishes(slug);
+
+  // Couple pages get the wishes band; the demo keeps Figma's frame exactly.
+  const bandH = slug ? WISHES_H : 0;
+  const { bank, giftDelivery: gift } = inv;
+  const hasGifts = Boolean(bank || gift);
+  const giftsShift = bandH;
+  const closingShift = bandH - (hasGifts ? 0 : GIFTS_H);
+  // A lone gift card moves to the middle of the two slots.
+  const bankShift = gift ? 0 : GIFT_CARD_STEP / 2;
+  const giftShift = bank ? 0 : -GIFT_CARD_STEP / 2;
+  const pageH = PAGE_H + closingShift;
+
+  const gallery = inv.gallery.slice(0, MAX_GALLERY);
+  const story = inv.story.slice(0, MAX_STORY);
+  const venueAddress = inv.venue.addressLines;
+  const mapsUrl = inv.venue.mapsUrl ?? mapsSearch(oneLine([inv.venue.name, ...venueAddress]));
 
   useLayoutEffect(() => {
     const el = wrapRef.current;
@@ -364,11 +698,13 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
     return () => ro.disconnect();
   }, []);
 
+  // The reveal layers stay the 375 × 4641 frame box even with the wishes band: the layers' %
+  // insets are laid out against it (the band only moves layers, as Shift does).
   const reveals = useScrollReveals({ enabled: ENABLE_ANIMATIONS, frameW: FRAME_W, frameH: FRAME_H, wrapRef, started: intro.revealed });
 
   return (
     <RevealProvider value={reveals}>
-    <div ref={wrapRef} className="relative w-full overflow-hidden" style={{ aspectRatio: `${FRAME_W} / ${PAGE_H}` }}>
+    <div ref={wrapRef} className="relative w-full overflow-hidden" style={{ aspectRatio: `${FRAME_W} / ${pageH}` }}>
       {/* Scaled with `zoom`, not `transform`: a transform would isolate this canvas, and the
           colour-dodge flares below must blend with the viewport-fixed gradient behind it. */}
       <div className="absolute left-0 top-0" style={{ width: FRAME_W, height: FRAME_H, zoom: scale }}>
@@ -376,164 +712,147 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
             The sky itself is the Content frame's gradient, drawn as a viewport-fixed layer by
             the template; these layers are transparent wherever that sky shows through.
             Order follows Figma: Piano BG + plain stars, then each starfield's COLOR_DODGE flare
-            group, then the opaque piano / pool illustrations on top. */}
-        <img alt="" src={A('content-bg.webp')} className="absolute left-0 top-0 block max-w-none" style={{ width: 375, height: 4450 }} />
+            group, then the opaque piano / pool illustrations on top. With the wishes band, the
+            plain stars stop at the band (it draws its own). */}
+        {bandH ? (
+          <div className="absolute left-0 top-0 overflow-hidden" style={{ width: 375, height: WISHES_Y }}>
+            <img alt="" src={A('content-bg.webp')} className="absolute left-0 top-0 block max-w-none" style={{ width: 375, height: 4450 }} />
+          </div>
+        ) : (
+          <img alt="" src={A('content-bg.webp')} className="absolute left-0 top-0 block max-w-none" style={{ width: 375, height: 4450 }} />
+        )}
         {FLARES.map((f) => (
           <Flare key={f.file} {...f} />
         ))}
-        {BG_ILLUSTRATIONS.map((b) => (
-          <img key={b.file} alt="" src={A(b.file)} className="absolute left-0 block max-w-none" style={{ top: b.top, width: 375, height: b.h }} />
-        ))}
+        {BG_ILLUSTRATIONS.map((b) =>
+          b.gifts && !hasGifts ? null : (
+            <Shift key={b.file} by={b.gifts ? giftsShift : 0}>
+              <img alt="" src={A(b.file)} className="absolute left-0 block max-w-none" style={{ top: b.top, width: 375, height: b.h }} />
+            </Shift>
+          ),
+        )}
 
-        {/* ===== Closing painting (Figma "Painting", the last BG layer) =====
-            465 × 615 at (-49, 4454), cropped by the frame's bottom edge at PAGE_H. */}
-        <div className="absolute overflow-hidden" style={{ left: -49, top: 4454, width: 465, height: PAGE_H - 4454 }}>
-          <img
-            alt="Sebastian dan Mia di restoran"
-            className="absolute left-0 max-w-none"
-            style={{ top: -615 * 0.0701, width: 465, height: 615 * 1.0703 }}
-            src={A('b7947.webp')}
-          />
-        </div>
+        <Shift by={closingShift}>
+          {/* ===== Closing painting (Figma "Painting", the last BG layer) =====
+              465 × 615 at (-49, 4454), cropped by the frame's bottom edge at PAGE_H. */}
+          <div className="absolute overflow-hidden" style={{ left: -49, top: 4454, width: 465, height: PAGE_H - 4454 }}>
+            <img
+              alt="Lukisan pasangan di restoran"
+              className="absolute left-0 max-w-none"
+              style={{ top: -615 * 0.0701, width: 465, height: 615 * 1.0703 }}
+              src={A('b7947.webp')}
+            />
+          </div>
+        </Shift>
         {/* Navy fades: over the bottom of the piano scene, and over the painting under the footer. */}
-        <div className="absolute" style={{ left: -6, top: 4147, width: 387, height: 307, backgroundImage: NAVY_FADE }} />
-        <div className="absolute" style={{ left: -6, top: 4549, width: 387, height: 307, backgroundImage: NAVY_FADE }} />
+        {hasGifts && (
+          <Shift by={giftsShift}>
+            <div className="absolute" style={{ left: -6, top: 4147, width: 387, height: 307, backgroundImage: NAVY_FADE }} />
+          </Shift>
+        )}
+        <Shift by={closingShift}>
+          <div className="absolute" style={{ left: -6, top: 4549, width: 387, height: 307, backgroundImage: NAVY_FADE }} />
+        </Shift>
 
         <PaperRip x={-23} y={2250} />
         <PaperRip y={1675} />
         <PaperRip y={3187} />
-        <PaperRip y={3749} />
-        <PaperRip x={-6} y={4438} />
+        {hasGifts && (
+          <Shift by={giftsShift}>
+            <PaperRip y={3749} />
+          </Shift>
+        )}
+        <Shift by={closingShift}>
+          <PaperRip x={-6} y={4438} />
+        </Shift>
 
         {/* ===== Gift =====
             Each card and its text rise together (same timing, split only because the bow is
             drawn between them); the bows pop on after. */}
-        <Reveal at={3921} kind="fadeUp" delay={150}>
-          <div className="absolute inset-[84.49%_10.92%_10.43%_11.24%]">
-            <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('d6919.svg')} />
-          </div>
-        </Reveal>
-        <Reveal at={3921} kind="pop" origin={[93.8, 3941.1]} delay={450}>
-          <Float box={[49.01, 3910.04, 89.48, 62.19]} delay={600}>
-            <div className="absolute inset-[84.25%_63.07%_14.41%_13.07%]">
-              <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('5428d.svg')} />
-            </div>
-          </Float>
-        </Reveal>
-        <Reveal at={3921} kind="fadeUp" delay={150}>
-          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[calc(50%+0.5px)] text-[25px] text-[#081a51] text-center top-[3987px] tracking-[-0.425px] whitespace-nowrap">
-            <p className="leading-[20px]">Bank BCA</p>
-          </div>
-          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[calc(50%-0.5px)] text-[35px] text-[#081a51] text-center top-[4027px] whitespace-nowrap">
-            <p className="leading-[20px]">123456789</p>
-          </div>
-          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[188.5px] text-[16px] text-[#081a51] text-center top-[4102.5px] tracking-[-0.272px] whitespace-nowrap">
-            <p className="leading-[15px]">a.n. Mia Dolan</p>
-          </div>
-          <SalinButton top={4057} label="Salin nomor rekening" text="123456789" />
-        </Reveal>
+        {hasGifts && (
+          <Shift by={giftsShift}>
+            {bank && (
+              <Shift by={bankShift}>
+                <Reveal at={3921} kind="fadeUp" delay={150}>
+                  <div className="absolute inset-[84.49%_10.92%_10.43%_11.24%]">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('d6919.svg')} />
+                  </div>
+                </Reveal>
+                <Reveal at={3921} kind="pop" origin={[93.8, 3941.1]} delay={450}>
+                  <Float box={[49.01, 3910.04, 89.48, 62.19]} delay={600}>
+                    <div className="absolute inset-[84.25%_63.07%_14.41%_13.07%]">
+                      <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('5428d.svg')} />
+                    </div>
+                  </Float>
+                </Reveal>
+                <Reveal at={3921} kind="fadeUp" delay={150}>
+                  <Fit fit={FIT.gift} className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[calc(50%+0.5px)] text-[25px] text-[#081a51] text-center top-[3987px] tracking-[-0.425px] whitespace-nowrap">
+                    <p className="leading-[20px]">{bank.bank}</p>
+                  </Fit>
+                  <Fit fit={FIT.gift} className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[calc(50%-0.5px)] text-[35px] text-[#081a51] text-center top-[4027px] whitespace-nowrap">
+                    <p className="leading-[20px]">{bank.number}</p>
+                  </Fit>
+                  <Fit fit={FIT.gift} className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[188.5px] text-[16px] text-[#081a51] text-center top-[4102.5px] tracking-[-0.272px] whitespace-nowrap">
+                    <p className="leading-[15px]">{bank.holder}</p>
+                  </Fit>
+                  {/* Copied without spaces or dashes, so it pastes straight into a banking app. */}
+                  <SalinButton top={4057} label="Salin nomor rekening" text={bank.number.replace(/[\s-]/g, '')} />
+                </Reveal>
+              </Shift>
+            )}
 
-        <Reveal at={4175} kind="fadeUp" delay={150}>
-          <div className="absolute inset-[89.97%_10.92%_4.96%_11.24%]">
-            <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('d6919.svg')} />
-          </div>
-        </Reveal>
-        <Reveal at={4175} kind="pop" origin={[296.3, 4199.4]} delay={450}>
-          <div className="absolute flex inset-[89.42%_6.49%_8.45%_64.53%] items-center justify-center" style={{ containerType: 'size' }}>
-            <div className="flex-none h-[hypot(-28.945cqw,54.2471cqh)] rotate-[30.38deg] w-[hypot(71.055cqw,45.7529cqh)]">
-              <div className="relative size-full">
-                <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('5d942.svg')} />
-              </div>
-            </div>
-          </div>
-        </Reveal>
-        <Reveal at={4175} kind="fadeUp" delay={150}>
-          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[calc(50%+1px)] text-[#29567f] text-[25px] text-center top-[4233px] tracking-[-0.425px] whitespace-nowrap">
-            <p className="leading-[20px]">Sebastian W</p>
-          </div>
-          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[188.5px] text-[#29567f] text-[13px] text-center top-[4298.5px] tracking-[-0.221px] whitespace-nowrap">
-            <p className="leading-[19px] whitespace-pre">{'Jl. Anggrek Loka No. 24, '}</p>
-            <p className="leading-[19px] whitespace-pre">{'RT 005 / RW 002 Kel. Meruya Utara, '}</p>
-            <p className="leading-[19px] whitespace-pre">{'Kec. Kembangan Jakarta Barat, '}</p>
-            <p className="leading-[19px] whitespace-pre">DKI Jakarta, 11620</p>
-            <p className="leading-[19px] whitespace-pre">No. HP: 0812-3456-7890</p>
-          </div>
-          <SalinButton
-            top={4351}
-            label="Salin alamat"
-            text="Sebastian W, Jl. Anggrek Loka No. 24, RT 005 / RW 002 Kel. Meruya Utara, Kec. Kembangan Jakarta Barat, DKI Jakarta, 11620. No. HP: 0812-3456-7890"
-          />
-        </Reveal>
-        <Reveal at={3838} kind="fadeUp" delay={120}>
-          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[187.5px] text-[13px] text-[#f1e9dd] text-center top-[3838px] w-max whitespace-nowrap">
-            Doa restu Anda adalah karunia yang berarti bagi
-            <br />
-            kami. Jika ingin memberi tanda kasih, kami dengan
-            <br />
-            senang hati menerimanya melalui:
-          </p>
-        </Reveal>
-        <Reveal at={3802} kind="fadeUp">
-          <p className="-translate-x-1/2 absolute font-['Federo'] leading-[normal] left-[calc(50%+1px)] text-[#fade20] text-[25px] text-center top-[3802px] whitespace-nowrap">
-            Tanda Kasih
-          </p>
-        </Reveal>
+            {gift && (
+              <Shift by={giftShift}>
+                <Reveal at={4175} kind="fadeUp" delay={150}>
+                  <div className="absolute inset-[89.97%_10.92%_4.96%_11.24%]">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('d6919.svg')} />
+                  </div>
+                </Reveal>
+                <Reveal at={4175} kind="pop" origin={[296.3, 4199.4]} delay={450}>
+                  <div className="absolute flex inset-[89.42%_6.49%_8.45%_64.53%] items-center justify-center" style={{ containerType: 'size' }}>
+                    <div className="flex-none h-[hypot(-28.945cqw,54.2471cqh)] rotate-[30.38deg] w-[hypot(71.055cqw,45.7529cqh)]">
+                      <div className="relative size-full">
+                        <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('5d942.svg')} />
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+                <Reveal at={4175} kind="fadeUp" delay={150}>
+                  <Fit fit={FIT.gift} className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[calc(50%+1px)] text-[#29567f] text-[25px] text-center top-[4233px] tracking-[-0.425px] whitespace-nowrap">
+                    <p className="leading-[20px]">{gift.name}</p>
+                  </Fit>
+                  <Fit fit={FIT.giftAddress} className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Raleway'] justify-center leading-[0] left-[188.5px] text-[#29567f] text-[13px] text-center top-[4298.5px] tracking-[-0.221px] whitespace-nowrap">
+                    {gift.addressLines.map((line, i) => (
+                      // Lines ending in a comma keep Figma's trailing space, so they centre as in the design.
+                      <p key={i} className="leading-[19px] whitespace-pre">{line.endsWith(',') ? `${line} ` : line}</p>
+                    ))}
+                  </Fit>
+                  <SalinButton top={4351} label="Salin alamat" text={oneLine([gift.name, ...gift.addressLines])} />
+                </Reveal>
+              </Shift>
+            )}
+            <Reveal at={3838} kind="fadeUp" delay={120}>
+              <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[187.5px] text-[13px] text-[#f1e9dd] text-center top-[3838px] w-max whitespace-nowrap">
+                Doa restu Anda adalah karunia yang berarti bagi
+                <br />
+                kami. Jika ingin memberi tanda kasih, kami dengan
+                <br />
+                senang hati menerimanya melalui:
+              </p>
+            </Reveal>
+            <Reveal at={3802} kind="fadeUp">
+              <p className="-translate-x-1/2 absolute font-['Federo'] leading-[normal] left-[calc(50%+1px)] text-[#fade20] text-[25px] text-center top-[3802px] whitespace-nowrap">
+                Tanda Kasih
+              </p>
+            </Reveal>
+          </Shift>
+        )}
 
         {/* ===== Konfirmasi Kehadiran (RSVP) ===== */}
         <Reveal at={3300} kind="fadeUp" delay={120}>
-          <form onSubmit={(e) => e.preventDefault()}>
-            <div className={fieldLabel} style={{ top: 3313 }}>
-              <label htmlFor="rsvp-nama" className="leading-[20px]">Nama</label>
-            </div>
-            <input
-              id="rsvp-nama"
-              name="nama"
-              placeholder="Nama Anda"
-              className={`${fieldBox} ${fieldText} h-[38px] top-[3328px] pl-[14px] pr-[14px]`}
-            />
-
-            <div className={fieldLabel} style={{ top: 3389 }}>
-              <p className="leading-[20px]">Konfirmasi Kehadiran</p>
-            </div>
-            {ATTENDANCE.map((opt) => (
-              <label key={opt.value} className={`${fieldBox} h-[38px] cursor-pointer`} style={{ top: opt.top }}>
-                <input
-                  type="radio"
-                  name="kehadiran"
-                  value={opt.value}
-                  checked={attendance === opt.value}
-                  onChange={() => setAttendance(opt.value)}
-                  className="sr-only"
-                />
-                <span className="absolute left-[9px] top-[8px] size-[19px] rounded-full border-2 border-[#324532]">
-                  {attendance === opt.value && <span className="absolute left-[3px] top-[3px] size-[9px] rounded-full bg-[#324532]" />}
-                </span>
-                <span className="-translate-y-1/2 absolute left-[39px] top-[18px] font-['Raleway'] text-[13px] leading-[20px] tracking-[-0.221px] text-black whitespace-nowrap">
-                  {opt.label}
-                </span>
-              </label>
-            ))}
-
-            <div className={fieldLabel} style={{ top: 3552 }}>
-              <label htmlFor="rsvp-pesan" className="leading-[20px]">Pesan/Ucapan</label>
-            </div>
-            <textarea
-              id="rsvp-pesan"
-              name="pesan"
-              placeholder="Tulis doa & ucapan Anda..."
-              className={`${fieldBox} ${fieldText} h-[104px] top-[3567px] pl-[14px] pr-[14px] pt-[8px] resize-none`}
-            />
-
-            <button
-              type="submit"
-              className="-translate-x-1/2 absolute bg-[#f9de1f] h-[38px] left-[calc(50%+0.5px)] rounded-[10px] top-[3680px] w-[302px] cursor-pointer"
-            >
-              <span className="-translate-x-1/2 -translate-y-1/2 absolute left-[calc(50%-1px)] top-1/2 font-['Raleway'] text-[20px] leading-[20px] text-[#000433] tracking-[2px] whitespace-nowrap">
-                KIRIM UCAPAN
-              </span>
-            </button>
-          </form>
+          <Rsvp inv={inv} slug={slug} onWish={wishes.add} />
         </Reveal>
+        {bandH > 0 && <WishesBand wishes={wishes} />}
 
         <Reveal at={3251} kind="fadeUp">
           <p className="-translate-x-1/2 absolute font-['Federo'] leading-[normal] text-[27px] text-center text-white whitespace-nowrap" style={{ left: 70 + 237 / 2, top: 3251 }}>
@@ -542,63 +861,22 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
         </Reveal>
 
         {/* ===== Love Story ===== */}
-        {/* Body paragraphs carry small relative top offsets: Figma lays out these mixed
-            line-heights (15px first word, 12px rest, 9px title in one block) lower than CSS
-            does; offsets are measured against the Figma render. */}
         <Reveal at={2830} kind="fade" delay={150}>
-          <div className="absolute inset-[60.98%_6.25%_31.78%_5.33%]">
-            <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('22121.svg')} />
-          </div>
+          <Timeline count={story.length} />
         </Reveal>
         <Reveal at={2796} kind="fadeUp">
           <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Fasthand'] justify-center leading-[0] left-[186.78px] text-[#fade20] text-[30px] text-center top-[2806px] tracking-[-0.51px] whitespace-nowrap">
             <p className="leading-[20px]">Cerita Kami...</p>
           </div>
         </Reveal>
-        <Reveal at={2842} kind="fromLeft" delay={120}>
-          <div className="-translate-x-full -translate-y-1/2 absolute flex flex-col font-['Raleway'] font-normal h-[83px] justify-center leading-[0] left-[159.78px] text-[0px] text-right text-white top-[2883.5px] tracking-[-0.17px] w-max whitespace-nowrap">
-            <p className="font-bold leading-[12px] text-[12px]">1 Juni 2018</p>
-            <p className="relative top-[1.5px] text-[10px]">
-              <span className="leading-[15px]">Berawal</span>
-              <span className="leading-[12px]">
-                {' dari dikenalkan oleh'}<br />teman kantor. Tak disangka,<br />perkenalan sederhana ini<br />menjadi awal dari perjalanan<br />kami.
-              </span>
-            </p>
-          </div>
-        </Reveal>
-        <Reveal at={2993} kind="fromLeft" delay={120}>
-          <div className="-translate-x-full -translate-y-1/2 absolute flex flex-col font-['Raleway'] font-normal h-[85px] justify-center leading-[0] left-[159.78px] text-[0px] text-right text-white top-[3035.5px] tracking-[-0.17px] w-max whitespace-nowrap">
-            <p className="font-bold leading-[12px] text-[12px]">19 Desember 2025</p>
-            <p className="relative top-[1.5px] text-[10px]">
-              <span className="leading-[15px]">Setelah</span>
-              <span className="leading-[12px]">
-                {' bertahun-tahun'}<br />melewati suka dan duka<br />bersama, kami mengikat janji<br />untuk melangkah ke tahap<br />berikutnya.
-              </span>
-            </p>
-          </div>
-        </Reveal>
-        <Reveal at={2919} kind="fromRight" delay={200}>
-          <div className="-translate-y-1/2 absolute flex flex-col font-['Raleway'] font-normal h-[86px] justify-center leading-[0] left-[209.78px] text-[0px] text-white top-[2962px] tracking-[-0.119px] w-max whitespace-nowrap">
-            <p className="font-bold leading-[9px] text-[12px]">14 Agustus 2018</p>
-            <p className="relative top-[3px] text-[10px]">
-              <span className="leading-[15px]">Setelah</span>
-              <span className="leading-[12px]">
-                {' kurang lebih dua bulan'}<br />PDKT, akhirnya kami<br />memutuskan untuk menjalin<br />hubungan dan memulai cerita<br />sebagai pasangan.
-              </span>
-            </p>
-          </div>
-        </Reveal>
-        <Reveal at={3066} kind="fromRight" delay={200}>
-          <div className="-translate-y-1/2 absolute flex flex-col font-['Raleway'] font-normal h-[93px] justify-center leading-[0] left-[209.78px] text-[0px] text-white top-[3112.5px] tracking-[-0.17px] w-max whitespace-nowrap">
-            <p className="font-bold leading-[12px] text-[12px]">{weddingDateId}</p>
-            <p className="relative top-[1.5px] text-[10px]">
-              <span className="leading-[15px]">Hari</span>
-              <span className="leading-[12px]">
-                {' di mana cerita kami'}<br />berlanjut ke babak baru. Bukan<br />lagi sekadar tentang aku dan<br />kamu, tapi tentang kita dan<br />selamanya.
-              </span>
-            </p>
-          </div>
-        </Reveal>
+        {story.map((moment, i) => {
+          const slot = STORY_SLOTS[i];
+          return (
+            <Reveal key={i} at={slot.at} kind={slot.left ? 'fromLeft' : 'fromRight'} delay={slot.left ? 120 : 200}>
+              <StoryText moment={moment} slot={slot} />
+            </Reveal>
+          );
+        })}
 
         {/* Mirrored in Figma: the node's reported x (386) is its flipped origin, i.e. its right edge. */}
         <Reveal at={2770} kind="pop" origin={[352.5, 2810.6]} delay={350}>
@@ -616,13 +894,13 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
         <div className="-translate-x-1/2 absolute bg-[#081a51] border border-[#f9de1f] border-solid h-[194.129px] left-[calc(50%+2.85px)] rounded-[10px] top-[2516.87px] w-[299.758px]" />
         <div className="-translate-x-1/2 absolute bg-[#081a51] border border-[#f9de1f] border-solid h-[194.129px] left-[calc(50%-2.85px)] rounded-[10px] top-[2512.11px] w-[299.758px]" />
         <p className="-translate-x-1/2 absolute font-['Raleway'] h-[17px] leading-[normal] left-[calc(50%+0.5px)] text-[13px] text-[#f9de1f] text-center top-[2677px] w-max whitespace-nowrap">
-          to {weddingDateEn}
+          to {dateEn(inv.date)}
         </p>
         <p className="-translate-x-1/2 absolute font-['Federo'] h-[17px] leading-[normal] left-1/2 text-[15px] text-[#f9de1f] text-center top-[2524px] w-[99px]">
           Countdown
         </p>
         <Hline left={34.77} top={2600.61} width={299.758} file="13eeb.svg" />
-        <CountdownNumbers />
+        <CountdownNumbers target={ceremonyStart(inv)} />
         <Hline left={34.77} top={2550.18} width={299.758} file="13eeb.svg" />
         <Hline left={34.77} top={2600.61} width={299.758} file="13eeb.svg" />
         <Hline left={34.77} top={2665.32} width={299.758} file="13eeb.svg" />
@@ -633,21 +911,21 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
         <Reveal at={2373} kind="fadeUp" delay={150}>
           <div className="-translate-x-1/2 absolute bg-[#081a51] border border-[#f9de1f] border-solid h-[114.194px] left-[calc(50%+2.85px)] rounded-[10px] top-[2377.94px] w-[299.758px]" />
           <div className="-translate-x-1/2 absolute bg-[#081a51] border border-[#f9de1f] border-solid h-[114.194px] left-[calc(50%-2.85px)] rounded-[10px] top-[2373.18px] w-[299.758px]" />
-          <p className="-translate-x-1/2 absolute font-['Federo'] h-[17px] leading-[normal] left-[calc(50%-73.5px)] text-[13px] text-[#f9de1f] text-center top-[2381px] w-[96px]">
-            Akad Nikah
-          </p>
-          <p className="absolute font-['Raleway'] h-[19.032px] leading-[normal] left-[calc(50%-104.2px)] text-[11px] text-[#f9de1f] top-[2406px] w-[75.177px] whitespace-nowrap">
-            08.00 - 11.00
-          </p>
+          <Fit fit={FIT.eventLabel} className="-translate-x-1/2 absolute font-['Federo'] h-[17px] leading-[normal] left-[calc(50%-73.5px)] text-[13px] text-[#f9de1f] text-center top-[2381px] w-max min-w-[96px] whitespace-nowrap">
+            {inv.ceremony.label ?? 'Akad Nikah'}
+          </Fit>
+          <Fit fit={FIT.time} className="absolute font-['Raleway'] h-[19.032px] leading-[normal] left-[calc(50%-104.2px)] text-[11px] text-[#f9de1f] top-[2406px] w-max whitespace-nowrap">
+            {inv.ceremony.time}
+          </Fit>
           <div className="absolute inset-[51.83%_79.31%_47.86%_16.88%]">
             <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('11f60.svg')} />
           </div>
           <p className="-translate-x-1/2 absolute font-['Federo'] h-[17.129px] leading-[normal] left-[calc(50%+69.94px)] text-[13px] text-[#f9de1f] text-center top-[2380.79px] w-[43.774px] whitespace-nowrap">
             Resepsi
           </p>
-          <p className="absolute font-['Raleway'] h-[19.032px] leading-[normal] left-[calc(50%+43.3px)] text-[11px] text-[#f9de1f] top-[2406px] w-[73.274px] whitespace-nowrap">
-            11.00 - selesai
-          </p>
+          <Fit fit={FIT.time} className="absolute font-['Raleway'] h-[19.032px] leading-[normal] left-[calc(50%+43.3px)] text-[11px] text-[#f9de1f] top-[2406px] w-max whitespace-nowrap">
+            {inv.reception.time}
+          </Fit>
           <div className="absolute inset-[51.83%_39.98%_47.86%_56.22%]">
             <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('11f60.svg')} />
           </div>
@@ -663,27 +941,25 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
             </div>
           </div>
           <a
-            href={MAPS_URL}
+            href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Lihat lokasi di Google Maps"
+            aria-label={`Lihat lokasi ${inv.venue.name} di Google Maps`}
             className="absolute h-[22.839px] left-[220.33px] rounded-[100px] top-[2445.5px] w-[95.161px]"
           />
           {/* Figma sets the address at 7px on one line; that's too small to read on a phone, so
               it is 10px on two lines, and the name and address are centred as a block in the
               box's lower half (2430–2487), level with the Lihat Lokasi button. */}
-          <p className="absolute font-['Federo'] h-[17.129px] leading-[normal] left-[54px] text-[#fade20] text-[13px] top-[2436.5px] w-[147.5px] whitespace-nowrap">
-            Gedung Serbaguna ABC
-          </p>
-          <p className="absolute font-['Raleway'] leading-[12px] left-[54px] text-[#fade20] text-[10px] top-[2455px] whitespace-nowrap">
-            Jl. Cempaka No. 18,
-            <br />
-            Kota Bogor, Jawa Barat
-          </p>
+          <Fit fit={FIT.venue} className="absolute font-['Federo'] h-[17.129px] leading-[normal] left-[54px] text-[#fade20] text-[13px] top-[2436.5px] w-max whitespace-nowrap">
+            {inv.venue.name}
+          </Fit>
+          <Fit fit={FIT.venueAddress} className="absolute font-['Raleway'] leading-[12px] left-[54px] text-[#fade20] text-[10px] top-[2455px] whitespace-nowrap">
+            <Lines lines={venueAddress} />
+          </Fit>
         </Reveal>
         <Reveal at={2298} kind="fadeUp">
           <p className="-translate-x-1/2 absolute font-['Federo'] h-[27.597px] leading-[normal] left-[calc(50%+0.48px)] text-[#fade20] text-[23px] text-center top-[2325.6px] w-max whitespace-nowrap">
-            {weddingDateIdLong}
+            {dateIdLong(inv.date)}
           </p>
           <p className="-translate-x-1/2 absolute font-['Raleway'] h-[23px] leading-[normal] left-[calc(50%+2.5px)] text-[13px] text-center text-white top-[2298px] w-max whitespace-nowrap">
             Acara akan dilangsungkan pada:
@@ -691,7 +967,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
         </Reveal>
 
         {/* ===== Prewed ===== */}
-        <PrewedGallery />
+        <PrewedGallery photos={gallery} coupleNames={inv.coupleNames} />
 
         {/* ===== Bride ===== */}
         <Reveal at={1295} kind="settle" origin={[184, 1437]} tilt={-2}>
@@ -703,7 +979,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
             </div>
           </div>
           <div className="absolute left-[28.45px] size-[299px] top-[1288px]" style={mask('53719-mirrored.svg', '50.098px 14.653px', '211.419px 278.236px')}>
-            <img alt="Mia Dolan" className="absolute inset-0 max-w-none object-cover size-full" src={A('c95c9.webp')} />
+            <img alt={inv.bride.name} className="absolute inset-0 max-w-none object-cover size-full" src={inv.bride.photo} />
           </div>
           <div className="absolute flex inset-[27.93%_24.37%_65.98%_19.78%] items-center justify-center" style={{ containerType: 'size' }}>
             <div className="-scale-x-100 flex-none h-[100cqh] w-[100cqw]">
@@ -721,12 +997,12 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           </div>
         </Reveal>
         <Reveal at={1594} kind="fadeUp" delay={150}>
-          <p className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1594px] whitespace-nowrap">
-            Mia Dolan
-          </p>
-          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[13px] text-center text-white top-[1630px] whitespace-nowrap">
-            Putri dari Bapak Jerome P dan Ibu Cania C
-          </p>
+          <Fit fit={FIT.name} className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1594px] whitespace-nowrap">
+            {inv.bride.name}
+          </Fit>
+          <Fit fit={FIT.parents} className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[13px] text-center text-white top-[1630px] whitespace-nowrap">
+            {`${inv.bride.parentsLabel} ${inv.bride.parents}`}
+          </Fit>
         </Reveal>
 
         {/* ===== Groom ===== */}
@@ -735,7 +1011,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
             <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('45f28.svg')} />
           </div>
           <div className="absolute inset-[19.36%_8.54%_73.77%_6.46%]" style={mask('53719.svg', '48.814px 5.235px', '211.419px 278.236px')}>
-            <img alt="Sebastian Wilder" className="absolute left-0 top-0 max-w-none size-full" src={A('68dbe.webp')} />
+            <img alt={inv.groom.name} className="absolute left-0 top-0 max-w-none object-cover size-full" src={inv.groom.photo} />
           </div>
           <div className="absolute inset-[19.34%_22.98%_74.57%_21.17%]">
             <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('6ebf7.svg')} />
@@ -745,12 +1021,12 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
           </div>
         </Reveal>
         <Reveal at={1195} kind="fadeUp" delay={150}>
-          <p className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1195px] whitespace-nowrap">
-            Sebastian Wilder
-          </p>
-          <p className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[13px] text-center text-white top-[1231px] whitespace-nowrap">
-            Putra dari Bapak Ari W dan Ibu Dian S
-          </p>
+          <Fit fit={FIT.name} className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1195px] whitespace-nowrap">
+            {inv.groom.name}
+          </Fit>
+          <Fit fit={FIT.parents} className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[13px] text-center text-white top-[1231px] whitespace-nowrap">
+            {`${inv.groom.parentsLabel} ${inv.groom.parents}`}
+          </Fit>
         </Reveal>
 
         {/* ===== Intro text ===== */}
@@ -772,7 +1048,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
         </Reveal>
         <Reveal at={531} kind="fadeUp" delay={750}>
           <img
-            alt="Sebastian & Mia berdansa"
+            alt="Ilustrasi pasangan berdansa"
             src={A('71976.webp')}
             className="absolute max-w-none object-cover"
             style={{ left: 15.19, top: 531, width: 327.896, height: 263 }}
@@ -801,7 +1077,7 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
             className="absolute"
             style={{ left: 46.275, top: -1.3923, width: 266.0625, height: 472.4538, ...mask('372a1.svg', '24.054px 74.392px', '236.147px 251.888px') }}
           >
-            <img alt="Sebastian & Mia di bioskop" className="absolute left-0 top-0 max-w-none size-full" src={A('8d654.webp')} />
+            <img alt={`Foto ${inv.coupleNames}`} className="absolute left-0 top-0 max-w-none object-cover size-full" src={inv.coverPhoto} />
           </div>
           <p className="-translate-x-1/2 absolute font-['Pompiere'] leading-[26px] left-1/2 text-[22px] text-[#000433] text-center top-[357px] w-max whitespace-nowrap">
             Here's to the ones who dream,
@@ -827,31 +1103,34 @@ export default function LaLaLandContent({ intro }: { intro: IntroState }) {
         </Reveal>
         <PaperRip y={2738} />
 
-        {/* ===== Closing: thank-you note on torn paper ===== */}
-        <Reveal at={4549} kind="fadeUp">
-          {/* Figma's 200 × 316 paper, turned 90° about the centre of its 316 × 200 box. */}
-          <div className="absolute" style={{ left: 188.02 - 100, top: 4649 - 158.025, width: 200, height: 316.05, transform: 'rotate(90deg)' }}>
-            <img alt="" src={A('paper-vintage.webp')} className="absolute inset-0 block size-full max-w-none" />
-          </div>
-        </Reveal>
-        <Reveal at={4586} kind="fadeUp" delay={150}>
-          <p className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[22px] left-[188px] text-[18px] text-[#181719] text-center top-[4614.5px] tracking-[-0.306px] w-max whitespace-nowrap">
-            Terima kasih telah menjadi bagian dari cerita kami
-            <br />
-            dan berbagi kebahagiaan di hari istimewa ini.
-          </p>
-        </Reveal>
-        <Reveal at={4656} kind="fadeUp" delay={250}>
-          <p className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[22px] left-[188px] text-[18px] text-black text-center top-[4667px] tracking-[-0.306px] whitespace-nowrap">
-            with love,
-          </p>
-          <p className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[30px] left-[188.49px] text-[27px] text-[#081a51] text-center top-[4697.14px] tracking-[-0.459px] whitespace-nowrap">
-            Sebastian &amp; Mia
-          </p>
-        </Reveal>
+        <Shift by={closingShift}>
+          {/* ===== Closing: thank-you note on torn paper ===== */}
+          <Reveal at={4549} kind="fadeUp">
+            {/* Figma's 200 × 316 paper, turned 90° about the centre of its 316 × 200 box. */}
+            <div className="absolute" style={{ left: 188.02 - 100, top: 4649 - 158.025, width: 200, height: 316.05, transform: 'rotate(90deg)' }}>
+              <img alt="" src={A('paper-vintage.webp')} className="absolute inset-0 block size-full max-w-none" />
+            </div>
+          </Reveal>
+          <Reveal at={4586} kind="fadeUp" delay={150}>
+            <Fit
+              fit={FIT.closing}
+              className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[22px] left-[188px] text-[18px] text-[#181719] text-center top-[4614.5px] tracking-[-0.306px] w-max max-w-[260px] whitespace-pre-line"
+            >
+              {inv.closing.text}
+            </Fit>
+          </Reveal>
+          <Reveal at={4656} kind="fadeUp" delay={250}>
+            <p className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[22px] left-[188px] text-[18px] text-black text-center top-[4667px] tracking-[-0.306px] whitespace-nowrap">
+              with love,
+            </p>
+            <Fit fit={FIT.signature} className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[30px] left-[188.49px] text-[27px] text-[#081a51] text-center top-[4697.14px] tracking-[-0.459px] whitespace-nowrap">
+              {inv.closing.signature}
+            </Fit>
+          </Reveal>
 
-        {/* ===== Made with love by nicemice (on the painting's navy fade; no edge of its own) ===== */}
-        <MadeWithLoveFooter y={4754} tone="light" />
+          {/* ===== Made with love by nicemice (on the painting's navy fade; no edge of its own) ===== */}
+          <MadeWithLoveFooter y={4754} tone="light" />
+        </Shift>
       </div>
     </div>
     </RevealProvider>

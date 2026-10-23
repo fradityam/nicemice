@@ -1,18 +1,6 @@
 import { Fragment, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { parseIsoDate } from '../../invitations/dates';
-import {
-  MAX_MESSAGE,
-  MAX_NAME,
-  rememberSent,
-  sendRsvp,
-  sentBefore,
-  useWishes,
-  type Attendance,
-  type RsvpReply,
-  type SendResult,
-  type Wish,
-  type WishesState,
-} from '../../invitations/rsvp';
+import { MAX_MESSAGE, MAX_NAME, timeAgo, useRsvpForm, useWishes, type Attendance, type SendError, type Wish, type WishesState } from '../../invitations/rsvp';
 import type { FriendsInvitation } from '../../invitations/types';
 import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
@@ -249,7 +237,7 @@ const fieldLabel = 'ff-f72 -translate-y-1/2 absolute left-[44px] text-[12px] lea
 const fieldBox = 'absolute left-[37px] w-[302px] rounded-[10px] border border-solid border-[#a07eb9] bg-white';
 const fieldText = 'ff-f72 text-[12px] leading-[20px] tracking-[-0.017em] text-black placeholder:text-[rgba(0,0,0,0.2)] outline-none';
 
-const SEND_ERRORS: Record<Exclude<SendResult, 'ok'>, string> = {
+const SEND_ERRORS: Record<SendError, string> = {
   failed: 'Couldn’t send your reply. Check your connection and try again.',
   busy: 'So many replies right now! Please try again in a minute.',
   closed: 'Replies to this invitation are closed.',
@@ -267,38 +255,7 @@ const THANKS: Record<Attendance, string> = {
  * is also what the guest sees when they reopen the invitation on the same phone.
  */
 function Rsvp({ inv, slug, onWish }: { inv: FriendsInvitation; slug?: string; onWish: (wish: Wish) => void }) {
-  const [attendance, setAttendance] = useState<Attendance>('hadir');
-  const [sent, setSent] = useState(() => (slug ? sentBefore(slug) : null));
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<Exclude<SendResult, 'ok'> | null>(null);
-
-  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (sending) return;
-    const form = new FormData(e.currentTarget);
-    const reply: RsvpReply = {
-      name: String(form.get('name') ?? '').trim(),
-      attendance,
-      message: String(form.get('message') ?? '').trim(),
-      website: String(form.get('website') ?? ''),
-    };
-    if (!reply.name) return;
-    if (!slug) return setSent(reply);
-    setSending(true);
-    setError(null);
-    const result = await sendRsvp(slug, reply);
-    setSending(false);
-    if (result !== 'ok') return setError(result);
-    rememberSent(slug, { name: reply.name, attendance });
-    setSent(reply);
-    if (reply.message) onWish({ name: reply.name, message: reply.message, time: new Date().toISOString() });
-  };
-
-  const sendAnother = () => {
-    if (slug) rememberSent(slug, null);
-    setSent(null);
-    setAttendance('hadir');
-  };
+  const { attendance, setAttendance, sent, sending, error, submit, sendAnother } = useRsvpForm(slug, onWish);
 
   const title = (
     <Centered cx={188.5} cy={3800} className={`${friendsTitle} text-[18px] leading-[20px] text-[#a07eb9]`}>
@@ -410,20 +367,6 @@ function ShiftDown({ by, children }: { by: number; children: ReactNode }) {
   );
 }
 
-const relativeTime = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-const shortDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
-/** "just now", "5 minutes ago", "yesterday", "3 days ago", then "12 Oct". */
-function timeAgo(iso: string | null) {
-  if (!iso) return '';
-  const then = new Date(iso);
-  const s = (Date.now() - then.getTime()) / 1000;
-  if (s < 60) return 'just now';
-  if (s < 3600) return relativeTime.format(-Math.floor(s / 60), 'minute');
-  if (s < 86400) return relativeTime.format(-Math.floor(s / 3600), 'hour');
-  if (s < 30 * 86400) return relativeTime.format(-Math.floor(s / 86400), 'day');
-  return shortDate.format(then);
-}
-
 function WishesBand({ wishes }: { wishes: WishesState }) {
   const note = 'ff-f72 px-[10px] py-[24px] text-center text-[12px] leading-[17px] tracking-[-0.017em] text-[#8a7a96]';
   return (
@@ -440,7 +383,7 @@ function WishesBand({ wishes }: { wishes: WishesState }) {
                 <li key={`${i}-${w.time}`} className="border-b border-dashed border-[#a07eb9]/40 py-[12px] last:border-b-0">
                   <p className="ff-f72 flex items-baseline justify-between gap-[8px] text-[13px] leading-[18px] tracking-[-0.017em] text-[#181719]">
                     <span className="min-w-0 break-words font-semibold">{w.name}</span>
-                    <span className="shrink-0 text-[10px] text-[#8a7a96]">{timeAgo(w.time)}</span>
+                    <span className="shrink-0 text-[10px] text-[#8a7a96]">{timeAgo(w.time, 'en')}</span>
                   </p>
                   <p className="ff-f72 mt-[4px] whitespace-pre-line break-words text-[12px] leading-[17px] tracking-[-0.017em] text-[#363636]">{w.message}</p>
                 </li>

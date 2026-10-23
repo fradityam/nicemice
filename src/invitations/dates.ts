@@ -6,6 +6,11 @@ export function parseIsoDate(iso: IsoDate): Date {
   return new Date(y, m - 1, d);
 }
 
+/** e.g. formatIsoDate('2027-09-27', 'id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) → '27 September 2027'. */
+export function formatIsoDate(iso: IsoDate, locale: string, options: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat(locale, options).format(parseIsoDate(iso));
+}
+
 /** Demo pages: a wedding `days` from today, so the dates in the design stay believable. */
 export function isoDateFromToday(days: number): IsoDate {
   const d = new Date();

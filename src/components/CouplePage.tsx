@@ -10,6 +10,7 @@ export type TemplateProps<T extends Invitation = Invitation> = { invitation: T; 
 
 const TEMPLATES: Record<TemplateId, ComponentType<TemplateProps<any>>> = {
   friends: lazy(() => import('./templates/FriendsTemplate')),
+  lalaland: lazy(() => import('./templates/LaLaLandTemplate')),
 };
 
 /** Keeps the page out of search engines while it is open. */
