@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 
 import coverBg from '../../assets/images/lalaland/figma/cover-bg.webp';
 import LaLaLandContent, { ENABLE_ANIMATIONS, FitSpan, NAVY_FADE, dateId } from './LaLaLandContent';
-import { useLight } from './lalalandLights';
+import { useLight } from './sceneLights';
 import { LAMP, OPENING, REDUCED_FADE_MS } from './lalalandOpening';
 import { Reveal, RevealProvider, RevealSpan, useCoverReveals } from './scrollReveal';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
@@ -29,7 +29,7 @@ const GUEST_FIT: FitBox = { w: 300 };
 // Figma Content frame fill (top → bottom).
 const SKY_GRADIENT = 'linear-gradient(to bottom, #000433 0%, #181065 50%, #672dc1 100%)';
 
-// The lamp's light (lalalandLights.ts), a warm glow this many frame px across over its glass.
+// The lamp's light (sceneLights.ts), a warm glow this many frame px across over its glass.
 const GLOW_D = 120;
 const GLOW = 'radial-gradient(circle, rgba(255,222,150,0.6) 0%, rgba(255,196,120,0.3) 30%, rgba(255,180,110,0.1) 52%, rgba(255,180,110,0) 70%)';
 // The glow opening's light, from the lamp: still strong at every corner of the frame (at most
@@ -59,7 +59,7 @@ const GLOW_MS = 6400;
 function Glint({ x, y, ms, delay, active }: (typeof GLINTS)[number] & { active: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   useLight(ref, 'twinkle', { ms, delay, active });
-  return <div ref={ref} className="ll-twinkle absolute" style={{ left: x - GLINT_D / 2, top: y - GLINT_D / 2, width: GLINT_D, height: GLINT_D, background: GLINT, mixBlendMode: 'screen' }} />;
+  return <div ref={ref} className="light-twinkle absolute" style={{ left: x - GLINT_D / 2, top: y - GLINT_D / 2, width: GLINT_D, height: GLINT_D, background: GLINT, mixBlendMode: 'screen' }} />;
 }
 
 /** The cover's layers the opening animates (see lalalandOpening.ts). */
@@ -76,7 +76,7 @@ type CoverParts = { painting: RefObject<HTMLDivElement | null>; glow: RefObject<
 // On load it settles in: the painting eases back a touch, the title line drifts down, the
 // names rise one by one, then the guest's name and the button; the button works from the start.
 // Once it has settled the lamp's light starts breathing and a few stars glint now and then
-// (lalalandLights.ts), until the guest opens it. `parts` are the layers the opening animates.
+// (sceneLights.ts), until the guest opens it. `parts` are the layers the opening animates.
 function LaLaLandCover({ invitation: inv, guest, parts, onOpen }: { invitation: LaLaLandInvitation; guest: string; parts: CoverParts; onOpen: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const greetingFit = useFit<HTMLParagraphElement>(GUEST_FIT);
@@ -139,7 +139,7 @@ function LaLaLandCover({ invitation: inv, guest, parts, onOpen }: { invitation: 
           ))}
           <div
             ref={parts.glow}
-            className="ll-glow absolute"
+            className="light-glow absolute"
             style={{ left: LAMP[0] - GLOW_D / 2, top: LAMP[1] - GLOW_D / 2, width: GLOW_D, height: GLOW_D, backgroundImage: GLOW, mixBlendMode: 'screen' }}
           />
           {/* The warm light the glow opening fills the screen with, spreading from the lamp. */}

@@ -1,0 +1,8 @@
+/* Lights twinkling or glowing in a scene (sceneLights.ts): their opacity is set while they do;
+   without, they are not there at all. */
+.light-twinkle {
+  opacity: var(--light-twinkle, 0);
+}
+.light-glow {
+  opacity: var(--light-glow, 0);
+}

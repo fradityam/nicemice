@@ -1,5 +1,5 @@
 /* La La Land's night (see Scene and Twinkle in LaLaLandContent.tsx, the cover's lamp in
-   LaLaLandTemplate.tsx and lalalandLights.ts): the dancing couple's star drifting at its own depth
+   LaLaLandTemplate.tsx and sceneLights.ts): the dancing couple's star drifting at its own depth
    as it scrolls by, the brightest stars twinkling, and the street lamp's light breathing on the
    cover. Only for guests who haven't asked for reduced motion; the depth only where the browser
    can tie an animation to scrolling (it then runs off the main thread). Anywhere else every layer
@@ -14,14 +14,6 @@
   to {
     translate: 0 calc(var(--ll-depth) * 1px);
   }
-}
-
-/* Set while they twinkle or glow (lalalandLights.ts); without, not there at all. */
-.ll-twinkle {
-  opacity: var(--ll-twinkle, 0);
-}
-.ll-glow {
-  opacity: var(--ll-glow, 0);
 }
 
 @media (prefers-reduced-motion: no-preference) {

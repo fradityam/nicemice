@@ -1,11 +1,13 @@
 import { useEffect, type RefObject } from 'react';
+import './sceneLights.css';
 
-// La La Land's twinkling stars and the street lamp's breathing light (lalaland.css). Each sets a
-// custom property that its opacity reads, about a dozen times a second from one timer for the
-// whole page: the page repaints just those few small boxes, nothing goes onto a layer of its own
-// (where the text drawn over the sky would lose its sub-pixel smoothing), and in between the page
-// does no work at all. (A CSS animation, even in steps, has the page recalculate its styles every
-// frame while it runs: on a slow phone several times the cost.)
+// Lights that twinkle or glow in a template's scenes: La La Land's stars and street lamp, Friends'
+// Tiffany lamps and fountain. Each sets a custom property that its opacity reads (sceneLights.css),
+// about a dozen times a second from one timer for the whole page: the page repaints just those few
+// small boxes, nothing goes onto a layer of its own (where text drawn nearby would lose its
+// sub-pixel smoothing), and in between the page does no work at all. (A CSS animation, even in
+// steps, has the page recalculate its styles every frame while it runs: on a slow phone several
+// times the cost.)
 
 /** How bright a light is over one round of it: [share of the round, brightness], from 0 to 1. */
 type Curve = [number, number][];
@@ -17,7 +19,7 @@ const CURVES = {
   glow: [[0, 0.55], [0.24, 0.85], [0.38, 0.72], [0.62, 1], [0.84, 0.68], [1, 0.55]],
 } satisfies Record<string, Curve>;
 type Kind = keyof typeof CURVES;
-const PROPS: Record<Kind, string> = { twinkle: '--ll-twinkle', glow: '--ll-glow' };
+const PROPS: Record<Kind, string> = { twinkle: '--light-twinkle', glow: '--light-glow' };
 
 const TICK_MS = 80;
 // The lamp comes on softly when it starts.
@@ -53,7 +55,7 @@ function tick() {
 
 /**
  * Makes the element in `ref` twinkle (or glow) while `active`, one round every `ms`, `delay` ms
- * behind the page's clock. Not for guests who prefer reduced motion: the night stays as painted.
+ * behind the page's clock. Not for guests who prefer reduced motion: the scene stays as painted.
  */
 export function useLight(ref: RefObject<HTMLElement | null>, kind: Kind, { ms, delay = 0, active }: { ms: number; delay?: number; active: boolean }) {
   useEffect(() => {

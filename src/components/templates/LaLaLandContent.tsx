@@ -4,7 +4,7 @@ import { MAX_MESSAGE, MAX_NAME, timeAgo, useRsvpForm, useWishes, type Attendance
 import type { GalleryPhoto, LaLaLandInvitation, StoryMoment } from '../../invitations/types';
 import { useFit, type FitBox } from './fitText';
 import { Handwritten } from './handwriting';
-import { useLight } from './lalalandLights';
+import { useLight } from './sceneLights';
 import { OPENING } from './lalalandOpening';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { Float, Reveal, RevealOffset, RevealProvider, useReveal, useScrollReveals } from './scrollReveal';
@@ -219,7 +219,7 @@ function Twinkle({ file, top: fileTop, w, h, x, y, r, ms, delay }: { file: strin
         ref={star}
         alt=""
         src={A(file)}
-        className="ll-twinkle absolute block max-w-none"
+        className="light-twinkle absolute block max-w-none"
         style={{
           left: -left,
           top: fileTop - top,
