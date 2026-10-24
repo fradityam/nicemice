@@ -10,6 +10,7 @@ import bouquet1 from '../../assets/images/crazylove/bouquet-1.webp';
 import bouquet2 from '../../assets/images/crazylove/bouquet-2.webp';
 import kids from '../../assets/images/crazylove/kids.webp';
 import CrazyLoveContent, { ENABLE_ANIMATIONS, INTRO } from './CrazyLoveContent';
+import { OPENING, type OpeningParts } from './crazyloveOpening';
 import { Reveal, RevealProvider, useCoverReveals } from './scrollReveal';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import { STAGE_BG } from './templateStage';
@@ -40,21 +41,29 @@ const NAMES_FIT: FitBox = { w: 200 };
 const LINE_FIT: FitBox = { w: 330 };
 
 /** A line of the cover that shrinks (towards its centre) when it is longer than its slot. */
-function FitLine({ fit, as: Tag = 'p', className, style, children }: { fit: FitBox; as?: 'p' | 'span'; className: string; style?: CSSProperties; children: ReactNode }) {
+function FitLine({ fit, as: Tag = 'p', part, className, style, children }: { fit: FitBox; as?: 'p' | 'span'; part?: string; className: string; style?: CSSProperties; children: ReactNode }) {
   const f = useFit<HTMLElement>(fit);
   return (
-    <Tag ref={f.ref as never} className={className} style={{ ...style, ...f.style }}>
+    <Tag ref={f.ref as never} data-cover={part} className={className} style={{ ...style, ...f.style }}>
       {children}
       {f.probe}
     </Tag>
   );
 }
 
-/** A layer centred in Figma's bounding box [x, y, w, h] and rotated about its centre. */
-function Rot({ box, w, h, deg, children }: { box: [number, number, number, number]; w: number; h: number; deg: number; children: ReactNode }) {
+/**
+ * A layer centred in Figma's bounding box [x, y, w, h] and rotated about its centre; `part` names
+ * it for the opening (see coverParts), `drift` how far it drifts off as the cover goes.
+ */
+function Rot({ box, w, h, deg, part, drift, children }: { box: [number, number, number, number]; w: number; h: number; deg: number; part?: string; drift?: [number, number]; children: ReactNode }) {
   const [x, y, bw, bh] = box;
   return (
-    <div className="absolute" style={{ left: x + bw / 2 - w / 2, top: y + bh / 2 - h / 2, width: w, height: h, transform: `rotate(${deg}deg)` }}>
+    <div
+      data-cover={part}
+      data-drift={drift?.join(' ')}
+      className="absolute"
+      style={{ left: x + bw / 2 - w / 2, top: y + bh / 2 - h / 2, width: w, height: h, transform: `rotate(${deg}deg)` }}
+    >
       {children}
     </div>
   );
@@ -84,27 +93,39 @@ function useCoverScale() {
 
 // Figma "Cover" frame (375 × 667) at its own coordinates, scaled to fit the column. On load
 // it settles in: the card fades in, the polaroid drops onto it, the flowers and the kids pop
-// in, then the guest's name and the button rise; the button works from the start.
-function CrazyLoveCover({ invitation: inv, guest, onOpen }: { invitation: CrazyLoveInvitation; guest: string; onOpen: () => void }) {
+// in, then the guest's name and the button rise; the button works from the start. Its parts
+// marked `data-cover` are what the opening animates (see coverParts); the polaroid's shadow on
+// the page is only there once `opening`.
+function CrazyLoveCover({ invitation: inv, guest, opening, onOpen }: { invitation: CrazyLoveInvitation; guest: string; opening: boolean; onOpen: () => void }) {
   const { ref, scale, top } = useCoverScale();
   const lang = greetingLanguage(inv.greeting);
   const { reveals } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1500 });
   return (
     <RevealProvider value={reveals}>
-    <div ref={ref} className="absolute inset-0 overflow-hidden" style={{ backgroundColor: CREAM }}>
-      <img alt="" src={paper} className={`${fill} opacity-50`} />
+    <div ref={ref} className="absolute inset-0 overflow-hidden">
+      <div data-cover="backdrop" className="absolute inset-0" style={{ backgroundColor: CREAM }}>
+        <img alt="" src={paper} className={`${fill} opacity-50`} />
+      </div>
       <div
         className="absolute left-1/2"
         style={{ top, width: COVER_W, height: COVER_H, transform: `translateX(-50%) scale(${scale})`, transformOrigin: '50% 0' }}
       >
         <Reveal at={0} kind="fade">
-          <Rot box={[21.13, 107, 341.747, 407.257]} w={319.416} h={389.147} deg={-3.37}>
+          <Rot box={[21.13, 107, 341.747, 407.257]} w={319.416} h={389.147} deg={-3.37} part="card">
             <img alt="" src={scallopFrame} className={fill} />
           </Rot>
         </Reveal>
 
+        {opening && (
+          <div data-cover="lift" className="absolute inset-0 opacity-0">
+            <Rot box={[60, 152.63, 264.852, 315.413]} w={243.238} h={298.053} deg={4.29}>
+              <div className="absolute inset-[6px] rounded-[10px] bg-[#3b2a22] blur-[10px]" />
+            </Rot>
+          </div>
+        )}
+
         {/* The polaroid, with its group drop shadow */}
-        <div className="absolute inset-0" style={{ filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.25))' }}>
+        <div data-cover="polaroid" className="absolute inset-0" style={{ filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.25))' }}>
           <Reveal at={0} kind="settle" origin={[192.4, 310.3]} delay={150}>
             <Rot box={[60, 152.63, 264.852, 315.413]} w={243.238} h={298.053} deg={4.29}>
               <img alt="" src={coverFrame} className={fill} />
@@ -129,34 +150,35 @@ function CrazyLoveCover({ invitation: inv, guest, onOpen }: { invitation: CrazyL
         </div>
 
         <Reveal at={0} kind="pop" origin={[0, 640]} delay={400}>
-          <Rot box={[-109, 341, 215.506, 275.268]} w={162.517} h={243.775} deg={13.66}>
+          <Rot box={[-109, 341, 215.506, 275.268]} w={162.517} h={243.775} deg={13.66} part="sticker" drift={[-22, 14]}>
             <img alt="" src={bouquet1} className={fill} />
           </Rot>
         </Reveal>
         <Reveal at={0} kind="pop" origin={[375, 0]} delay={480}>
-          <Rot box={[267, -69, 246.773, 220.301]} w={137.311} h={205.966} deg={-119.18}>
+          <Rot box={[267, -69, 246.773, 220.301]} w={137.311} h={205.966} deg={-119.18} part="sticker" drift={[18, -16]}>
             <img alt="" src={bouquet1} className={fill} />
           </Rot>
         </Reveal>
         <Reveal at={0} kind="pop" origin={[5, 107]} delay={560}>
-          <Rot box={[5, 107, 117.833, 141.64]} w={80.744} h={121.116} deg={-20.36}>
+          <Rot box={[5, 107, 117.833, 141.64]} w={80.744} h={121.116} deg={-20.36} part="sticker" drift={[-14, -8]}>
             <img alt="" src={bouquet2} className={fill} />
           </Rot>
         </Reveal>
 
         <Reveal at={0} kind="fadeUp" delay={650}>
-          <FitLine fit={LINE_FIT} className="-translate-x-1/2 absolute left-1/2 top-[519px] font-['Josefin_Slab'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
+          <FitLine part="text" fit={LINE_FIT} className="-translate-x-1/2 absolute left-1/2 top-[519px] font-['Josefin_Slab'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
             {inv.greeting}
           </FitLine>
         </Reveal>
         <Reveal at={0} kind="fadeUp" delay={730}>
-          <FitLine fit={LINE_FIT} className="-translate-x-1/2 absolute left-1/2 top-[549px] font-['Josefin_Sans'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
+          <FitLine part="text" fit={LINE_FIT} className="-translate-x-1/2 absolute left-1/2 top-[549px] font-['Josefin_Sans'] text-[22px] leading-[30px] whitespace-nowrap" style={{ color: BROWN }}>
             {guest}
           </FitLine>
         </Reveal>
         <Reveal at={0} kind="fadeUp" delay={800}>
           <button
             type="button"
+            data-cover="text"
             onClick={onOpen}
             className="absolute left-[98px] top-[584px] h-[32px] w-[179px] cursor-pointer rounded-[17px] bg-[#a9c6d8] transition-[filter] hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#519ac8]"
           >
@@ -167,7 +189,7 @@ function CrazyLoveCover({ invitation: inv, guest, onOpen }: { invitation: CrazyL
         </Reveal>
 
         <Reveal at={0} kind="pop" origin={[98.2, 76.7]} delay={600}>
-          <Rot box={[53, 35, 90.316, 83.394]} w={89.929} h={82.974} deg={-0.27}>
+          <Rot box={[53, 35, 90.316, 83.394]} w={89.929} h={82.974} deg={-0.27} part="sticker" drift={[-6, -14]}>
             <img alt="" src={kids} className={fill} />
           </Rot>
         </Reveal>
@@ -178,6 +200,26 @@ function CrazyLoveCover({ invitation: inv, guest, onOpen }: { invitation: CrazyL
 }
 
 type Phase = 'cover' | 'opening' | 'open';
+
+/** The parts of the cover in `column` the opening animates, found by their `data-cover` names. */
+function coverParts(column: HTMLElement): OpeningParts | null {
+  const all = (name: string) => [...column.querySelectorAll<HTMLElement>(`[data-cover="${name}"]`)];
+  const one = (name: string) => all(name)[0];
+  const parts = {
+    column,
+    backdrop: one('backdrop'),
+    card: one('card'),
+    polaroid: one('polaroid'),
+    lift: one('lift'),
+    stickers: all('sticker'),
+    text: all('text'),
+    back: one('back'),
+    shade: one('shade'),
+    cast: column.parentElement?.querySelector<HTMLElement>('[data-cover="cast"]') ?? undefined,
+  };
+  const needed = OPENING.turns ? [parts.back, parts.shade, parts.cast] : [parts.lift];
+  return [parts.backdrop, parts.card, parts.polaroid, ...needed].every(Boolean) ? (parts as OpeningParts) : null;
+}
 
 /** A couple's invitation, or (with no props, at /template/crazy-little-thing) the demo. */
 export default function CrazyLoveTemplate({ invitation = crazyLoveDemo, slug }: Partial<TemplateProps<CrazyLoveInvitation>>) {
@@ -205,11 +247,31 @@ export default function CrazyLoveTemplate({ invitation = crazyLoveDemo, slug }: 
     };
   }, [phase]);
 
+  // The cover opens with an opening (crazyloveOpening.ts); without animations, it simply fades.
+  const animated = ENABLE_ANIMATIONS && !reducedMotion;
   useEffect(() => {
     if (phase !== 'opening') return;
-    const t = setTimeout(() => setPhase('open'), reducedMotion ? INTRO.REDUCED_FADE_MS : INTRO.TOTAL_MS);
+    const t = setTimeout(() => setPhase('open'), animated ? OPENING.totalMs : INTRO.REDUCED_FADE_MS);
     return () => clearTimeout(t);
-  }, [phase, reducedMotion]);
+  }, [phase, animated]);
+
+  const columnRef = useRef<HTMLDivElement>(null);
+  // The opening starts once its own layers (the polaroid's shadow, or the page's back and
+  // shadows) are there.
+  useLayoutEffect(() => {
+    const parts = columnRef.current && coverParts(columnRef.current);
+    if (phase === 'opening' && animated && parts) OPENING.play(parts);
+  }, [phase, animated]);
+  // The layer that moves first and most goes on a layer of its own as soon as a finger (or mouse
+  // button) is down, a moment before the tap, so the opening doesn't start by making that layer
+  // and painting it (a noticeable hitch on slow phones). Not from the start: on a layer the
+  // cover's text would lose its sub-pixel smoothing.
+  const prepareOpening = () => {
+    const column = columnRef.current;
+    if (!ENABLE_ANIMATIONS || phase !== 'cover' || !column || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const el = OPENING.prepare === 'column' ? column : column.querySelector<HTMLElement>('[data-cover="polaroid"]');
+    if (el) el.style.willChange = 'transform';
+  };
 
   const open = () => {
     if (phase !== 'cover') return;
@@ -220,8 +282,9 @@ export default function CrazyLoveTemplate({ invitation = crazyLoveDemo, slug }: 
   };
 
   const leaving = phase !== 'cover';
-  const coverFadeMs = reducedMotion ? INTRO.REDUCED_FADE_MS : INTRO.COVER_FADE_MS;
-  const coverT = `${coverFadeMs}ms ${INTRO.EASE_OUT}`;
+  const opening = leaving && animated;
+  const turning = opening && OPENING.turns;
+  const coverT = `${INTRO.REDUCED_FADE_MS}ms ${INTRO.EASE_OUT}`;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: STAGE_BG }}>
@@ -239,23 +302,42 @@ export default function CrazyLoveTemplate({ invitation = crazyLoveDemo, slug }: 
       {phase !== 'open' && (
         <div
           className={`fixed inset-0 z-50 ${leaving ? 'pointer-events-none' : ''}`}
-          style={{
-            opacity: leaving ? 0 : 1,
-            transform: leaving && !reducedMotion ? `translateY(-${INTRO.COVER_RISE_PX}px)` : 'none',
-            transition: `opacity ${coverT}, transform ${coverT}`,
-          }}
+          style={opening ? undefined : { opacity: leaving ? 0 : 1, transform: 'none', transition: `opacity ${coverT}, transform ${coverT}` }}
         >
+          {/* The shadow the turning page casts on the collage beneath, deepest by its spine. */}
+          {turning && (
+            <div
+              data-cover="cast"
+              aria-hidden="true"
+              className="absolute inset-0 mx-auto max-w-[430px] opacity-0"
+              style={{ backgroundImage: 'linear-gradient(90deg, rgba(70,45,35,0.32), rgba(70,45,35,0.12) 55%, rgba(70,45,35,0))' }}
+            />
+          )}
           {/* The cover keeps to the invitation column; the stage shows around it on desktop.
-              The cover layer itself is transparent so the cream content shows through as it
-              dissolves, instead of flashing the dark stage. */}
-          <div className="absolute inset-0 mx-auto max-w-[430px]">
-            <CrazyLoveCover invitation={invitation} guest={guest} onOpen={open} />
+              The cover layer itself is transparent so the cream content shows through as the
+              cover goes, instead of flashing the dark stage. */}
+          <div
+            ref={columnRef}
+            className="absolute inset-0 mx-auto max-w-[430px]"
+            style={turning ? { transformOrigin: '0 50%', transformStyle: 'preserve-3d' } : undefined}
+            onPointerDown={prepareOpening}
+          >
+            <div className="absolute inset-0" style={turning ? { backfaceVisibility: 'hidden' } : undefined}>
+              <CrazyLoveCover invitation={invitation} guest={guest} opening={opening} onOpen={open} />
+              {turning && <div data-cover="shade" aria-hidden="true" className="absolute inset-0 bg-[#3b2a22] opacity-0" />}
+            </div>
+            {/* The page's back, lined paper too, turned to face away until the page turns over. */}
+            {turning && (
+              <div data-cover="back" aria-hidden="true" className="absolute inset-0" style={{ backgroundColor: CREAM, transform: 'rotateY(180deg)', backfaceVisibility: 'hidden' }}>
+                <img alt="" src={paper} className={`${fill} opacity-50 -scale-x-100`} />
+              </div>
+            )}
           </div>
         </div>
       )}
 
       <div className="relative max-w-[430px] mx-auto">
-        <CrazyLoveContent invitation={invitation} slug={slug} intro={{ revealed: phase !== 'cover', reducedMotion }} />
+        <CrazyLoveContent invitation={invitation} slug={slug} intro={{ revealed: phase !== 'cover', reducedMotion: !animated, done: phase === 'open' }} />
       </div>
 
       {invitation.music && phase !== 'cover' && (

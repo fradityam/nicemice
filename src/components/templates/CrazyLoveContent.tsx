@@ -5,6 +5,7 @@ import type { CrazyLoveInvitation, CrazyLoveVenue, GalleryPhoto, StoryMoment } f
 import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
+import { OPENING } from './crazyloveOpening';
 import { Float, Reveal, RevealOffset, RevealProvider, useScrollReveals } from './scrollReveal';
 
 // Every layer is placed at its position in the Figma "Content" frame (375 × 6051), in
@@ -69,26 +70,23 @@ const FIT = {
   signature: { w: 300 },
 } satisfies Record<string, FitBox>;
 
-/** Cover → content transition (shared with the template). */
+/** Cover → content transition without animations (shared with the template): the cover fades. */
 export const INTRO = {
   EASE_OUT: 'cubic-bezier(0.33, 1, 0.68, 1)',
-  COVER_FADE_MS: 1000,
-  COVER_RISE_PX: 16,
-  CONTENT_DELAY_MS: 150,
-  CONTENT_MS: 900,
-  CONTENT_RISE_PX: 24,
   REDUCED_FADE_MS: 300,
-  get TOTAL_MS() {
-    return Math.max(this.COVER_FADE_MS, this.CONTENT_DELAY_MS + this.CONTENT_MS);
-  },
 };
-export type IntroState = { revealed: boolean; reducedMotion: boolean };
+/**
+ * The cover → content transition, from the template: `revealed` once the guest has tapped the
+ * cover, `done` once the cover has gone.
+ */
+export type IntroState = { revealed: boolean; reducedMotion: boolean; done: boolean };
 
-function introStyle({ revealed, reducedMotion }: IntroState): CSSProperties {
-  if (reducedMotion) return {};
-  if (!revealed) return { opacity: 0, transform: `translateY(${INTRO.CONTENT_RISE_PX}px)` };
-  const t = `${INTRO.CONTENT_MS}ms ${INTRO.EASE_OUT} ${INTRO.CONTENT_DELAY_MS}ms`;
-  return { opacity: 1, transform: 'translateY(0)', transition: `opacity ${t}, transform ${t}` };
+/** The collage page waits under the cover a touch out of place, and settles as the cover goes (see crazyloveOpening.ts). */
+function introStyle({ revealed, reducedMotion, done }: IntroState): CSSProperties {
+  if (!ENABLE_ANIMATIONS || reducedMotion || done) return {};
+  const { from, origin, delayMs, ms, ease } = OPENING.page;
+  if (!revealed) return { transform: from, transformOrigin: origin };
+  return { transform: 'none', transformOrigin: origin, transition: `transform ${ms}ms ${ease} ${delayMs}ms` };
 }
 
 // ---------- Scroll reveals ----------
@@ -412,8 +410,10 @@ type OpenPhoto = (start: number) => { label: string; onOpen: () => void };
 /** A reveal's own duration, and its delay taken as it is rather than stretched by the shared pace. */
 type Timing = { ms: number; cue: true };
 // The collage right under the cover arrives quicker than the sections further down, all of it
-// within about 1.5s: the frames settle one after another, then the stickers pop on around them.
+// within about 1.5s of the cover clearing it (OPENING.collageDelayMs): the frames settle one
+// after another, then the stickers pop on around them.
 const COLLAGE_TIMING = { frame: { ms: 800, cue: true }, sticker: { ms: 500, cue: true } } satisfies Record<string, Timing>;
+const afterCover = (delay: number) => OPENING.collageDelayMs + delay;
 
 // The three collage polaroids, top to bottom, each with the stickers that sit on or by it.
 // With fewer photos the frames used (and their stickers) move together towards the middle of
@@ -427,7 +427,7 @@ const COLLAGE_MOVES: Record<number, [number, number][]> = {
 function CollageFrame({ index, photo, open }: { index: number; photo: GalleryPhoto; open: OpenPhoto }) {
   if (index === 0)
     return (
-      <Reveal at={0} kind="settle" origin={[162, 131.6]} delay={0} {...COLLAGE_TIMING.frame}>
+      <Reveal at={0} kind="settle" origin={[162, 131.6]} delay={afterCover(0)} {...COLLAGE_TIMING.frame}>
         <Photo {...open(0)}>
           <Rot box={[51.21, 44, 221.705, 175.277]} w={204.634} h={151.218} deg={-7.08}>
             <img alt="" src={A('top-frame.svg')} className={fill} />
@@ -440,7 +440,7 @@ function CollageFrame({ index, photo, open }: { index: number; photo: GalleryPho
     );
   if (index === 1)
     return (
-      <Reveal at={0} kind="settle" origin={[237.9, 262.2]} tilt={-3} delay={100} {...COLLAGE_TIMING.frame}>
+      <Reveal at={0} kind="settle" origin={[237.9, 262.2]} tilt={-3} delay={afterCover(100)} {...COLLAGE_TIMING.frame}>
         <Photo {...open(1)}>
           <Rot box={[128, 176, 219.751, 172.406]} w={204.634} h={151.218} deg={6.19}>
             <img alt="" src={A('top-frame.svg')} className={fill} />
@@ -452,7 +452,7 @@ function CollageFrame({ index, photo, open }: { index: number; photo: GalleryPho
       </Reveal>
     );
   return (
-    <Reveal at={0} kind="settle" origin={[127.8, 376.6]} delay={200} {...COLLAGE_TIMING.frame}>
+    <Reveal at={0} kind="settle" origin={[127.8, 376.6]} delay={afterCover(200)} {...COLLAGE_TIMING.frame}>
       <Photo {...open(2)}>
         <Rot box={[22.67, 297.11, 210.355, 159.055]} w={204.634} h={151.218} deg={-2.23}>
           <img alt="" src={A('top-frame.svg')} className={fill} />
@@ -468,26 +468,26 @@ function CollageFrame({ index, photo, open }: { index: number; photo: GalleryPho
 // Each frame's stickers, in Figma's layer order (they are drawn above all three frames).
 const COLLAGE_STICKERS: ReactNode[][] = [
   [
-    <PopImg key="4" file="sticker-4.webp" x={254} y={95} w={25} h={25} delay={560} timing={COLLAGE_TIMING.sticker} />,
-    <Reveal key="9" at={0} kind="pop" origin={[134.5, 52]} delay={500} {...COLLAGE_TIMING.sticker}>
+    <PopImg key="4" file="sticker-4.webp" x={254} y={95} w={25} h={25} delay={afterCover(560)} timing={COLLAGE_TIMING.sticker} />,
+    <Reveal key="9" at={0} kind="pop" origin={[134.5, 52]} delay={afterCover(500)} {...COLLAGE_TIMING.sticker}>
       <Float box={[118, 34, 33, 36]} delay={1400}>
         <Img file="sticker-9.webp" x={118} y={34} w={33} h={36} />
       </Float>
     </Reveal>,
-    <PopImg key="13" file="sticker-13.webp" x={39} y={120} w={38} h={35} delay={620} timing={COLLAGE_TIMING.sticker} />,
-    <PopImg key="14" file="sticker-14.webp" x={196} y={174} w={20} h={20} delay={690} timing={COLLAGE_TIMING.sticker} />,
-    <PopImg key="19" file="sticker-19.webp" x={116} y={235} w={35} h={32} delay={780} timing={COLLAGE_TIMING.sticker} />,
+    <PopImg key="13" file="sticker-13.webp" x={39} y={120} w={38} h={35} delay={afterCover(620)} timing={COLLAGE_TIMING.sticker} />,
+    <PopImg key="14" file="sticker-14.webp" x={196} y={174} w={20} h={20} delay={afterCover(690)} timing={COLLAGE_TIMING.sticker} />,
+    <PopImg key="19" file="sticker-19.webp" x={116} y={235} w={35} h={32} delay={afterCover(780)} timing={COLLAGE_TIMING.sticker} />,
   ],
   [
-    <PopRot key="heart" file="heart.webp" box={[248, 365, 31.455, 29.763]} w={25.575} h={22.923} deg={18.2} delay={880} timing={COLLAGE_TIMING.sticker} />,
-    <PopRot key="15" file="sticker-15.webp" box={[303, 184, 28.753, 28.052]} w={23.084} h={21.994} deg={18.01} delay={750} timing={COLLAGE_TIMING.sticker} />,
-    <PopRot key="37" file="sticker-37.webp" box={[300.74, 315.76, 49.516, 49.479]} w={29} h={41} deg={45.13} delay={840} timing={COLLAGE_TIMING.sticker} />,
+    <PopRot key="heart" file="heart.webp" box={[248, 365, 31.455, 29.763]} w={25.575} h={22.923} deg={18.2} delay={afterCover(880)} timing={COLLAGE_TIMING.sticker} />,
+    <PopRot key="15" file="sticker-15.webp" box={[303, 184, 28.753, 28.052]} w={23.084} h={21.994} deg={18.01} delay={afterCover(750)} timing={COLLAGE_TIMING.sticker} />,
+    <PopRot key="37" file="sticker-37.webp" box={[300.74, 315.76, 49.516, 49.479]} w={29} h={41} deg={45.13} delay={afterCover(840)} timing={COLLAGE_TIMING.sticker} />,
   ],
   [
-    <PopImg key="3" file="sticker-3.webp" x={45} y={418} w={26} h={29} delay={1000} timing={COLLAGE_TIMING.sticker} />,
-    <PopImg key="16" file="sticker-16.webp" x={17} y={285} w={36} h={41} delay={810} timing={COLLAGE_TIMING.sticker} />,
-    <PopImg key="43" file="sticker-43.webp" x={178} y={428} w={34} h={38} delay={970} timing={COLLAGE_TIMING.sticker} />,
-    <PopImg key="44" file="sticker-44.webp" x={218.1} y={399.5} w={21} h={24} delay={940} timing={COLLAGE_TIMING.sticker} />,
+    <PopImg key="3" file="sticker-3.webp" x={45} y={418} w={26} h={29} delay={afterCover(1000)} timing={COLLAGE_TIMING.sticker} />,
+    <PopImg key="16" file="sticker-16.webp" x={17} y={285} w={36} h={41} delay={afterCover(810)} timing={COLLAGE_TIMING.sticker} />,
+    <PopImg key="43" file="sticker-43.webp" x={178} y={428} w={34} h={38} delay={afterCover(970)} timing={COLLAGE_TIMING.sticker} />,
+    <PopImg key="44" file="sticker-44.webp" x={218.1} y={399.5} w={21} h={24} delay={afterCover(940)} timing={COLLAGE_TIMING.sticker} />,
   ],
 ];
 
