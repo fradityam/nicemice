@@ -3,8 +3,12 @@ import { formatIsoDate, parseIsoDate } from '../../invitations/dates';
 import { MAX_MESSAGE, MAX_NAME, timeAgo, useRsvpForm, useWishes, type Attendance, type SendError, type Wish, type WishesState } from '../../invitations/rsvp';
 import type { GalleryPhoto, LaLaLandInvitation, StoryMoment } from '../../invitations/types';
 import { useFit, type FitBox } from './fitText';
+import { Handwritten } from './handwriting';
+import { useLight } from './lalalandLights';
+import { OPENING } from './lalalandOpening';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { Float, Reveal, RevealOffset, RevealProvider, useReveal, useScrollReveals } from './scrollReveal';
+import './lalaland.css';
 
 // Every layer below is laid out in the Figma "Content" frame's own coordinate space. The
 // whole frame is then scaled uniformly to the column width, so the composition stays
@@ -40,26 +44,17 @@ const mask = (file: string, position: string, size: string): CSSProperties => {
   };
 };
 
-// Cover → content transition. The cover fades out over COVER_FADE_MS while the Quotes
-// card, starting QUOTES_DELAY_MS later, fades in and rises QUOTES_RISE_PX into place.
-export const INTRO = {
-  EASE_OUT: 'cubic-bezier(0.33, 1, 0.68, 1)',
-  COVER_FADE_MS: 1100,
-  QUOTES_DELAY_MS: 150,
-  QUOTES_MS: 1000,
-  QUOTES_RISE_PX: 32,
-  REDUCED_FADE_MS: 300,
-  get TOTAL_MS() {
-    return Math.max(this.COVER_FADE_MS, this.QUOTES_DELAY_MS + this.QUOTES_MS);
-  },
-};
+// Cover → content transition. As the cover goes (see lalalandOpening.ts), the Quotes card fades
+// in and rises QUOTES_RISE_PX into place, when the opening says.
+const QUOTES_RISE_PX = 32;
+const EASE_OUT = 'cubic-bezier(0.33, 1, 0.68, 1)';
 
 export type IntroState = { revealed: boolean; reducedMotion: boolean };
 
 function quotesIntroStyle({ revealed, reducedMotion }: IntroState): CSSProperties {
   if (reducedMotion) return {};
-  if (!revealed) return { opacity: 0, transform: `translateY(${INTRO.QUOTES_RISE_PX}px)` };
-  const t = `${INTRO.QUOTES_MS}ms ${INTRO.EASE_OUT} ${INTRO.QUOTES_DELAY_MS}ms`;
+  if (!revealed) return { opacity: 0, transform: `translateY(${QUOTES_RISE_PX}px)` };
+  const t = `${OPENING.quotes.ms}ms ${EASE_OUT} ${OPENING.quotes.delayMs}ms`;
   return { opacity: 1, transform: 'translateY(0)', transition: `opacity ${t}, transform ${t}` };
 }
 
@@ -124,6 +119,12 @@ export function FitSpan({ fit, children }: { fit: FitBox; children: ReactNode })
   );
 }
 
+// Handwritten headings start as soon as they are just on screen, before the reveals around them.
+// A name under a photo waits for the photo to start settling; the closing is signed once its
+// paper and words have faded in (they reveal at much the same moment, see the closing).
+const NAME_WRITE_DELAY_MS = 500;
+const SIGN_DELAY_MS = 1300;
+
 /** Lines of text with a <br /> between them. */
 const Lines = ({ lines }: { lines: readonly string[] }) => (
   <>
@@ -161,19 +162,133 @@ const FLARES = [
   { file: 'flare-3195.webp', top: 3224.03, w: 203.62, h: 580.9 },
 ];
 /**
- * One starfield's few bright stars, fading in as they scroll into view. The layer fades by
- * itself: a fading wrapper would cut its colour-dodge off from the sky it blends with.
+ * Whether the element is on screen (or nearly), for idle motion that only runs there; also
+ * toggles `data-live` on it, which starts a scene's depth (lalaland.css).
+ */
+function useLive<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        el.toggleAttribute('data-live', entry.isIntersecting);
+        setLive(entry.isIntersecting);
+      },
+      { rootMargin: '100px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return [ref, live] as const;
+}
+
+// The brightest stars that aren't hidden behind a photo or a card, each twinkling now and then:
+// its starfield's file, its centre and how far its rays reach (frame px), how often it flares up
+// and how far behind the page's clock.
+const TWINKLES: Record<string, { x: number; y: number; r: number; ms: number; delay: number }[]> = {
+  'flare-665.webp': [
+    { x: 316.7, y: 1091.5, r: 38, ms: 8600, delay: -2400 },
+    { x: 350.7, y: 995.7, r: 16, ms: 10400, delay: -7000 },
+  ],
+  'flare-1165.webp': [{ x: 334, y: 1591.5, r: 38, ms: 9400, delay: -5600 }],
+  'flare-2245.webp': [{ x: 316, y: 2293.3, r: 23, ms: 7900, delay: -1500 }],
+  'flare-3195.webp': [
+    { x: 14, y: 3259, r: 29, ms: 11200, delay: -8300 },
+    { x: 134.7, y: 3750.9, r: 49, ms: 8200, delay: -3900 },
+  ],
+};
+// A twinkling star's rays reach this much further at its brightest.
+const TWINKLE_REACH = 1.25;
+
+/**
+ * One star of a starfield flaring up now and then: the same star from the starfield's image, a
+ * touch larger, blended over it more brightly at times and not at all in between, so at rest the
+ * sky is exactly as painted. Just around the star, so only that small box repaints.
+ */
+function Twinkle({ file, top: fileTop, w, h, x, y, r, ms, delay }: { file: string; top: number; w: number; h: number; x: number; y: number; r: number; ms: number; delay: number }) {
+  const [ref, live] = useLive<HTMLDivElement>();
+  const star = useRef<HTMLImageElement>(null);
+  useLight(star, 'twinkle', { ms, delay, active: live });
+  const half = Math.ceil(r * TWINKLE_REACH) + 2;
+  const [left, top] = [x - half, y - half];
+  return (
+    <div ref={ref} className="pointer-events-none absolute overflow-hidden" style={{ left, top, width: 2 * half, height: 2 * half }}>
+      <img
+        ref={star}
+        alt=""
+        src={A(file)}
+        className="ll-twinkle absolute block max-w-none"
+        style={{
+          left: -left,
+          top: fileTop - top,
+          width: w,
+          height: h,
+          mixBlendMode: 'color-dodge',
+          transform: `scale(${TWINKLE_REACH})`,
+          transformOrigin: `${x}px ${y - fileTop}px`,
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * One starfield's few bright stars, fading in as they scroll into view, and then twinkling. The
+ * layer fades by itself: a fading wrapper would cut its colour-dodge off from the sky it blends
+ * with.
  */
 function Flare({ file, top, w, h }: { file: string; top: number; w: number; h: number }) {
   const reveal = useReveal(top + 120, 'fade', { delay: 200 });
   return (
-    <img
-      alt=""
-      src={A(file)}
-      className="absolute block max-w-none"
-      style={{ left: 0, top, width: w, height: h, mixBlendMode: 'color-dodge', ...reveal?.style }}
-      onTransitionEnd={reveal?.onTransitionEnd}
-    />
+    <>
+      <img
+        alt=""
+        src={A(file)}
+        className="absolute block max-w-none"
+        style={{ left: 0, top, width: w, height: h, mixBlendMode: 'color-dodge', ...reveal?.style }}
+        onTransitionEnd={reveal?.onTransitionEnd}
+      />
+      {reveal?.done && TWINKLES[file]?.map((t) => <Twinkle key={t.x} file={file} top={top} w={w} h={h} {...t} />)}
+    </>
+  );
+}
+
+/**
+ * Plain image layer at a Figma box which, inside a Scene, drifts at its own `depth` as it scrolls
+ * by (positive: further away, so slower than the page; negative: nearer).
+ */
+function DepthImg({ file, x, y, w, h, depth, alt = '' }: { file: string; x: number; y: number; w: number; h: number; depth: number; alt?: string }) {
+  return (
+    <div className="ll-depth absolute left-0 top-0" style={{ '--ll-depth': depth } as CSSProperties}>
+      <img alt={alt} src={A(file)} className="absolute block max-w-none" style={{ left: x, top: y, width: w, height: h }} />
+    </div>
+  );
+}
+
+// Room around a Scene's layers for them to move in.
+const SCENE_MARGIN = 14;
+
+/**
+ * Layers (DepthImg) that move as one scene, as in The Notebook: each is exactly at its Figma
+ * position whenever the scene's box is centred on screen, and they move only while the scene is on
+ * screen (or nearly). The box also clips them, just around themselves: Chrome assumes a running
+ * animation may overlap everything painted after it and would move that onto separate layers, so
+ * text painted later would lose its sub-pixel smoothing. Keep text drawn after a Scene out of its
+ * box. (Not for layers inside a Shift: its transform would move the scene from the scroll
+ * position the depth follows.)
+ */
+function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, number]; children: ReactNode }) {
+  const [ref] = useLive<HTMLDivElement>();
+  if (!ENABLE_ANIMATIONS) return <>{children}</>;
+  const m = SCENE_MARGIN;
+  return (
+    <div ref={ref} className="ll-scene pointer-events-none absolute overflow-clip" style={{ left: x - m, top: y - m, width: w + 2 * m, height: h + 2 * m }}>
+      <div className="absolute [&_img]:pointer-events-auto" style={{ left: m - x, top: m - y }}>
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -672,6 +787,7 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const wishes = useWishes(slug, inv.demo?.sampleWishes);
+  const [withLoveWritten, setWithLoveWritten] = useState(false);
 
   // The wishes band: the couple's guests' wishes, or a demo's samples. (Without either, e.g. a
   // page with neither a slug nor demo data, the frame is Figma's exactly.)
@@ -705,7 +821,9 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
 
   return (
     <RevealProvider value={reveals}>
-    <div ref={wrapRef} className="relative w-full overflow-hidden" style={{ aspectRatio: `${FRAME_W} / ${pageH}` }}>
+    {/* Clipped, not `overflow: hidden`: that would make it the scroll container the couple's scene
+        follows for its depth (see Scene), which never scrolls. */}
+    <div ref={wrapRef} className="relative w-full overflow-clip" style={{ aspectRatio: `${FRAME_W} / ${pageH}` }}>
       {/* Scaled with `zoom`, not `transform`: a transform would isolate this canvas, and the
           colour-dodge flares below must blend with the viewport-fixed gradient behind it. */}
       <div className="absolute left-0 top-0" style={{ width: FRAME_W, height: FRAME_H, zoom: scale }}>
@@ -865,11 +983,11 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
         <Reveal at={2830} kind="fade" delay={150}>
           <Timeline count={story.length} />
         </Reveal>
-        <Reveal at={2796} kind="fadeUp">
-          <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Fasthand'] justify-center leading-[0] left-[186.78px] text-[#fade20] text-[30px] text-center top-[2806px] tracking-[-0.51px] whitespace-nowrap">
-            <p className="leading-[20px]">Cerita Kami...</p>
-          </div>
-        </Reveal>
+        <div className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col font-['Fasthand'] justify-center leading-[0] left-[186.78px] text-[#fade20] text-[30px] text-center top-[2806px] tracking-[-0.51px] whitespace-nowrap">
+          <p className="leading-[20px]">
+            <Handwritten at={2796}>Cerita Kami...</Handwritten>
+          </p>
+        </div>
         {story.map((moment, i) => {
           const slot = STORY_SLOTS[i];
           return (
@@ -997,10 +1115,11 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
             </div>
           </div>
         </Reveal>
+        {/* Her name written by hand under her photo; her parents' line fades in. */}
+        <Fit fit={FIT.name} className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1594px] whitespace-nowrap">
+          <Handwritten at={1594} delay={NAME_WRITE_DELAY_MS}>{inv.bride.name}</Handwritten>
+        </Fit>
         <Reveal at={1594} kind="fadeUp" delay={150}>
-          <Fit fit={FIT.name} className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1594px] whitespace-nowrap">
-            {inv.bride.name}
-          </Fit>
           <Fit fit={FIT.parents} className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[13px] text-center text-white top-[1630px] whitespace-nowrap">
             {`${inv.bride.parentsLabel} ${inv.bride.parents}`}
           </Fit>
@@ -1021,10 +1140,10 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
             <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('ed8ee.svg')} />
           </div>
         </Reveal>
+        <Fit fit={FIT.name} className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1195px] whitespace-nowrap">
+          <Handwritten at={1195} delay={NAME_WRITE_DELAY_MS}>{inv.groom.name}</Handwritten>
+        </Fit>
         <Reveal at={1195} kind="fadeUp" delay={150}>
-          <Fit fit={FIT.name} className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1195px] whitespace-nowrap">
-            {inv.groom.name}
-          </Fit>
           <Fit fit={FIT.parents} className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[13px] text-center text-white top-[1231px] whitespace-nowrap">
             {`${inv.groom.parentsLabel} ${inv.groom.parents}`}
           </Fit>
@@ -1039,21 +1158,6 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
             <br />
             kami memasuki babak baru.
           </p>
-        </Reveal>
-
-        {/* ===== Couple and star ===== */}
-        <Reveal at={531} kind="pop" origin={[185.8, 660.3]} delay={600}>
-          <div className="absolute inset-[11.44%_13.48%_82.98%_12.55%]">
-            <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('c0e6c.svg')} />
-          </div>
-        </Reveal>
-        <Reveal at={531} kind="fadeUp" delay={750}>
-          <img
-            alt="Ilustrasi pasangan berdansa"
-            src={A('71976.webp')}
-            className="absolute max-w-none object-cover"
-            style={{ left: 15.19, top: 531, width: 327.896, height: 263 }}
-          />
         </Reveal>
 
         {/* ===== Quotes ===== */}
@@ -1091,6 +1195,24 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
           </p>
         </div>
 
+        {/* ===== Couple and star =====
+            Drawn after the Quotes card (which ends above them) so that nothing with text is drawn
+            after them in their scene's box: the intro text below is drawn before (see Scene).
+            Depth: the star sits further back than the dancing couple and drifts slower. */}
+        <Scene box={[15.19, 530.93, 327.9, 263.07]}>
+          <Reveal at={531} kind="pop" origin={[185.8, 660.3]} delay={600}>
+            <DepthImg file="c0e6c.svg" x={47.0625} y={530.9304} w={277.3875} h={258.9678} depth={12} />
+          </Reveal>
+          <Reveal at={531} kind="fadeUp" delay={750}>
+            <img
+              alt="Ilustrasi pasangan berdansa"
+              src={A('71976.webp')}
+              className="absolute max-w-none object-cover"
+              style={{ left: 15.19, top: 531, width: 327.896, height: 263 }}
+            />
+          </Reveal>
+        </Scene>
+
         {/* ===== Top-most layers ===== */}
         <Reveal at={2595} kind="fromLeft" delay={250}>
           <div className="absolute" style={{ left: -45, top: 2595, width: 132, height: 159 }}>
@@ -1120,14 +1242,18 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
               {inv.closing.text}
             </Fit>
           </Reveal>
-          <Reveal at={4656} kind="fadeUp" delay={250}>
-            <p className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[22px] left-[188px] text-[18px] text-black text-center top-[4667px] tracking-[-0.306px] whitespace-nowrap">
+          {/* Signed by hand: "with love," once the paper and the words above it are in, and then
+              the couple's names. */}
+          <p className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[22px] left-[188px] text-[18px] text-black text-center top-[4667px] tracking-[-0.306px] whitespace-nowrap">
+            <Handwritten at={4656} delay={SIGN_DELAY_MS} onWritten={() => setWithLoveWritten(true)}>
               with love,
-            </p>
-            <Fit fit={FIT.signature} className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[30px] left-[188.49px] text-[27px] text-[#081a51] text-center top-[4697.14px] tracking-[-0.459px] whitespace-nowrap">
+            </Handwritten>
+          </p>
+          <Fit fit={FIT.signature} className="-translate-x-1/2 -translate-y-1/2 absolute font-['Pompiere'] leading-[30px] left-[188.49px] text-[27px] text-[#081a51] text-center top-[4697.14px] tracking-[-0.459px] whitespace-nowrap">
+            <Handwritten at={4697} wait={!withLoveWritten} delay={150}>
               {inv.closing.signature}
-            </Fit>
-          </Reveal>
+            </Handwritten>
+          </Fit>
 
           {/* ===== Made with love by nicemice (on the painting's navy fade; no edge of its own) ===== */}
           <MadeWithLoveFooter y={4754} tone="light" />
