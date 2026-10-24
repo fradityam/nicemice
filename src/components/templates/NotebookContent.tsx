@@ -67,11 +67,11 @@ export const NOTEBOOK_FEEL: RevealFeel = {
  */
 const NOTEBOOK_SCROLL_FEEL: RevealFeel = {
   kinds: {
-    fade: { ms: 1400 },
-    fadeUp: { ms: 1400, from: () => 'translateY(20px)' },
-    fromLeft: { ms: 1400, from: () => 'translateX(-20px)' },
-    fromRight: { ms: 1400, from: () => 'translateX(20px)' },
-    settle: { ms: 1400, moveEase: 'cubic-bezier(0.34, 1.25, 0.64, 1)' },
+    fade: { ms: 2000 },
+    fadeUp: { ms: 2000, from: () => 'translateY(20px)' },
+    fromLeft: { ms: 2000, from: () => 'translateX(-20px)' },
+    fromRight: { ms: 2000, from: () => 'translateX(20px)' },
+    settle: { ms: 2000, moveEase: 'cubic-bezier(0.34, 1.25, 0.64, 1)' },
   },
 };
 
@@ -322,7 +322,9 @@ const STROKE_EASE = 'cubic-bezier(0.35, 0, 0.65, 1)';
  */
 function Handwritten({ at, delay = 0, children }: { at: number; delay?: number; children: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(at);
+  // Starts as soon as it is just inside the viewport (`early`), unlike the reveals, which wait
+  // until they are further up: the heading keeps its own timing.
+  const inView = useInView(at, true);
   const [written, setWritten] = useState(false);
   useEffect(() => {
     const el = ref.current;

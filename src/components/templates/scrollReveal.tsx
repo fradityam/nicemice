@@ -6,10 +6,10 @@ import { createContext, useContext, useEffect, useRef, useState, type CSSPropert
 // positions, origins and boxes are all in frame px.
 
 const EASE_OUT = 'cubic-bezier(0.33, 1, 0.68, 1)';
-// A gentler start and a long, soft landing.
-const EASE_SOFT = 'cubic-bezier(0.3, 0.6, 0.25, 1)';
+// A slow start and a long, soft landing.
+const EASE_SOFT = 'cubic-bezier(0.4, 0, 0.15, 1)';
 
-// How far (in frame px) an element must be inside the viewport before it reveals.
+// How far (in frame px) an element must be inside the viewport before it reveals, at least.
 const REVEAL_OFFSET = 40;
 
 export type RevealKind = 'fade' | 'fadeUp' | 'fadeDown' | 'rise' | 'pop' | 'grow' | 'settle' | 'fromLeft' | 'fromRight' | 'zoomOut';
@@ -32,13 +32,14 @@ const REVEAL: Record<RevealKind, { from: (tilt: number) => string; ms: number; f
 
 /**
  * How fast the reveals play. A cover settles in briskly as the page loads (the durations above);
- * sections scrolling into view arrive slower and softer, every reveal taking `ms` (or its kind's
- * own in `kinds`) with a gentler landing, and the parts of a section `stagger` times further apart
- * than their delays say.
+ * sections scrolling into view arrive slowly and softly, every reveal taking `ms` (or its kind's
+ * own in `kinds`) with a slow start and a long landing, and the parts of a section `stagger` times
+ * further apart than their delays say. They wait until they are `into` (a share of the viewport's
+ * height) up the screen, so the guest sees them arrive rather than only the end of it.
  */
-type Pace = { ms?: number; kinds?: Partial<Record<RevealKind, number>>; ease: string; stagger: number };
-const COVER_PACE: Pace = { ease: EASE_OUT, stagger: 1 };
-const SCROLL_PACE: Pace = { ms: 1250, kinds: { pop: 1050, settle: 1350, zoomOut: 1500 }, ease: EASE_SOFT, stagger: 1.5 };
+type Pace = { ms?: number; kinds?: Partial<Record<RevealKind, number>>; ease: string; stagger: number; into: number };
+const COVER_PACE: Pace = { ease: EASE_OUT, stagger: 1, into: 0 };
+const SCROLL_PACE: Pace = { ms: 1900, kinds: { pop: 1800, settle: 2000, zoomOut: 2000 }, ease: EASE_SOFT, stagger: 3, into: 0.22 };
 
 /**
  * A template's own take on the reveals: its easing and, per kind, a different duration,
@@ -52,31 +53,37 @@ export type RevealFeel = {
 
 /**
  * Tracks how far down the frame the viewport has reached (in frame px) and tells each
- * waiting element once it is in view. Inactive until the cover has opened.
+ * waiting element once it is `lead` frame px inside it (an `early` one, REVEAL_OFFSET).
+ * Inactive until the cover has opened.
  */
 class RevealStore {
   active = false;
   bottom = 0;
-  private waiting = new Map<() => void, number>();
+  lead = REVEAL_OFFSET;
+  private waiting = new Map<() => void, { at: number; early: boolean }>();
   constructor(
     readonly frameW: number,
     readonly frameH: number,
     readonly feel: RevealFeel = {},
     readonly pace: Pace = COVER_PACE,
   ) {}
-  watch(at: number, show: () => void) {
-    if (this.active && this.bottom >= at + REVEAL_OFFSET) {
+  private inView(at: number, early: boolean) {
+    return this.bottom >= at + Math.min(this.lead, early ? REVEAL_OFFSET : Infinity);
+  }
+  watch(at: number, show: () => void, early = false) {
+    if (this.active && this.inView(at, early)) {
       show();
       return undefined;
     }
-    this.waiting.set(show, at);
+    this.waiting.set(show, { at, early });
     return () => void this.waiting.delete(show);
   }
-  update(bottom: number) {
+  update(bottom: number, lead = this.lead) {
     this.bottom = bottom;
+    this.lead = lead;
     if (!this.active) return;
-    for (const [show, at] of this.waiting) {
-      if (bottom >= at + REVEAL_OFFSET) {
+    for (const [show, { at, early }] of this.waiting) {
+      if (this.inView(at, early)) {
         this.waiting.delete(show);
         show();
       }
@@ -106,14 +113,20 @@ export function useScrollReveals({ enabled, frameW, frameH, wrapRef, started, fe
   );
 
   // From then on the viewport's bottom edge (in frame px) is passed to the store on every
-  // scroll and resize, at most once per frame.
+  // scroll and resize, at most once per frame, with how far up the screen elements reveal. Once
+  // the page can't scroll any further that is anywhere on screen: elements at the very bottom
+  // never get far enough up, and must not stay hidden. (Those scrolled past fast are already
+  // above the line, and reveal as soon as the scrolling stops.)
   useEffect(() => {
     const el = wrapRef.current;
     if (!store || !el || !started) return;
     store.active = true;
     const measure = () => {
       const r = el.getBoundingClientRect();
-      store.update((window.innerHeight - r.top) / (r.width / store.frameW));
+      const scale = r.width / store.frameW;
+      const atEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+      const lead = atEnd ? 0 : Math.max(REVEAL_OFFSET, (window.innerHeight / scale) * store.pace.into);
+      store.update((window.innerHeight - r.top) / scale, lead);
     };
     let raf = 0;
     const onScroll = () => {
@@ -187,13 +200,14 @@ type RevealOptions = { origin?: [number, number]; delay?: number; tilt?: number;
 
 /**
  * Whether frame y `at` has come into view (it stays true from then on), for an element that
- * reveals in its own way; null when animations are off.
+ * reveals in its own way; `early`, as soon as it is just inside the viewport rather than as far
+ * up as the reveals wait for. Null when animations are off.
  */
-export function useInView(at: number) {
+export function useInView(at: number, early = false) {
   const store = useContext(RevealContext);
   const offset = useContext(RevealOffset);
   const [shown, setShown] = useState(false);
-  useEffect(() => store?.watch(at + offset, () => setShown(true)), [store, at, offset]);
+  useEffect(() => store?.watch(at + offset, () => setShown(true), early), [store, at, offset, early]);
   return store ? shown : null;
 }
 
