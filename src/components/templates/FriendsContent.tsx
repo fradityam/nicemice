@@ -6,7 +6,8 @@ import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
 import { OPENING } from './friendsOpening';
-import { Float, Reveal, RevealOffset, RevealProvider, useScrollReveals } from './scrollReveal';
+import { useLight } from './sceneLights';
+import { Float, Reveal, RevealOffset, RevealProvider, useInView, useScrollReveals } from './scrollReveal';
 
 // Every layer is placed at its position in the Figma "Content" frame (375 × 5768), in
 // Figma's layer order, and the whole frame is scaled to the column width.
@@ -512,6 +513,99 @@ function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, 
   );
 }
 
+// The Tiffany lamps' warm light (sceneLights.ts), a box this many frame px across over each
+// shade's centre: the two at the fountain, and Central Perk's. A halo around the shade, faint over
+// the glass itself so its colours aren't washed out.
+const GLOW_W = 150;
+const GLOW_H = 120;
+// Laid over the painting as it is, not blended with it: a blend mode would have the browser put
+// the whole page, text and all, on a layer of its own beside a moving scene.
+const GLOW = 'radial-gradient(closest-side, rgba(255,214,150,0.08) 0%, rgba(255,204,130,0.12) 45%, rgba(255,190,112,0.2) 62%, rgba(255,180,100,0.08) 82%, rgba(255,180,100,0) 100%)';
+const LAMP_GLOWS = {
+  fountainLeft: { x: 32, y: 425.7, ms: 6400, delay: 0 },
+  fountainRight: { x: 343, y: 425.7, ms: 7100, delay: -2600 },
+  perk: { x: 341, y: 2865, ms: 6800, delay: -1300 },
+};
+
+/**
+ * A lamp's light breathing (sceneLights.ts) while it is on screen, once `active`: it comes on
+ * softly. For guests who prefer reduced motion there is no element at all.
+ */
+function LampGlow({ x, y, ms, delay, active = true }: (typeof LAMP_GLOWS)[keyof typeof LAMP_GLOWS] & { active?: boolean }) {
+  const [ref, live] = useLive<HTMLDivElement>();
+  useLight(ref, 'glow', { ms, delay, active: active && live });
+  if (useStill()) return null;
+  return <div ref={ref} className="light-glow pointer-events-none absolute" style={{ left: x - GLOW_W / 2, top: y - GLOW_H / 2, width: GLOW_W, height: GLOW_H, backgroundImage: GLOW }} />;
+}
+
+// Bright spots on the fountain's jets that glint now and then (frame x, y; how often; how far
+// behind the page's clock), all well clear of the text.
+const FOUNTAIN_GLINTS = [
+  { x: 185, y: 352, ms: 5200, delay: -800 },
+  { x: 132, y: 388, ms: 6100, delay: -3400 },
+  { x: 232, y: 380, ms: 5700, delay: -2100 },
+  { x: 262, y: 452, ms: 6600, delay: -4700 },
+];
+// How far around each spot the glint reaches.
+const GLINT_R = 14;
+const GLINT_MASK: CSSProperties = {
+  maskImage: 'radial-gradient(circle closest-side, #000 35%, transparent)',
+  WebkitMaskImage: 'radial-gradient(circle closest-side, #000 35%, transparent)',
+};
+
+/**
+ * One spot of the fountain's water glinting now and then: the same part of the painting blended
+ * over it more brightly at times and not at all in between (as La La Land's stars twinkle), so at
+ * rest the water is exactly as painted. Just around the spot, so only that small box repaints.
+ */
+function FountainGlint({ x, y, ms, delay, active }: (typeof FOUNTAIN_GLINTS)[number] & { active: boolean }) {
+  const [ref, live] = useLive<HTMLDivElement>();
+  const water = useRef<HTMLImageElement>(null);
+  useLight(water, 'twinkle', { ms, delay, active: active && live });
+  if (useStill()) return null;
+  const [left, top] = [x - GLINT_R, y - GLINT_R];
+  return (
+    // Fading out towards its edge, so the box never shows on the lit water around it.
+    <div ref={ref} className="pointer-events-none absolute overflow-hidden" style={{ left, top, width: 2 * GLINT_R, height: 2 * GLINT_R, ...GLINT_MASK }}>
+      <img ref={water} alt="" src={A('fountain.webp')} className="light-twinkle absolute block max-w-none" style={{ left: 60 - left, top: 334 - top, width: 245, height: 261, mixBlendMode: 'screen' }} />
+    </div>
+  );
+}
+
+/**
+ * Chandler's emphasis: the word gives one small bounce, a moment after its line has come in at
+ * frame y `at`, and is plain text again once it has. Without the reveals it simply shows.
+ */
+function Emphasis({ at, className, children }: { at: number; className: string; children: ReactNode }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(at);
+  useEffect(() => {
+    const el = ref.current;
+    if (!inView || !el) return;
+    // A transform needs a box of its own: the word alone, so the line is laid out as before.
+    el.style.display = 'inline-block';
+    const anim = el.animate(
+      [
+        { transform: 'none' },
+        { transform: 'translateY(-3px) scale(1.16)', offset: 0.35 },
+        { transform: 'translateY(0.5px) scale(0.97)', offset: 0.7 },
+        { transform: 'none' },
+      ],
+      { duration: 650, delay: EMPHASIS_DELAY_MS, easing: 'cubic-bezier(0.37, 0, 0.63, 1)' },
+    );
+    const done = () => el.style.removeProperty('display');
+    anim.finished.then(done, done);
+    return () => anim.cancel();
+  }, [inView]);
+  return (
+    <span ref={ref} className={className} style={{ transformOrigin: '50% 80%' }}>
+      {children}
+    </span>
+  );
+}
+// Once the line has mostly faded in.
+const EMPHASIS_DELAY_MS = 1100;
+
 // Central Perk: the rug, lamp, couch and table come forward as one, nearer than the bar against
 // the wall (which stays with the page), so nothing slides on the rug and the stools peeking over
 // the couch shift behind it.
@@ -651,7 +745,7 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           <Centered cx={188} cy={2137} className={`${friendsTitle} text-[24px] leading-[30px] text-white`}>
             Could this wedding
             <br />
-            <span className="text-[33px]">be</span> any more special?
+            <Emphasis at={2110} className="text-[33px]">be</Emphasis> any more special?
           </Centered>
         </Reveal>
         <Reveal at={1330} kind="fade" delay={150}>
@@ -670,6 +764,9 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         {/* ===== Fountain scene (first section: the camera settles into it as the cover opens) ===== */}
         <div className="absolute left-0 top-0 h-[780px] w-[375px]" style={introStyle(intro, OPENING.scene.mid)}>
           <Img file="fountain.webp" x={60} y={334} w={245} h={261} />
+          {FOUNTAIN_GLINTS.map((g) => (
+            <FountainGlint key={g.x} {...g} active={intro.revealed} />
+          ))}
           {/* h2: the cover's title (FriendsTemplate.tsx) is the page's one h1. (Drawn before the
               lamps and couch, which it is well clear of, so they can settle as one plane.) */}
           <h2 ref={titleFit.ref} className={`-translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-[116.5px] text-center ${friendsTitle} leading-[35px] text-white`} style={titleFit.style}>
@@ -685,6 +782,9 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           <Near style={introStyle(intro, OPENING.scene.near / OPENING.scene.mid)}>
           <Img file="lamp.webp" x={264} y={389} w={157} h={236} />
           <Img file="lamp.webp" x={-47} y={389} w={157} h={236} />
+          {/* The lamps come on as the cover opens. */}
+          <LampGlow {...LAMP_GLOWS.fountainRight} active={intro.revealed} />
+          <LampGlow {...LAMP_GLOWS.fountainLeft} active={intro.revealed} />
           <Img file="orange-couch.webp" x={24} y={472} w={327} h={164} alt="The orange couch in front of the fountain" />
 
           {/* Magna Doodle */}
@@ -785,6 +885,7 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           <Depth depth={PERK_DEPTH}>
             <Img file="carpet.webp" x={-62} y={3039} w={498} h={163} />
             <Img file="lamp.webp" x={257} y={2826} w={167} h={251} />
+            <LampGlow {...LAMP_GLOWS.perk} />
             <Img file="perk-couch.webp" x={17} y={2925} w={340} h={191} alt="The Central Perk couch" />
             <Img file="perk-table.webp" x={71} y={3002} w={232} h={155} />
           </Depth>

@@ -22,11 +22,14 @@ type Kind = keyof typeof CURVES;
 const PROPS: Record<Kind, string> = { twinkle: '--light-twinkle', glow: '--light-glow' };
 
 const TICK_MS = 80;
-// The lamp comes on softly when it starts.
+// A lamp comes on softly the first time it starts.
 const FADE_IN_MS = 1200;
 
 type Light = { el: HTMLElement; kind: Kind; ms: number; delay: number; since: number; value?: number };
 const lights = new Set<Light>();
+// When each light first came on: one coming back on screen carries on where it is, rather than
+// coming on again.
+const firstOn = new WeakMap<HTMLElement, number>();
 let timer: ReturnType<typeof setInterval> | undefined;
 
 /** The curve at share `p` of its round, easing in and out between its points. */
@@ -61,7 +64,8 @@ export function useLight(ref: RefObject<HTMLElement | null>, kind: Kind, { ms, d
   useEffect(() => {
     const el = ref.current;
     if (!el || !active || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const light: Light = { el, kind, ms, delay, since: performance.now() };
+    if (!firstOn.has(el)) firstOn.set(el, performance.now());
+    const light: Light = { el, kind, ms, delay, since: firstOn.get(el)! };
     lights.add(light);
     timer ??= setInterval(tick, TICK_MS);
     return () => {
