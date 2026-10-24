@@ -153,13 +153,13 @@ const treeWind = (lead: boolean): Wind => ({
   origin: '50% 100%',
 });
 
-// The lilies in the same breeze as the trees, a little lighter, from where their stems leave the
-// frame. The right one, which the wind reaches 0.4s before the left, is cut off right at the
-// frame's edge, so it only nods (its top dips 1–3px); the left one leans its top 2–7px left, out
-// over its own edge.
+// The lilies in the same breeze as the trees, from where their stems leave the frame. The right
+// one, which the wind reaches 0.4s before the left, is cut off right at the frame's edge, so it
+// only nods (its top dips 1–3px) until it has an image reaching past that edge; the left one
+// leans its top 3–10px left, nearly as far as the left tree, out over its own edge.
 const LILY_WIND = {
   right: { keyframes: 'nb-breeze-nod', deg: 1.5, ms: WIND_STRENGTHS.breeze.ms, delay: 0, origin: '100% 81%' },
-  left: { keyframes: 'nb-breeze', deg: 1.66, ms: WIND_STRENGTHS.breeze.ms, delay: 400, origin: '0% 77%' },
+  left: { keyframes: 'nb-breeze', deg: 2.4, ms: WIND_STRENGTHS.breeze.ms, delay: 400, origin: '0% 77%' },
 } satisfies Record<string, Wind>;
 
 /**
