@@ -39,7 +39,7 @@ const REVEAL: Record<RevealKind, { from: (tilt: number) => string; ms: number; f
  */
 type Pace = { ms?: number; kinds?: Partial<Record<RevealKind, number>>; ease: string; stagger: number; into: number };
 const COVER_PACE: Pace = { ease: EASE_OUT, stagger: 1, into: 0 };
-const SCROLL_PACE: Pace = { ms: 1900, kinds: { pop: 1800, settle: 2000, zoomOut: 2000 }, ease: EASE_SOFT, stagger: 3, into: 0.22 };
+const SCROLL_PACE: Pace = { ms: 1450, kinds: { pop: 1400, settle: 1500, zoomOut: 1500 }, ease: EASE_SOFT, stagger: 2.5, into: 0.22 };
 
 /**
  * A template's own take on the reveals: its easing and, per kind, a different duration,
@@ -196,7 +196,8 @@ const frameLayer = (store: RevealStore): CSSProperties => ({ width: store.frameW
 const FRAME_LAYER = 'absolute left-0 top-0 *:pointer-events-auto';
 
 // `cue`: the delay is a set moment (e.g. in step with the cover opening), not a stagger to stretch.
-type RevealOptions = { origin?: [number, number]; delay?: number; tilt?: number; cue?: boolean };
+// `ms`: this element's own duration, for a sequence that has to be quicker than the pace.
+type RevealOptions = { origin?: [number, number]; delay?: number; tilt?: number; cue?: boolean; ms?: number };
 
 /**
  * Whether frame y `at` has come into view (it stays true from then on), for an element that
@@ -217,7 +218,7 @@ export function useInView(at: number, early = false) {
  * rotation a `settle` starts from. Use Reveal instead, unless the element has to animate by
  * itself (e.g. a blended layer, which a wrapper would isolate from what it blends with).
  */
-export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, tilt = 3, cue = false }: RevealOptions = {}) {
+export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, tilt = 3, cue = false, ms: ownMs }: RevealOptions = {}) {
   const store = useContext(RevealContext);
   const shown = useInView(at);
   const [done, setDone] = useState(false);
@@ -227,7 +228,7 @@ export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, til
   const own = store.feel.kinds?.[kind];
   const { fade = true } = REVEAL[kind];
   const from = own?.from ?? REVEAL[kind].from;
-  const ms = own?.ms ?? pace.kinds?.[kind] ?? pace.ms ?? REVEAL[kind].ms;
+  const ms = ownMs ?? own?.ms ?? pace.kinds?.[kind] ?? pace.ms ?? REVEAL[kind].ms;
   const ease = store.feel.ease ?? pace.ease;
   const wait = cue ? delay : delay * pace.stagger;
   const t = `${ms}ms ${ease} ${wait}ms`;

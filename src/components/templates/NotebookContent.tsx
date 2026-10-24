@@ -67,11 +67,11 @@ export const NOTEBOOK_FEEL: RevealFeel = {
  */
 const NOTEBOOK_SCROLL_FEEL: RevealFeel = {
   kinds: {
-    fade: { ms: 2000 },
-    fadeUp: { ms: 2000, from: () => 'translateY(20px)' },
-    fromLeft: { ms: 2000, from: () => 'translateX(-20px)' },
-    fromRight: { ms: 2000, from: () => 'translateX(20px)' },
-    settle: { ms: 2000, moveEase: 'cubic-bezier(0.34, 1.25, 0.64, 1)' },
+    fade: { ms: 1500 },
+    fadeUp: { ms: 1500, from: () => 'translateY(20px)' },
+    fromLeft: { ms: 1500, from: () => 'translateX(-20px)' },
+    fromRight: { ms: 1500, from: () => 'translateX(20px)' },
+    settle: { ms: 1500, moveEase: 'cubic-bezier(0.34, 1.25, 0.64, 1)' },
   },
 };
 
@@ -493,9 +493,10 @@ function SalinButton({ top, label, text }: { top: number; label: string; text: s
 // ---------- The lake scene ----------
 
 // When the lake scene starts to appear: as the house comes into view. Then each layer, from the
-// back, this many ms (before the shared stretch) after the first.
+// back, this many ms (before the shared stretch) after the first: the last duck has landed about
+// 3s after the forest started.
 const LAKE_AT = 1349;
-const LAKE_DELAYS = { forest: 0, house: 180, trees: 360, boat: 560, ducks: 760 };
+const LAKE_DELAYS = { forest: 0, house: 120, trees: 240, boat: 380, ducks: 480 };
 
 // The boat and the ducks afloat: a few px of rise and about a degree of roll at most, each on its
 // own swell so they never move together.
@@ -1049,7 +1050,7 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
             <Img file="house.webp" x={94} y={1349} w={207} h={132} depth={6} />
           </Reveal>
           {/* The right tree first, which the wind reaches first too. */}
-          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.trees + 60}>
+          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.trees + 40}>
             <Img file="tree.webp" x={-12} y={1256} w={150} h={225} depth={4} wind={treeWind(true)} />
           </Reveal>
           <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.trees}>
@@ -1067,13 +1068,13 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
           <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.ducks}>
             <Img file="duck.webp" x={42} y={1506} w={49} h={33} bob={BOBS.duckBack} />
           </Reveal>
-          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.ducks + 80}>
+          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.ducks + 50}>
             <Img file="duck.webp" x={8} y={1555} w={68} h={45} bob={BOBS.duckLeft} />
           </Reveal>
           <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.boat}>
             <Img file="couple-boat.webp" x={42} y={1436} w={274} h={205} alt="Ilustrasi pasangan di perahu" bob={BOBS.boat} />
           </Reveal>
-          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.ducks + 160}>
+          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.ducks + 100}>
             <Img file="duck.webp" x={290} y={1573} w={119} h={80} flip bob={BOBS.duckFront} />
           </Reveal>
         </Scene>
