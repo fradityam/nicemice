@@ -6,16 +6,20 @@ import { createContext, useContext, useEffect, useRef, useState, type CSSPropert
 // positions, origins and boxes are all in frame px.
 
 const EASE_OUT = 'cubic-bezier(0.33, 1, 0.68, 1)';
+// A gentler start and a long, soft landing.
+const EASE_SOFT = 'cubic-bezier(0.3, 0.6, 0.25, 1)';
 
 // How far (in frame px) an element must be inside the viewport before it reveals.
 const REVEAL_OFFSET = 40;
 
-export type RevealKind = 'fade' | 'fadeUp' | 'fadeDown' | 'pop' | 'grow' | 'settle' | 'fromLeft' | 'fromRight' | 'zoomOut';
+export type RevealKind = 'fade' | 'fadeUp' | 'fadeDown' | 'rise' | 'pop' | 'grow' | 'settle' | 'fromLeft' | 'fromRight' | 'zoomOut';
 // `fade: false`: the element stays fully visible and only moves.
 const REVEAL: Record<RevealKind, { from: (tilt: number) => string; ms: number; fade?: false }> = {
   fade: { from: () => 'none', ms: 700 },
   fadeUp: { from: () => 'translateY(12px)', ms: 700 },
   fadeDown: { from: () => 'translateY(-12px)', ms: 700 },
+  // A layer of a scene surfacing: a soft fade and only a slight rise.
+  rise: { from: () => 'translateY(8px)', ms: 700 },
   pop: { from: () => 'scale(0.9)', ms: 500 },
   grow: { from: () => 'scale(0.96)', ms: 700 },
   // A photo being placed on the page: a touch higher, bigger and more tilted, then it settles.
@@ -25,6 +29,16 @@ const REVEAL: Record<RevealKind, { from: (tilt: number) => string; ms: number; f
   // A cover painting settling: a very slow, tiny zoom out.
   zoomOut: { from: () => 'scale(1.03)', ms: 1500, fade: false },
 };
+
+/**
+ * How fast the reveals play. A cover settles in briskly as the page loads (the durations above);
+ * sections scrolling into view arrive slower and softer, every reveal taking `ms` (or its kind's
+ * own in `kinds`) with a gentler landing, and the parts of a section `stagger` times further apart
+ * than their delays say.
+ */
+type Pace = { ms?: number; kinds?: Partial<Record<RevealKind, number>>; ease: string; stagger: number };
+const COVER_PACE: Pace = { ease: EASE_OUT, stagger: 1 };
+const SCROLL_PACE: Pace = { ms: 1250, kinds: { pop: 1050, settle: 1350, zoomOut: 1500 }, ease: EASE_SOFT, stagger: 1.5 };
 
 /**
  * A template's own take on the reveals: its easing and, per kind, a different duration,
@@ -48,6 +62,7 @@ class RevealStore {
     readonly frameW: number,
     readonly frameH: number,
     readonly feel: RevealFeel = {},
+    readonly pace: Pace = COVER_PACE,
   ) {}
   watch(at: number, show: () => void) {
     if (this.active && this.bottom >= at + REVEAL_OFFSET) {
@@ -87,7 +102,7 @@ export const RevealOffset = createContext(0);
 export function useScrollReveals({ enabled, frameW, frameH, wrapRef, started, feel }: { enabled: boolean; frameW: number; frameH: number; wrapRef: RefObject<HTMLElement | null>; started: boolean; feel?: RevealFeel }) {
   // Decided once, before the first paint, so animated elements start hidden rather than flash.
   const [store] = useState(() =>
-    enabled && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? new RevealStore(frameW, frameH, feel) : null,
+    enabled && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? new RevealStore(frameW, frameH, feel, SCROLL_PACE) : null,
   );
 
   // From then on the viewport's bottom edge (in frame px) is passed to the store on every
@@ -167,7 +182,20 @@ export function useCoverReveals({ enabled, frameW, frameH, rootRef, settleMs, fe
 const frameLayer = (store: RevealStore): CSSProperties => ({ width: store.frameW, height: store.frameH, pointerEvents: 'none' });
 const FRAME_LAYER = 'absolute left-0 top-0 *:pointer-events-auto';
 
-type RevealOptions = { origin?: [number, number]; delay?: number; tilt?: number };
+// `cue`: the delay is a set moment (e.g. in step with the cover opening), not a stagger to stretch.
+type RevealOptions = { origin?: [number, number]; delay?: number; tilt?: number; cue?: boolean };
+
+/**
+ * Whether frame y `at` has come into view (it stays true from then on), for an element that
+ * reveals in its own way; null when animations are off.
+ */
+export function useInView(at: number) {
+  const store = useContext(RevealContext);
+  const offset = useContext(RevealOffset);
+  const [shown, setShown] = useState(false);
+  useEffect(() => store?.watch(at + offset, () => setShown(true)), [store, at, offset]);
+  return store ? shown : null;
+}
 
 /**
  * The reveal itself, for an element to apply to its own style: null when animations are off.
@@ -175,19 +203,21 @@ type RevealOptions = { origin?: [number, number]; delay?: number; tilt?: number 
  * rotation a `settle` starts from. Use Reveal instead, unless the element has to animate by
  * itself (e.g. a blended layer, which a wrapper would isolate from what it blends with).
  */
-export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, tilt = 3 }: RevealOptions = {}) {
+export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, tilt = 3, cue = false }: RevealOptions = {}) {
   const store = useContext(RevealContext);
-  const offset = useContext(RevealOffset);
-  const [state, setState] = useState<'waiting' | 'showing' | 'done'>('waiting');
-  useEffect(() => store?.watch(at + offset, () => setState('showing')), [store, at, offset]);
+  const shown = useInView(at);
+  const [done, setDone] = useState(false);
   if (!store) return null;
+  const state = done ? 'done' : shown ? 'showing' : 'waiting';
+  const { pace } = store;
   const own = store.feel.kinds?.[kind];
   const { fade = true } = REVEAL[kind];
   const from = own?.from ?? REVEAL[kind].from;
-  const ms = own?.ms ?? REVEAL[kind].ms;
-  const ease = store.feel.ease ?? EASE_OUT;
-  const t = `${ms}ms ${ease} ${delay}ms`;
-  const moveT = `${ms}ms ${own?.moveEase ?? ease} ${delay}ms`;
+  const ms = own?.ms ?? pace.kinds?.[kind] ?? pace.ms ?? REVEAL[kind].ms;
+  const ease = store.feel.ease ?? pace.ease;
+  const wait = cue ? delay : delay * pace.stagger;
+  const t = `${ms}ms ${ease} ${wait}ms`;
+  const moveT = `${ms}ms ${own?.moveEase ?? ease} ${wait}ms`;
   // Once revealed the element drops its animation styles, so nothing stays on its own
   // compositing layer and the page renders exactly as it does without animations (text keeps
   // its sub-pixel smoothing).
@@ -201,7 +231,7 @@ export function useReveal(at: number, kind: RevealKind, { origin, delay = 0, til
           transition: state === 'showing' ? `opacity ${t}, transform ${moveT}` : 'none',
         };
   const onTransitionEnd = (e: TransitionEvent<HTMLElement>) => {
-    if (e.target === e.currentTarget && e.propertyName === (fade ? 'opacity' : 'transform')) setState('done');
+    if (e.target === e.currentTarget && e.propertyName === (fade ? 'opacity' : 'transform')) setDone(true);
   };
   return { store, done: state === 'done', style, onTransitionEnd };
 }

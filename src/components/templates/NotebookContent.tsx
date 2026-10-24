@@ -6,7 +6,7 @@ import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { OPENING } from './notebookOpening';
 import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
-import { Float, Reveal, RevealOffset, RevealProvider, useScrollReveals, type RevealFeel, type RevealKind } from './scrollReveal';
+import { Float, Reveal, RevealOffset, RevealProvider, useInView, useScrollReveals, type RevealFeel, type RevealKind } from './scrollReveal';
 import './notebook.css';
 
 // Every layer is placed at its position in the Figma "Content" frame, in Figma's layer order,
@@ -45,9 +45,8 @@ const mask = (file: string, position: string, size: string): CSSProperties => {
 export const ENABLE_ANIMATIONS = true;
 
 /**
- * How The Notebook's reveals move: arrivals with some weight, a fast start and a long gentle
- * landing, a little further and slower than the other templates'; photos land with the
- * faintest overshoot, as if placed on a table.
+ * How The Notebook's cover settles in: arrivals with some weight, a fast start and a long gentle
+ * landing, a little further and slower than the other templates'.
  */
 export const NOTEBOOK_FEEL: RevealFeel = {
   ease: 'cubic-bezier(0.22, 1, 0.36, 1)',
@@ -61,7 +60,25 @@ export const NOTEBOOK_FEEL: RevealFeel = {
   },
 };
 
-/** The parts of a section arriving one after another: each this many ms after the previous one. */
+/**
+ * How its sections arrive as they scroll into view: at the shared slow, soft pace, a little
+ * further and longer than the other templates'; photos land with the faintest overshoot, as if
+ * placed on a table.
+ */
+const NOTEBOOK_SCROLL_FEEL: RevealFeel = {
+  kinds: {
+    fade: { ms: 1400 },
+    fadeUp: { ms: 1400, from: () => 'translateY(20px)' },
+    fromLeft: { ms: 1400, from: () => 'translateX(-20px)' },
+    fromRight: { ms: 1400, from: () => 'translateX(20px)' },
+    settle: { ms: 1400, moveEase: 'cubic-bezier(0.34, 1.25, 0.64, 1)' },
+  },
+};
+
+/**
+ * The parts of a section arriving one after another: each this many ms after the previous one
+ * (stretched, like every delay as a section scrolls in, by the shared pace).
+ */
 const STAGGER_MS = 80;
 
 /** Reveals each child in turn, STAGGER_MS apart, from `delay` ms after frame y `at` comes into view. */
@@ -155,19 +172,26 @@ const treeWind = (lead: boolean): Wind => ({
 
 // The lilies in the same breeze as the trees, from where their stems leave the frame. The right
 // one, which the wind reaches 0.4s before the left, is cut off right at the frame's edge, so it
-// only nods (its top dips 1–3px) until it has an image reaching past that edge; the left one
-// leans its top 3–10px left, nearly as far as the left tree, out over its own edge.
+// only nods (its top dips 1–3px) until it has an image reaching past that edge; the left one,
+// lighter, leans its top 4–13px left, out over its own edge, and sways a little quicker.
 const LILY_WIND = {
   right: { keyframes: 'nb-breeze-nod', deg: 1.5, ms: WIND_STRENGTHS.breeze.ms, delay: 0, origin: '100% 81%' },
-  left: { keyframes: 'nb-breeze', deg: 2.4, ms: WIND_STRENGTHS.breeze.ms, delay: 400, origin: '0% 77%' },
+  left: { keyframes: 'nb-breeze', deg: 3.2, ms: 7800, delay: 400, origin: '0% 77%' },
 } satisfies Record<string, Wind>;
+
+/**
+ * Something afloat (notebook.css): it rises `px` and sinks back every `ms`, and rocks `roll`
+ * degrees either way about `origin` on a slower swell; `delay` (negative: already under way)
+ * keeps things on the same water out of step.
+ */
+type Bob = { px: number; roll: number; ms: number; delay: number; origin: string };
 
 /**
  * Plain image layer at a Figma box, object-cover like the Figma fill. Inside a Scene it can drift
  * at its own `depth` as it scrolls by (positive: further away, so slower than the page; negative:
- * nearer), and move in the `wind`.
+ * nearer), move in the `wind`, or `bob` on the water.
  */
-function Img({ file, x, y, w, h, flip, alt = '', depth, wind }: { file: string; x: number; y: number; w: number; h: number; flip?: boolean; alt?: string; depth?: number; wind?: Wind }) {
+function Img({ file, x, y, w, h, flip, alt = '', depth, wind, bob }: { file: string; x: number; y: number; w: number; h: number; flip?: boolean; alt?: string; depth?: number; wind?: Wind; bob?: Bob }) {
   const windStyle = wind && ({
     '--nb-wind': wind.deg,
     '--nb-wind-ms': `${wind.ms}ms`,
@@ -175,12 +199,19 @@ function Img({ file, x, y, w, h, flip, alt = '', depth, wind }: { file: string; 
     '--nb-wind-name': wind.keyframes,
     transformOrigin: wind.origin,
   } as CSSProperties);
+  const bobStyle = bob && ({
+    '--nb-bob': bob.px,
+    '--nb-roll': bob.roll,
+    '--nb-bob-ms': `${bob.ms}ms`,
+    '--nb-bob-delay': `${bob.delay}ms`,
+    transformOrigin: bob.origin,
+  } as CSSProperties);
   const img = (
     <img
       alt={alt}
       src={A(file)}
-      className={`absolute max-w-none object-cover ${flip ? '-scale-x-100' : ''} ${wind ? 'nb-wind' : ''}`}
-      style={{ left: x, top: y, width: w, height: h, ...windStyle }}
+      className={`absolute max-w-none object-cover ${flip ? '-scale-x-100' : ''} ${wind ? 'nb-wind' : ''} ${bob ? 'nb-bob' : ''}`}
+      style={{ left: x, top: y, width: w, height: h, ...windStyle, ...bobStyle }}
     />
   );
   if (!depth) return img;
@@ -195,7 +226,7 @@ function Img({ file, x, y, w, h, flip, alt = '', depth, wind }: { file: string; 
 const SCENE_MARGIN = 14;
 
 /**
- * Layers (Img with depth or wind) that move as one scene: each is exactly at its Figma position
+ * Layers (Img with depth, wind or bob) that move as one scene: each is exactly at its Figma position
  * whenever the scene's box is centred on screen, and the wind moves them only while it is on
  * screen. The box also clips them, just around themselves: Chrome assumes a running animation may
  * overlap everything painted after it and would move that onto separate layers, so text painted
@@ -211,11 +242,12 @@ function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, 
     const el = ref.current;
     const clip = el?.firstElementChild;
     if (!el || !clip) return;
-    // The wind runs on one clock for the whole page: whenever a scene comes on screen its plants
-    // carry on as if they had never stopped, so plants in different scenes keep their offsets.
+    // The wind and the water run on one clock for the whole page: whenever a scene comes on
+    // screen its plants and boats carry on as if they had never stopped, so those in different
+    // scenes keep their offsets.
     const io = new IntersectionObserver(
       ([entry]) => {
-        const winds = el.getAnimations({ subtree: true }).filter((a) => a instanceof CSSAnimation && /^nb-(gust|breeze)/.test(a.animationName));
+        const winds = el.getAnimations({ subtree: true }).filter((a) => a instanceof CSSAnimation && /^nb-(gust|breeze|bob)/.test(a.animationName));
         for (const a of winds) {
           if (entry.isIntersecting) a.startTime = 0;
           else a.pause();
@@ -273,6 +305,69 @@ export function FitSpan({ fit, children }: { fit: FitBox; children: ReactNode })
     <span ref={f.ref} className="relative inline-block whitespace-nowrap" style={f.style}>
       {children}
       {f.probe}
+    </span>
+  );
+}
+
+// How long the pen takes over a whole heading, and how long it lifts between two words.
+const WRITE_MS = 1800;
+const PEN_LIFT_MS = 180;
+// A word's strokes start slowly, speed up and slow down to its end.
+const STROKE_EASE = 'cubic-bezier(0.35, 0, 0.65, 1)';
+
+/**
+ * One line of a heading written by hand from left to right as frame y `at` scrolls into view
+ * (notebook.css): uncovered word by word at a pen's pace, the pen lifting for a moment between
+ * words. Kept as text throughout, so it stays sharp; once written it is plain text again.
+ */
+function Handwritten({ at, delay = 0, children }: { at: number; delay?: number; children: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(at);
+  const [written, setWritten] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!inView || !el) return;
+    let anim: Animation | undefined;
+    let cancelled = false;
+    document.fonts.ready.then(() => {
+      const text = el.firstChild;
+      if (cancelled || !text) return;
+      // Where each word starts and ends, as shares of the box the mask covers.
+      const box = el.getBoundingClientRect();
+      const words = [...children.matchAll(/\S+/g)].map((m) => {
+        const range = document.createRange();
+        range.setStart(text, m.index);
+        range.setEnd(text, m.index + m[0].length);
+        const r = range.getBoundingClientRect();
+        return [(r.left - box.left) / box.width, (r.right - box.left) / box.width];
+      });
+      const edge = (share: number) => `${share * 100}%`;
+      const strokesMs = WRITE_MS / words.reduce((sum, [start, end]) => sum + end - start, 0);
+      const totalMs = WRITE_MS + PEN_LIFT_MS * (words.length - 1);
+      // From the first letter's left edge (the soft edge of the ink still just short of it).
+      const keyframes: Keyframe[] = [{ '--nb-write': edge(words[0][0]), easing: STROKE_EASE, offset: 0 }];
+      let t = 0;
+      words.forEach(([start, end], i) => {
+        // Each word written up to where the next one starts, so the pen lifts with it all inked.
+        t += (end - start) * strokesMs;
+        const last = i === words.length - 1;
+        // (The last exactly at 1: a hair short and the animation would end on the unwritten line.)
+        keyframes.push({ '--nb-write': last ? 'calc(100% + 0.35em)' : edge(words[i + 1][0]), easing: 'linear', offset: last ? 1 : t / totalMs });
+        if (last) return;
+        t += PEN_LIFT_MS;
+        keyframes.push({ '--nb-write': edge(words[i + 1][0]), easing: STROKE_EASE, offset: t / totalMs });
+      });
+      anim = el.animate(keyframes, { duration: totalMs, delay, fill: 'both' });
+      anim.finished.then(() => setWritten(true), () => {});
+    });
+    return () => {
+      cancelled = true;
+      anim?.cancel();
+    };
+  }, [inView, children, delay]);
+  return (
+    <span ref={ref} className={inView === null || written ? undefined : 'nb-write'}>
+      {children}
     </span>
   );
 }
@@ -392,6 +487,22 @@ function SalinButton({ top, label, text }: { top: number; label: string; text: s
     </button>
   );
 }
+
+// ---------- The lake scene ----------
+
+// When the lake scene starts to appear: as the house comes into view. Then each layer, from the
+// back, this many ms (before the shared stretch) after the first.
+const LAKE_AT = 1349;
+const LAKE_DELAYS = { forest: 0, house: 180, trees: 360, boat: 560, ducks: 760 };
+
+// The boat and the ducks afloat: a few px of rise and about a degree of roll at most, each on its
+// own swell so they never move together.
+const BOBS = {
+  boat: { px: 2.5, roll: 0.5, ms: 5200, delay: 0, origin: '50% 80%' },
+  duckBack: { px: 1.5, roll: 1.2, ms: 4300, delay: -1700, origin: '50% 90%' },
+  duckLeft: { px: 2, roll: 1, ms: 4700, delay: -3100, origin: '50% 90%' },
+  duckFront: { px: 2.5, roll: 0.8, ms: 5700, delay: -900, origin: '50% 90%' },
+} satisfies Record<string, Bob>;
 
 // ---------- Masked photos (portraits and collage) ----------
 
@@ -779,7 +890,7 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
     return () => ro.disconnect();
   }, []);
 
-  const reveals = useScrollReveals({ enabled: ENABLE_ANIMATIONS, frameW: FRAME_W, frameH: FRAME_H, wrapRef, started: intro.revealed, feel: NOTEBOOK_FEEL });
+  const reveals = useScrollReveals({ enabled: ENABLE_ANIMATIONS, frameW: FRAME_W, frameH: FRAME_H, wrapRef, started: intro.revealed, feel: NOTEBOOK_SCROLL_FEEL });
 
   const eventLine = "font-['Raleway'] text-[15px] leading-[20px] tracking-[-0.255px] text-black";
   const eventLabel = "font-['La_Belle_Aurore'] text-[20px] leading-[20px] tracking-[-0.34px] text-[#324532]";
@@ -802,17 +913,21 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
           <div className="absolute inset-[73%_0_22.96%_0]"><img alt="" src={A('drip-2.svg')} className="absolute block inset-0 max-w-none size-full" /></div>
         </Shift>
 
-        {/* ===== Forests behind the house ===== */}
-        <Img file="forest.webp" x={-106} y={1270} w={525} h={249} />
-        <Img file="forest.webp" x={-106} y={1270} w={525} h={249} />
-        <Img file="forest.webp" x={-45} y={1183} w={423} h={201} />
-        <Img file="forest.webp" x={-45} y={1183} w={423} h={201} />
+        {/* ===== Forests behind the house: the first layer of the lake scene to appear (see
+            LAKE_AT). Only while they rise is the Resepsi card's text, drawn over them, on a
+            layer of its own; it is arriving itself then. ===== */}
+        <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.forest}>
+          <Img file="forest.webp" x={-106} y={1270} w={525} h={249} />
+          <Img file="forest.webp" x={-106} y={1270} w={525} h={249} />
+          <Img file="forest.webp" x={-45} y={1183} w={423} h={201} />
+          <Img file="forest.webp" x={-45} y={1183} w={423} h={201} />
+        </Reveal>
 
         {/* ===== Envelope letter (first section, settles in as the cover lifts off it; then the
             quote and the doodle appear on it) ===== */}
         <div className="absolute left-0 top-0 h-[480px] w-[375px]" style={introStyle(intro)}>
           <Img file="letter.webp" x={30.33} y={92} w={313.211} h={376} />
-          <Reveal at={0} kind="fade" delay={OPENING.letterContentDelayMs[0]}>
+          <Reveal at={0} kind="fade" delay={OPENING.letterContentDelayMs[0]} cue>
             <div className="-translate-y-1/2 absolute font-['La_Belle_Aurore'] text-[13px] leading-[20px] tracking-[-0.221px] text-black whitespace-nowrap" style={{ left: 177, top: 240 }}>
               “I want all of you,
               <br />
@@ -826,7 +941,7 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
               -The Notebook
             </Centered>
           </Reveal>
-          <Reveal at={0} kind="fade" delay={OPENING.letterContentDelayMs[1]}>
+          <Reveal at={0} kind="fade" delay={OPENING.letterContentDelayMs[1]} cue>
             <Img file="doodle-couple.webp" x={90} y={173} w={83} h={123} alt="Ilustrasi pasangan dari film The Notebook" />
           </Reveal>
         </div>
@@ -919,26 +1034,47 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
         </Staggered>
 
         {/* ===== House & boat =====
-            Depth: the house sits furthest back and the trees a little nearer, both drifting
+            As it scrolls into view the scene paints itself in layer by layer (LAKE_DELAYS): the
+            lake is there already, then come the forests, the house, the trees, the boat and the
+            ducks. Depth: the house sits furthest back and the trees a little nearer, both drifting
             slower than the page; the lake, boat and ducks are the ground and stay put; the lamps
             hang in front and drift faster. The forests behind stay put too: the Resepsi card's
             text is drawn over them (see Scene). The wind blows from right to left and bends both
             trees, drawn over the Resepsi card as in Figma: the left one fully, the right one
             only as far as keeps its edge, cut off just beyond the frame, beyond it. */}
         <Scene box={[-12, 1256, 390, 225]}>
-          <Img file="house.webp" x={94} y={1349} w={207} h={132} depth={6} />
-          <Img file="tree.webp" x={-12} y={1256} w={150} h={225} depth={4} wind={treeWind(true)} />
-          <Img file="tree.webp" x={228} y={1256} w={150} h={225} flip depth={4} wind={treeWind(false)} />
+          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.house}>
+            <Img file="house.webp" x={94} y={1349} w={207} h={132} depth={6} />
+          </Reveal>
+          {/* The right tree first, which the wind reaches first too. */}
+          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.trees + 60}>
+            <Img file="tree.webp" x={-12} y={1256} w={150} h={225} depth={4} wind={treeWind(true)} />
+          </Reveal>
+          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.trees}>
+            <Img file="tree.webp" x={228} y={1256} w={150} h={225} flip depth={4} wind={treeWind(false)} />
+          </Reveal>
         </Scene>
-        <Img file="duck.webp" x={42} y={1506} w={49} h={33} />
-        <Img file="duck.webp" x={8} y={1555} w={68} h={45} />
         {[[326, 952], [6, 1114]].map(([x, y]) => (
           <Scene key={y} box={[x, y, 45, 66]}>
             <Img file="lamp.webp" x={x} y={y} w={45} h={66} depth={-6} />
           </Scene>
         ))}
-        <Img file="couple-boat.webp" x={42} y={1436} w={274} h={205} alt="Ilustrasi pasangan di perahu" />
-        <Img file="duck.webp" x={290} y={1573} w={119} h={80} flip />
+        {/* The boat and the ducks bob on the water, each in its own time (BOBS). Nothing with
+            text is drawn after them in their box (see Scene): the collage starts below it. */}
+        <Scene box={[8, 1436, 401, 217]}>
+          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.ducks}>
+            <Img file="duck.webp" x={42} y={1506} w={49} h={33} bob={BOBS.duckBack} />
+          </Reveal>
+          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.ducks + 80}>
+            <Img file="duck.webp" x={8} y={1555} w={68} h={45} bob={BOBS.duckLeft} />
+          </Reveal>
+          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.boat}>
+            <Img file="couple-boat.webp" x={42} y={1436} w={274} h={205} alt="Ilustrasi pasangan di perahu" bob={BOBS.boat} />
+          </Reveal>
+          <Reveal at={LAKE_AT} kind="rise" delay={LAKE_DELAYS.ducks + 160}>
+            <Img file="duck.webp" x={290} y={1573} w={119} h={80} flip bob={BOBS.duckFront} />
+          </Reveal>
+        </Scene>
 
         {/* ===== Photo collage ===== */}
         <Collage photos={gallery} coupleNames={inv.coupleNames} onOpen={setPhoto} />
@@ -947,11 +1083,9 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
         <Reveal at={1993} kind="fade" delay={150}>
           <Timeline count={story.length} />
         </Reveal>
-        <Reveal at={1959} kind="fadeUp">
-          <Centered x={84} y={1959} w={200} h={20} className="font-['La_Belle_Aurore'] text-[30px] leading-[20px] tracking-[-0.51px] text-[#4e769a]">
-            Cerita Kami...
-          </Centered>
-        </Reveal>
+        <Centered x={84} y={1959} w={200} h={20} className="font-['La_Belle_Aurore'] text-[30px] leading-[20px] tracking-[-0.51px] text-[#4e769a]">
+          <Handwritten at={1959}>Cerita Kami...</Handwritten>
+        </Centered>
         {story.map((moment, i) => {
           const slot = STORY_SLOTS[i];
           return (

@@ -155,6 +155,58 @@
   }
 }
 
+/* Afloat: a rise of --nb-bob px and back, and on a slower swell a roll of --nb-roll degrees one
+   way and then the other. On their own properties, so a flip (scale) or the wind (transform)
+   stays as it is; each round starts and ends at the Figma position. */
+@keyframes nb-bob-rise {
+  0%,
+  100% {
+    translate: none;
+  }
+  50% {
+    translate: 0 calc(var(--nb-bob) * -1px);
+  }
+}
+/* Sine curves throughout: through the middle at full speed, slowing at either side. */
+@keyframes nb-bob-roll {
+  0% {
+    rotate: none;
+    animation-timing-function: cubic-bezier(0.61, 1, 0.88, 1);
+  }
+  25% {
+    rotate: calc(var(--nb-roll) * 1deg);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  75% {
+    rotate: calc(var(--nb-roll) * -1deg);
+    animation-timing-function: cubic-bezier(0.12, 0, 0.39, 0);
+  }
+  100% {
+    rotate: none;
+  }
+}
+
+/* A heading being written by hand (see Handwritten in NotebookContent.tsx): a soft-edged mask
+   uncovers it from left to right as --nb-write moves along it. A mask clips to the box, so the
+   box reaches half an em past the text all round, for the script's swashes, and a margin as
+   wide takes that back: the text stays exactly where it is. Once written the mask is gone and
+   the text is drawn exactly as without it. */
+@property --nb-write {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+.nb-write {
+  display: inline-block;
+  padding: 0.5em;
+  margin: -0.5em;
+  --nb-write-mask: linear-gradient(90deg, #000 calc(var(--nb-write) - 0.35em), transparent var(--nb-write));
+  -webkit-mask-image: var(--nb-write-mask);
+  mask-image: var(--nb-write-mask);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .nb-scene {
@@ -169,5 +221,10 @@
   /* Played and paused by its Scene, on one clock for the whole page (see Scene). */
   .nb-wind {
     animation: var(--nb-wind-name) var(--nb-wind-ms) cubic-bezier(0.45, 0, 0.55, 1) var(--nb-wind-delay) infinite both;
+  }
+  .nb-bob {
+    animation:
+      nb-bob-rise var(--nb-bob-ms) cubic-bezier(0.37, 0, 0.63, 1) var(--nb-bob-delay) infinite both,
+      nb-bob-roll calc(var(--nb-bob-ms) * 1.6) cubic-bezier(0.37, 0, 0.63, 1) var(--nb-bob-delay) infinite both;
   }
 }
