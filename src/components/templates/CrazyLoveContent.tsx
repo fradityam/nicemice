@@ -1,4 +1,4 @@
-import { useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatIsoDate, parseIsoDate } from '../../invitations/dates';
 import { MAX_MESSAGE, MAX_NAME, timeAgo, useRsvpForm, useWishes, type Attendance, type SendError, type Wish, type WishesState } from '../../invitations/rsvp';
 import type { CrazyLoveInvitation, CrazyLoveVenue, GalleryPhoto, StoryMoment } from '../../invitations/types';
@@ -6,7 +6,9 @@ import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
 import { OPENING } from './crazyloveOpening';
+import { useLight } from './sceneLights';
 import { Float, Reveal, RevealOffset, RevealProvider, useInView, useScrollReveals, type RevealFeel } from './scrollReveal';
+import './crazylove.css';
 
 // Every layer is placed at its position in the Figma "Content" frame (375 × 6051), in
 // Figma's layer order, and the whole frame is scaled to the column width. Sections the couple
@@ -182,6 +184,110 @@ function Shift({ by, x = 0, children }: { by: number; x?: number; children: Reac
       </div>
     </RevealOffset.Provider>
   );
+}
+
+// ---------- Scenes ----------
+
+/** Whether the page's scenes stay still (animations off, or reduced motion): decided once, like the reveals. */
+function useStill() {
+  const [still] = useState(() => !ENABLE_ANIMATIONS || window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  return still;
+}
+
+/**
+ * Whether the element is on screen (or nearly), for idle motion that only runs there; also
+ * toggles `data-live` on it, which starts a scene's depth (crazylove.css).
+ */
+function useLive<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        el.toggleAttribute('data-live', entry.isIntersecting);
+        setLive(entry.isIntersecting);
+      },
+      { rootMargin: '100px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return [ref, live] as const;
+}
+
+/**
+ * Layers which, inside a Scene, drift at their own `depth` as they scroll by (positive: further
+ * away, so slower than the page; negative: nearer). The size of the whole frame at its origin, so
+ * the layers keep their Figma coordinates. Outside a moving Scene, just the layers.
+ */
+function Depth({ depth, children }: { depth: number; children: ReactNode }) {
+  if (!useContext(InMovingScene)) return <>{children}</>;
+  return (
+    <div className="cl-depth absolute inset-0" style={{ '--cl-depth': depth } as CSSProperties}>
+      {children}
+    </div>
+  );
+}
+
+// Room around a Scene's layers for them to move in.
+const SCENE_MARGIN = 14;
+const InMovingScene = createContext(false);
+
+/**
+ * Layers (in Depth) that move as one scene, as in Friends, The Notebook and La La Land: each is
+ * exactly at its Figma position whenever the scene's box is centred on screen, and they move only
+ * while the scene is on screen (or nearly). The box also clips them, just around themselves:
+ * Chrome assumes a running animation may overlap everything painted after it and would move that
+ * onto separate layers, so text painted later would lose its sub-pixel smoothing. Keep text drawn
+ * after a Scene out of its box. (Not for layers inside a Shift: its transform would move the scene
+ * from the scroll position the depth follows.) For guests who prefer reduced motion there is no
+ * box at all, so the layers are drawn exactly as without one.
+ */
+function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, number]; children: ReactNode }) {
+  const [ref] = useLive<HTMLDivElement>();
+  if (useStill()) return <>{children}</>;
+  const m = SCENE_MARGIN;
+  return (
+    <div ref={ref} className="cl-scene pointer-events-none absolute overflow-clip" style={{ left: x - m, top: y - m, width: w + 2 * m, height: h + 2 * m }}>
+      <div className="absolute [&_img]:pointer-events-auto" style={{ left: m - x, top: m - y, width: FRAME_W, height: FRAME_H }}>
+        <InMovingScene.Provider value>{children}</InMovingScene.Provider>
+      </div>
+    </div>
+  );
+}
+
+// The bridge: the bridge itself a little further back than the page, the couple on the bench a
+// little nearer, so they part slightly as they scroll by.
+const BRIDGE_DEPTH = 4;
+const COUPLE_DEPTH = -6;
+
+// The stage lights behind the couple at the end (sceneLights.ts): bulbs painted in the ending's
+// background (frame x, y of each centre) that flare up now and then, how often and how far behind
+// the page's clock. Only bulbs the drawing leaves uncovered, all well below the signature.
+const STAGE_BULBS = [
+  { x: 27, y: 5800, ms: 6200, delay: -900 },
+  { x: 173, y: 5754, ms: 5600, delay: -3100 },
+  { x: 219, y: 5800, ms: 6800, delay: -5200 },
+  { x: 265, y: 5754, ms: 5900, delay: -1700 },
+  { x: 359, y: 5800, ms: 6500, delay: -4100 },
+];
+// How far around a bulb's centre its light reaches (a painted bulb is about 32 frame px across).
+const BULB_R = 24;
+// Laid over the painting as it is, not blended with it: a blend mode would have the browser put
+// the page, text and all, on a layer of its own.
+const BULB_GLOW = 'radial-gradient(closest-side, rgba(255,248,228,0.95) 0%, rgba(255,228,172,0.6) 45%, rgba(255,210,140,0) 100%)';
+
+/**
+ * A stage light flaring up now and then while it is on screen (sceneLights.ts), and in between
+ * exactly as painted. For guests who prefer reduced motion there is no element at all.
+ */
+function StageBulb({ x, y, ms, delay }: (typeof STAGE_BULBS)[number]) {
+  const [ref, live] = useLive<HTMLDivElement>();
+  useLight(ref, 'twinkle', { ms, delay, active: live });
+  if (useStill()) return null;
+  return <div ref={ref} className="light-twinkle pointer-events-none absolute" style={{ left: x - BULB_R, top: y - BULB_R, width: 2 * BULB_R, height: 2 * BULB_R, backgroundImage: BULB_GLOW }} />;
 }
 
 // The demo's own photos keep Figma's crop (the photo stretched over the whole box, of which
@@ -936,8 +1042,11 @@ export default function CrazyLoveContent({ invitation: inv, slug, intro }: { inv
 
   return (
     <RevealProvider value={reveals}>
-    <div ref={wrapRef} className="relative w-full overflow-hidden" style={{ aspectRatio: `${FRAME_W} / ${pageH}`, backgroundColor: CREAM }}>
-      <div className="absolute left-0 top-0 overflow-hidden" style={{ width: FRAME_W, height: pageH, zoom: scale }}>
+    <div ref={wrapRef} className="relative w-full overflow-hidden" style={{ aspectRatio: `${FRAME_W} / ${pageH}`, backgroundColor: CREAM, overflow: 'clip' }}>
+      {/* `clip` rather than `hidden` (kept as the fallback): a box that clips by hiding can be
+          scrolled, so the bridge's depth would follow it rather than the page, and the browser
+          could scroll the frame sideways when it brings a form field or button into view. */}
+      <div className="absolute left-0 top-0 overflow-hidden" style={{ width: FRAME_W, height: pageH, zoom: scale, overflow: 'clip' }}>
         {/* ===== BG ===== */}
         <div className="absolute left-px top-[798px] h-[1349px] w-[375px]" style={{ backgroundImage: `linear-gradient(to bottom, ${CREAM}, #ffdde1 50%, ${CREAM})` }} />
         <Img file="curtain.webp" x={1} y={604} w={376} h={197} className="rounded-t-[40px]" />
@@ -959,6 +1068,9 @@ export default function CrazyLoveContent({ invitation: inv, slug, intro }: { inv
         </Shift>
         <Shift by={atClosing}>
           <Img file="ending-bg.webp" x={0} y={5635} w={378} h={335} />
+          {STAGE_BULBS.map((bulb) => (
+            <StageBulb key={bulb.x} {...bulb} />
+          ))}
           <div className="absolute left-[-3px] top-[5633px] h-[328px] w-[381px]" style={{ backgroundImage: `linear-gradient(to bottom, ${CREAM}, rgba(255,244,232,0))` }} />
 
           <Img file="ending-drawing.webp" x={-3} y={5717} w={378} h={252} alt="Ilustrasi pengantin wanita memberi buket bunga" />
@@ -1103,8 +1215,17 @@ export default function CrazyLoveContent({ invitation: inv, slug, intro }: { inv
 
         {dresscode && <Dresscode dresscode={dresscode} />}
 
-        <Img file="bridge-scene.webp" x={-13} y={2607} w={401} h={348} alt="Ilustrasi pasangan duduk di jembatan kayu" />
-        <Img file="bridge.webp" x={-37} y={2690} w={432} h={288} />
+        {/* The bridge and the couple on its bench. Depth: the bridge a little further back, the
+            couple a little nearer; nothing drawn after them reaches into their box (see Scene). The
+            bridge is cut off at the frame's sides and its foot, so it only moves up and down. */}
+        <Scene box={[-37, 2607, 432, 371]}>
+          <Depth depth={BRIDGE_DEPTH}>
+            <Img file="bridge-scene.webp" x={-13} y={2607} w={401} h={348} alt="Ilustrasi pasangan duduk di jembatan kayu" />
+          </Depth>
+          <Depth depth={COUPLE_DEPTH}>
+            <Img file="bridge.webp" x={-37} y={2690} w={432} h={288} />
+          </Depth>
+        </Scene>
 
         {/* ===== Detail Acara ===== */}
         <Reveal at={1489} kind="fadeUp">

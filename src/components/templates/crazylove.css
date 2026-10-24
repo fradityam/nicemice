@@ -1,0 +1,27 @@
+/* The bridge scene (see Scene and Depth in CrazyLoveContent.tsx): the bridge and the couple on the
+   bench drift at their own depth as they scroll by. Only for guests who haven't asked for reduced
+   motion, and only where the browser can tie an animation to scrolling (it then runs off the main
+   thread). Anywhere else every layer stays at its Figma position. */
+
+/* Across the scene's whole pass through the screen, from entering at the bottom to leaving at
+   the top: at its Figma position halfway, when the scene is centred. */
+@keyframes cl-depth {
+  from {
+    translate: 0 calc(var(--cl-depth) * -1px);
+  }
+  to {
+    translate: 0 calc(var(--cl-depth) * 1px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .cl-scene {
+      view-timeline: --cl-scene block;
+    }
+    .cl-scene[data-live] .cl-depth {
+      animation: cl-depth linear both;
+      animation-timeline: --cl-scene;
+    }
+  }
+}
