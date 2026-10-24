@@ -30,3 +30,31 @@
 .ff-fraunces {
   font-variation-settings: 'SOFT' 0, 'WONK' 1;
 }
+
+/* Central Perk (see Scene and Depth in FriendsContent.tsx): the rug, couch, table and lamp drift
+   at their own depth as they scroll by, nearer than the bar against the wall. Only for guests who
+   haven't asked for reduced motion, and only where the browser can tie an animation to scrolling
+   (it then runs off the main thread). Anywhere else every layer stays at its Figma position. */
+
+/* Across the scene's whole pass through the screen, from entering at the bottom to leaving at
+   the top: at its Figma position halfway, when the scene is centred. */
+@keyframes fr-depth {
+  from {
+    translate: 0 calc(var(--fr-depth) * -1px);
+  }
+  to {
+    translate: 0 calc(var(--fr-depth) * 1px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .fr-scene {
+      view-timeline: --fr-scene block;
+    }
+    .fr-scene[data-live] .fr-depth {
+      animation: fr-depth linear both;
+      animation-timeline: --fr-scene;
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { Fragment, useContext, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { parseIsoDate } from '../../invitations/dates';
 import { MAX_MESSAGE, MAX_NAME, timeAgo, useRsvpForm, useWishes, type Attendance, type SendError, type Wish, type WishesState } from '../../invitations/rsvp';
 import type { FriendsInvitation } from '../../invitations/types';
@@ -371,15 +371,22 @@ const DELIVERY_ALONE_SHIFT = -100;
 
 /**
  * Layers moved down by `by` frame px (or up, when negative), e.g. everything below the wishes
- * band; their reveals move with them. No wrapper at all when `by` is 0.
+ * band; their reveals move with them. No wrapper at all when `by` is 0. Nothing in it reaches
+ * above frame y `from`, where its box starts: a box drawn after a Scene that reaches into it would
+ * go onto a layer of its own while the scene moves, and the text in it lose its sub-pixel
+ * smoothing (see Scene).
  */
-function Shift({ by, children }: { by: number; children: ReactNode }) {
+function Shift({ by, from = 0, children }: { by: number; from?: number; children: ReactNode }) {
   const offset = useContext(RevealOffset);
+  // Where nothing moves, the box is the whole frame, exactly as without scenes.
+  if (useStill()) from = 0;
   if (!by) return <>{children}</>;
   return (
     <RevealOffset.Provider value={offset + by}>
-      <div className="absolute left-0 top-0 *:pointer-events-auto" style={{ width: FRAME_W, height: FRAME_H, transform: `translateY(${by}px)`, pointerEvents: 'none' }}>
-        {children}
+      <div className={`absolute left-0 ${from ? 'overflow-clip' : ''}`} style={{ top: from, width: FRAME_W, height: FRAME_H - from, transform: `translateY(${by}px)`, pointerEvents: 'none' }}>
+        <div className="absolute left-0 *:pointer-events-auto" style={{ top: -from, width: FRAME_W, height: FRAME_H }}>
+          {children}
+        </div>
       </div>
     </RevealOffset.Provider>
   );
@@ -435,6 +442,81 @@ function Near({ style, children }: { style: CSSProperties; children: ReactNode }
   );
 }
 
+/** Whether the page's scenes stay still (animations off, or reduced motion): decided once, like the reveals. */
+function useStill() {
+  const [still] = useState(() => !ENABLE_ANIMATIONS || window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  return still;
+}
+
+/**
+ * Whether the element is on screen (or nearly), for idle motion that only runs there; also
+ * toggles `data-live` on it, which starts a scene's depth (friends.css).
+ */
+function useLive<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        el.toggleAttribute('data-live', entry.isIntersecting);
+        setLive(entry.isIntersecting);
+      },
+      { rootMargin: '100px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return [ref, live] as const;
+}
+
+/**
+ * Layers which, inside a Scene, drift at their own `depth` as they scroll by (positive: further
+ * away, so slower than the page; negative: nearer). The size of the whole frame at its origin, so
+ * the layers keep their Figma coordinates. Outside a moving Scene, just the layers.
+ */
+function Depth({ depth, children }: { depth: number; children: ReactNode }) {
+  if (!useContext(InMovingScene)) return <>{children}</>;
+  return (
+    <div className="fr-depth absolute inset-0" style={{ '--fr-depth': depth } as CSSProperties}>
+      {children}
+    </div>
+  );
+}
+
+// Room around a Scene's layers for them to move in.
+const SCENE_MARGIN = 14;
+const InMovingScene = createContext(false);
+
+/**
+ * Layers (in Depth) that move as one scene, as in The Notebook and La La Land: each is exactly at
+ * its Figma position whenever the scene's box is centred on screen, and they move only while the
+ * scene is on screen (or nearly). The box also clips them, just around themselves: Chrome assumes
+ * a running animation may overlap everything painted after it and would move that onto separate
+ * layers, so text painted later would lose its sub-pixel smoothing. Keep text drawn after a Scene
+ * out of its box. (Not for layers inside a Shift: its transform would move the scene from the
+ * scroll position the depth follows.) For guests who prefer reduced motion there is no box at
+ * all, so the layers are drawn exactly as without one.
+ */
+function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, number]; children: ReactNode }) {
+  const [ref] = useLive<HTMLDivElement>();
+  if (useStill()) return <>{children}</>;
+  const m = SCENE_MARGIN;
+  return (
+    <div ref={ref} className="fr-scene pointer-events-none absolute overflow-clip" style={{ left: x - m, top: y - m, width: w + 2 * m, height: h + 2 * m }}>
+      <div className="absolute [&_img]:pointer-events-auto" style={{ left: m - x, top: m - y, width: FRAME_W, height: FRAME_H }}>
+        <InMovingScene.Provider value>{children}</InMovingScene.Provider>
+      </div>
+    </div>
+  );
+}
+
+// Central Perk: the rug, lamp, couch and table come forward as one, nearer than the bar against
+// the wall (which stays with the page), so nothing slides on the rug and the stools peeking over
+// the couch shift behind it.
+const PERK_DEPTH = -8;
+
 // ---------- Page ----------
 
 const storyTitle = 'ff-f72 -translate-y-1/2 absolute left-[89px] text-[15px] leading-[30px] tracking-[-0.017em] text-[#d64f16] whitespace-nowrap';
@@ -482,7 +564,9 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
 
   return (
     <RevealProvider value={reveals}>
-    <div ref={wrapRef} className="relative w-full overflow-hidden bg-[#fefffa]" style={{ aspectRatio: `${FRAME_W} / ${frameH}` }}>
+    {/* `clip` too (`hidden` is the fallback): a box that hides its overflow goes onto a layer of
+        its own, with all the text in it, while a scene inside it moves (see Scene). */}
+    <div ref={wrapRef} className="relative w-full overflow-hidden bg-[#fefffa]" style={{ aspectRatio: `${FRAME_W} / ${frameH}`, overflow: 'clip' }}>
       {/* `clip` rather than `hidden` (kept as the fallback) so the browser can't scroll the frame
           sideways when it brings a form field or button into view. */}
       <div className="absolute left-0 top-0 overflow-hidden" style={{ width: FRAME_W, height: frameH, zoom: scale, overflow: 'clip' }}>
@@ -551,9 +635,17 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         <Img file="ribbon.svg" x={-16} y={3735.1} w={377.688} h={440.765} />
 
         {/* ===== Cast line-art on the yellow arch ===== */}
-        <Img file="yellow-arch.svg" x={-16.76} y={1828} w={408.511} h={256} />
-        <Img file="carpet.webp" x={-18} y={1966} w={412} h={135} />
-        <Img file="cast-lineart.webp" x={29} y={1854} w={325} h={217} alt="Line drawing of the bride and her friends on the couch" />
+        {/* The set lighting up as it scrolls in: the arch grows up from its base (still past both
+            edges of the frame at its smallest), the rug comes up, then the friends on the couch. */}
+        <Reveal at={1828} kind="grow" origin={[187.5, 2084]}>
+          <Img file="yellow-arch.svg" x={-16.76} y={1828} w={408.511} h={256} />
+        </Reveal>
+        <Reveal at={1966} kind="fade" delay={150}>
+          <Img file="carpet.webp" x={-18} y={1966} w={412} h={135} />
+        </Reveal>
+        <Reveal at={1854} kind="rise" delay={300}>
+          <Img file="cast-lineart.webp" x={29} y={1854} w={325} h={217} alt="Line drawing of the bride and her friends on the couch" />
+        </Reveal>
 
         <Reveal at={2110} kind="fadeUp">
           <Centered cx={188} cy={2137} className={`${friendsTitle} text-[24px] leading-[30px] text-white`}>
@@ -687,10 +779,16 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
 
         {/* ===== Central Perk ===== */}
         <Img file="perk-bar.webp" x={47} y={2808} w={280} h={224} />
-        <Img file="carpet.webp" x={-62} y={3039} w={498} h={163} />
-        <Img file="lamp.webp" x={257} y={2826} w={167} h={251} />
-        <Img file="perk-couch.webp" x={17} y={2925} w={340} h={191} alt="The Central Perk couch" />
-        <Img file="perk-table.webp" x={71} y={3002} w={232} h={155} />
+        {/* Its box reaches to the frame's edges (the rug and lamp are cut off there) and stops
+            above the Ceremony frame. */}
+        <Scene box={[0, 2826, FRAME_W, 3202 - 2826]}>
+          <Depth depth={PERK_DEPTH}>
+            <Img file="carpet.webp" x={-62} y={3039} w={498} h={163} />
+            <Img file="lamp.webp" x={257} y={2826} w={167} h={251} />
+            <Img file="perk-couch.webp" x={17} y={2925} w={340} h={191} alt="The Central Perk couch" />
+            <Img file="perk-table.webp" x={71} y={3002} w={232} h={155} />
+          </Depth>
+        </Scene>
 
         {/* ===== Ceremony & Reception ===== */}
         <Reveal at={3221} kind="fadeUp" delay={150}>
@@ -731,7 +829,7 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
 
         {/* ===== Gifting ===== */}
         {hasGifts && (
-          <Shift by={shift}>
+          <Shift by={shift} from={GIFTS_TOP}>
             <Reveal at={4690} kind="fadeUp">
               <Centered cx={189.5} cy={4699} className={`${friendsTitle} text-[18px] leading-[20px] text-[#a07eb9]`}>Gifting</Centered>
             </Reveal>
@@ -798,7 +896,7 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           </Shift>
         )}
 
-        <Shift by={shift}>
+        <Shift by={shift} from={4250}>
         {/* ===== Couple photo strip ===== */}
         <Reveal at={4276} kind="fade" delay={100}>
           <Img src={inv.couplePhoto} x={0} y={4276} w={376} h={376} alt={inv.coupleNames} />
@@ -807,7 +905,7 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         </Reveal>
         </Shift>
 
-        <Shift by={closingShift}>
+        <Shift by={closingShift} from={5430}>
         {/* ===== Closing note on torn paper ===== */}
         <Reveal at={5496} kind="fadeUp">
           {/* Figma's 200 × 316 paper, turned 90° about the centre of its 316 × 200 box. */}
@@ -835,7 +933,7 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         </Reveal>
 
         {/* ===== Made with love by nicemice (no edge in Figma: the white gradient fades into it) ===== */}
-        <Shift by={closingShift}>
+        <Shift by={closingShift} from={5690}>
           <MadeWithLoveFooter y={5715} bgTop={5690} frameH={FRAME_H} background="#fefffa" />
         </Shift>
       </div>
