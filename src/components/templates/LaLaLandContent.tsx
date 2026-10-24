@@ -1,4 +1,4 @@
-import { Fragment, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createContext, Fragment, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { formatIsoDate, parseIsoDate } from '../../invitations/dates';
 import { MAX_MESSAGE, MAX_NAME, timeAgo, useRsvpForm, useWishes, type Attendance, type SendError, type Wish, type WishesState } from '../../invitations/rsvp';
 import type { GalleryPhoto, LaLaLandInvitation, StoryMoment } from '../../invitations/types';
@@ -256,37 +256,44 @@ function Flare({ file, top, w, h }: { file: string; top: number; w: number; h: n
 }
 
 /**
- * Plain image layer at a Figma box which, inside a Scene, drifts at its own `depth` as it scrolls
- * by (positive: further away, so slower than the page; negative: nearer).
+ * Layers which, inside a Scene, drift at their own `depth` as they scroll by (positive: further
+ * away, so slower than the page; negative: nearer). The size of the whole frame at its origin, so
+ * the layers keep their Figma coordinates, % insets and all. Outside a moving Scene, just the
+ * layers.
  */
-function DepthImg({ file, x, y, w, h, depth, alt = '' }: { file: string; x: number; y: number; w: number; h: number; depth: number; alt?: string }) {
+function Depth({ depth, children }: { depth: number; children: ReactNode }) {
+  if (!useContext(InMovingScene)) return <>{children}</>;
   return (
-    <div className="ll-depth absolute left-0 top-0" style={{ '--ll-depth': depth } as CSSProperties}>
-      <img alt={alt} src={A(file)} className="absolute block max-w-none" style={{ left: x, top: y, width: w, height: h }} />
+    <div className="ll-depth absolute inset-0" style={{ '--ll-depth': depth } as CSSProperties}>
+      {children}
     </div>
   );
 }
 
 // Room around a Scene's layers for them to move in.
 const SCENE_MARGIN = 14;
+const InMovingScene = createContext(false);
 
 /**
- * Layers (DepthImg) that move as one scene, as in The Notebook: each is exactly at its Figma
+ * Layers (in Depth) that move as one scene, as in The Notebook: each is exactly at its Figma
  * position whenever the scene's box is centred on screen, and they move only while the scene is on
  * screen (or nearly). The box also clips them, just around themselves: Chrome assumes a running
  * animation may overlap everything painted after it and would move that onto separate layers, so
  * text painted later would lose its sub-pixel smoothing. Keep text drawn after a Scene out of its
  * box. (Not for layers inside a Shift: its transform would move the scene from the scroll
- * position the depth follows.)
+ * position the depth follows.) For guests who prefer reduced motion there is no box at all, so
+ * the layers are drawn exactly as without one.
  */
 function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, number]; children: ReactNode }) {
   const [ref] = useLive<HTMLDivElement>();
-  if (!ENABLE_ANIMATIONS) return <>{children}</>;
+  // Decided once, like the reveals.
+  const [still] = useState(() => !ENABLE_ANIMATIONS || window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (still) return <>{children}</>;
   const m = SCENE_MARGIN;
   return (
     <div ref={ref} className="ll-scene pointer-events-none absolute overflow-clip" style={{ left: x - m, top: y - m, width: w + 2 * m, height: h + 2 * m }}>
-      <div className="absolute [&_img]:pointer-events-auto" style={{ left: m - x, top: m - y }}>
-        {children}
+      <div className="absolute [&_img]:pointer-events-auto" style={{ left: m - x, top: m - y, width: FRAME_W, height: FRAME_H }}>
+        <InMovingScene.Provider value>{children}</InMovingScene.Provider>
       </div>
     </div>
   );
@@ -1160,6 +1167,30 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
           </p>
         </Reveal>
 
+        {/* ===== Couple and star =====
+            Depth: the star sits further back than the dancing couple and drifts slower. Text drawn
+            after them stays out of their scene's box (see Scene): the Quotes card's words end well
+            above it; only the card's pattern, which has none, reaches its top edge. Kept in Figma's
+            layer order: drawn after the card, it would change how other drawings on the page are
+            anti-aliased. */}
+        <Scene box={[15.19, 530.93, 327.9, 263.07]}>
+          <Reveal at={531} kind="pop" origin={[185.8, 660.3]} delay={600}>
+            <Depth depth={12}>
+              <div className="absolute inset-[11.44%_13.48%_82.98%_12.55%]">
+                <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('c0e6c.svg')} />
+              </div>
+            </Depth>
+          </Reveal>
+          <Reveal at={531} kind="fadeUp" delay={750}>
+            <img
+              alt="Ilustrasi pasangan berdansa"
+              src={A('71976.webp')}
+              className="absolute max-w-none object-cover"
+              style={{ left: 15.19, top: 531, width: 327.896, height: 263 }}
+            />
+          </Reveal>
+        </Scene>
+
         {/* ===== Quotes ===== */}
         {/* The multiply texture animates on its own so it keeps blending with the
             background; the rest of the card animates as one group so the pattern layer
@@ -1194,24 +1225,6 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
             the mess we make.
           </p>
         </div>
-
-        {/* ===== Couple and star =====
-            Drawn after the Quotes card (which ends above them) so that nothing with text is drawn
-            after them in their scene's box: the intro text below is drawn before (see Scene).
-            Depth: the star sits further back than the dancing couple and drifts slower. */}
-        <Scene box={[15.19, 530.93, 327.9, 263.07]}>
-          <Reveal at={531} kind="pop" origin={[185.8, 660.3]} delay={600}>
-            <DepthImg file="c0e6c.svg" x={47.0625} y={530.9304} w={277.3875} h={258.9678} depth={12} />
-          </Reveal>
-          <Reveal at={531} kind="fadeUp" delay={750}>
-            <img
-              alt="Ilustrasi pasangan berdansa"
-              src={A('71976.webp')}
-              className="absolute max-w-none object-cover"
-              style={{ left: 15.19, top: 531, width: 327.896, height: 263 }}
-            />
-          </Reveal>
-        </Scene>
 
         {/* ===== Top-most layers ===== */}
         <Reveal at={2595} kind="fromLeft" delay={250}>
