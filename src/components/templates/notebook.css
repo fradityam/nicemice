@@ -187,11 +187,22 @@
 }
 
 /* A heading being written by hand (see Handwritten in NotebookContent.tsx): a soft-edged mask
-   uncovers it from left to right as --nb-write moves along it. A mask clips to the box, so the
-   box reaches half an em past the text all round, for the script's swashes, and a margin as
-   wide takes that back: the text stays exactly where it is. Once written the mask is gone and
-   the text is drawn exactly as without it. */
-@property --nb-write {
+   uncovers each line from left to right as its --nb-write-<line> moves along it (Handwritten
+   gives each line a band of the mask of its own; until then this one hides the whole heading).
+   A mask clips to the box, so the box reaches half an em past the text all round, for the
+   script's swashes, and a margin as wide takes that back: the text stays exactly where it is.
+   Once written the mask is gone and the text is drawn exactly as without it. */
+@property --nb-write-1 {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+@property --nb-write-2 {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+@property --nb-write-3 {
   syntax: '<length-percentage>';
   inherits: false;
   initial-value: 0%;
@@ -200,9 +211,8 @@
   display: inline-block;
   padding: 0.5em;
   margin: -0.5em;
-  --nb-write-mask: linear-gradient(90deg, #000 calc(var(--nb-write) - 0.35em), transparent var(--nb-write));
-  -webkit-mask-image: var(--nb-write-mask);
-  mask-image: var(--nb-write-mask);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--nb-write-1) - 0.35em), transparent var(--nb-write-1));
+  mask-image: linear-gradient(90deg, #000 calc(var(--nb-write-1) - 0.35em), transparent var(--nb-write-1));
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
 }
