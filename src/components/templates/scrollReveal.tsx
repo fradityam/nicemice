@@ -286,9 +286,11 @@ export function RevealSpan({ at, kind, className, style, children, ...options }:
 
 /**
  * A very slow, tiny idle bob, for two or three small elements per template only. `box` is the
- * element's frame box [x, y, w, h]: the bob runs inside a clip just around it, because Chrome
- * assumes a running transform animation may overlap everything painted after it and would
- * otherwise move all later text onto separate layers (losing its sub-pixel smoothing).
+ * element's frame box [x, y, w, h]. The bob moves a box just around the element (with the element
+ * inside, at its Figma coordinates) along a short path up and back, which the page draws itself,
+ * as smoothly as a transform, rather than by a transform: Chrome gives a transform animation a
+ * layer of its own, takes it to overlap everything drawn after it and moves all that onto layers
+ * too, where text loses its sub-pixel smoothing (a clip around it doesn't stop that).
  */
 const FLOAT_PX = 3;
 export function Float({ box: [x, y, w, h], delay = 0, children }: { box: [number, number, number, number]; delay?: number; children: ReactNode }) {
@@ -297,7 +299,7 @@ export function Float({ box: [x, y, w, h], delay = 0, children }: { box: [number
   useEffect(() => {
     const el = ref.current;
     if (!store || !el) return;
-    const anim = el.animate([{ transform: 'translateY(0)' }, { transform: `translateY(-${FLOAT_PX}px)` }, { transform: 'translateY(0)' }], {
+    const anim = el.animate([{ offsetDistance: '0%' }, { offsetDistance: '100%' }, { offsetDistance: '0%' }], {
       duration: 4800,
       iterations: Infinity,
       easing: 'ease-in-out',
@@ -306,14 +308,17 @@ export function Float({ box: [x, y, w, h], delay = 0, children }: { box: [number
     return () => anim.cancel();
   }, [store, delay]);
   if (!store) return <>{children}</>;
-  // The clip leaves room for the bob above; the inner layer shifts back to the frame origin so
-  // the element keeps its Figma coordinates.
+  // Room around the element, so the box never clips it. The path starts where the box is (its
+  // top left corner on the path, kept upright), so at rest it is exactly in place.
   const m = FLOAT_PX + 2;
+  const path: CSSProperties = { offsetPath: `path("M 0 0 L 0 -${FLOAT_PX}")`, offsetPosition: 'normal', offsetAnchor: '0 0', offsetRotate: '0deg' };
   return (
-    <div className="absolute overflow-hidden" style={{ left: x - m, top: y - m, width: w + 2 * m, height: h + 2 * m }}>
-      <div ref={ref} className={FRAME_LAYER} style={{ ...frameLayer(store), left: m - x, top: m - y }}>
+    <div ref={ref} className="absolute overflow-hidden" style={{ left: x - m, top: y - m, width: w + 2 * m, height: h + 2 * m, ...path }}>
+      <div className={FRAME_LAYER} style={{ ...frameLayer(store), left: m - x, top: m - y }}>
         {children}
       </div>
     </div>
   );
 }
+
+

@@ -227,10 +227,14 @@ const SCENE_MARGIN = 14;
 
 /**
  * Layers (Img with depth, wind or bob) that move as one scene: each is exactly at its Figma position
- * whenever the scene's box is centred on screen, and the wind moves them only while it is on
- * screen. The box also clips them, just around themselves: Chrome assumes a running animation may
- * overlap everything painted after it and would move that onto separate layers, so text painted
- * later would lose its sub-pixel smoothing. Keep text drawn after a Scene out of its box.
+ * whenever the scene's box is centred on screen, and they move only while the scene is on screen
+ * (or nearly). The box also clips them, just around themselves: Chrome assumes a running animation
+ * may overlap everything painted after it and would move that onto separate layers, so text
+ * painted later would lose its sub-pixel smoothing. Keep text drawn after a Scene out of its box.
+ * (Off screen nothing in it moves at all, not even the depth, which follows the scroll: anything
+ * drawn after a scene that reaches into its box goes onto a layer of its own while the scene
+ * moves, and drags along whatever overlaps that in turn, so text far down the page would lose its
+ * smoothing too.)
  */
 function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, number]; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -242,16 +246,15 @@ function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, 
     const el = ref.current;
     const clip = el?.firstElementChild;
     if (!el || !clip) return;
-    // The wind and the water run on one clock for the whole page: whenever a scene comes on
-    // screen its plants and boats carry on as if they had never stopped, so those in different
-    // scenes keep their offsets.
+    // The scene moves while `data-live` (notebook.css). The wind and the water run on one clock
+    // for the whole page: whenever a scene comes on screen its plants and boats carry on as if
+    // they had never stopped, so those in different scenes keep their offsets.
     const io = new IntersectionObserver(
       ([entry]) => {
+        el.toggleAttribute('data-live', entry.isIntersecting);
+        if (!entry.isIntersecting) return;
         const winds = el.getAnimations({ subtree: true }).filter((a) => a instanceof CSSAnimation && /^nb-(gust|breeze|bob)/.test(a.animationName));
-        for (const a of winds) {
-          if (entry.isIntersecting) a.startTime = 0;
-          else a.pause();
-        }
+        for (const a of winds) a.startTime = 0;
       },
       { rootMargin: '100px 0px' },
     );

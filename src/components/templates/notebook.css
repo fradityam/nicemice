@@ -222,17 +222,17 @@
     .nb-scene {
       view-timeline: --nb-scene block;
     }
-    .nb-depth {
+    .nb-scene[data-live] .nb-depth {
       animation: nb-depth linear both;
       animation-timeline: --nb-scene;
     }
   }
 
-  /* Played and paused by its Scene, on one clock for the whole page (see Scene). */
-  .nb-wind {
+  /* Only while its Scene is on screen, on one clock for the whole page (see Scene). */
+  .nb-scene[data-live] .nb-wind {
     animation: var(--nb-wind-name) var(--nb-wind-ms) cubic-bezier(0.45, 0, 0.55, 1) var(--nb-wind-delay) infinite both;
   }
-  .nb-bob {
+  .nb-scene[data-live] .nb-bob {
     animation:
       nb-bob-rise var(--nb-bob-ms) cubic-bezier(0.37, 0, 0.63, 1) var(--nb-bob-delay) infinite both,
       nb-bob-roll calc(var(--nb-bob-ms) * 1.6) cubic-bezier(0.37, 0, 0.63, 1) var(--nb-bob-delay) infinite both;
