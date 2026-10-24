@@ -6,6 +6,7 @@ import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
 import { OPENING } from './friendsOpening';
+import { Handwritten } from './handwriting';
 import { useLight } from './sceneLights';
 import { Float, Reveal, RevealOffset, RevealProvider, useInView, useScrollReveals } from './scrollReveal';
 
@@ -611,6 +612,12 @@ const EMPHASIS_DELAY_MS = 1100;
 // the couch shift behind it.
 const PERK_DEPTH = -8;
 
+// Handwritten headings start as soon as they are just on screen, before the reveals around them.
+// A name under a photo waits for the photo to start coming in; the Magna Doodle is written once the
+// camera has all but settled into its scene.
+const NAME_WRITE_DELAY_MS = 400;
+const DOODLE_WRITE_DELAY_MS = OPENING.scene.delayMs + OPENING.scene.ms * 0.4;
+
 // ---------- Page ----------
 
 const storyTitle = 'ff-f72 -translate-y-1/2 absolute left-[89px] text-[15px] leading-[30px] tracking-[-0.017em] text-[#d64f16] whitespace-nowrap';
@@ -640,6 +647,8 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
   // Polaroids are drawn bottom of the stack first.
   const [topPolaroid, middlePolaroid, bottomPolaroid] = inv.polaroids;
   const titleFit = useFit<HTMLHeadingElement>(FIT.title);
+  // The Magna Doodle is signed once its message is written.
+  const [doodleWritten, setDoodleWritten] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -789,11 +798,17 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
 
           {/* Magna Doodle */}
           <Img file="magna-doodle.webp" x={81.25} y={515} w={223.5} h={149} />
-          <Centered cx={181.24} cy={572.84} className={`${friendsTitle} text-[14px] leading-[19px] text-[#3a3535]`} fit={FIT.doodle}>
-            <Lines lines={inv.doodle.lines} />
+          {/* Written on it with its pen as the camera settles into the scene (its lines as one
+              text, broken where the couple broke them), and then signed. */}
+          <Centered cx={181.24} cy={572.84} className={`${friendsTitle} text-[14px] leading-[19px] text-[#3a3535]`} style={{ whiteSpace: 'pre' }} fit={FIT.doodle}>
+            <Handwritten at={548} delay={DOODLE_WRITE_DELAY_MS} onWritten={() => setDoodleWritten(true)}>
+              {inv.doodle.lines.join('\n')}
+            </Handwritten>
           </Centered>
           <Centered cx={176.8} cy={614.87} className={`${friendsTitle} text-[12px] leading-[26px] text-[#3a3535]`} fit={FIT.doodleSignature}>
-            {inv.doodle.signature}
+            <Handwritten at={602} wait={!doodleWritten} delay={150}>
+              {inv.doodle.signature}
+            </Handwritten>
           </Centered>
           </Near>
         </div>
@@ -809,8 +824,11 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           <Img src={inv.groom.photo} x={83} y={940} w={239} h={239} alt={inv.groom.name} style={{ clipPath: 'inset(3px 33px 12px 10px)' }} />
           <Img file="yellow-frame.webp" x={39} y={887} w={298} h={337} />
         </Reveal>
+        {/* His name written by hand under his photo; his parents' lines fade in. */}
+        <Centered cx={188} cy={1239} className={`${friendsTitle} text-[24px] leading-[30px] text-white`} fit={FIT.line}>
+          <Handwritten at={1225} delay={NAME_WRITE_DELAY_MS}>{inv.groom.name}</Handwritten>
+        </Centered>
         <Reveal at={1225} kind="fadeUp" delay={150}>
-          <Centered cx={188} cy={1239} className={`${friendsTitle} text-[24px] leading-[30px] text-white`} fit={FIT.line}>{inv.groom.name}</Centered>
           <Centered cx={187} cy={1265} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.groom.parentsLabel}</Centered>
           <Centered cx={187.5} cy={1286} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.groom.parents}</Centered>
         </Reveal>
@@ -819,8 +837,10 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           <Img src={inv.bride.photo} x={70} y={1437} w={240} h={240} alt={inv.bride.name} style={{ clipPath: 'inset(0 21px 16px 23px)' }} />
           <Img file="yellow-frame.webp" x={39} y={1381} w={298} h={337} />
         </Reveal>
+        <Centered cx={188} cy={1733} className={`${friendsTitle} text-[24px] leading-[30px] text-white`} fit={FIT.line}>
+          <Handwritten at={1720} delay={NAME_WRITE_DELAY_MS}>{inv.bride.name}</Handwritten>
+        </Centered>
         <Reveal at={1720} kind="fadeUp" delay={150}>
-          <Centered cx={188} cy={1733} className={`${friendsTitle} text-[24px] leading-[30px] text-white`} fit={FIT.line}>{inv.bride.name}</Centered>
           <Centered cx={187.5} cy={1759} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.bride.parentsLabel}</Centered>
           <Centered cx={187} cy={1780} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.bride.parents}</Centered>
         </Reveal>
@@ -861,9 +881,9 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         <Transformed m={[0.974, 0.225, -62.181, -0.225, 0.974, 2716.135]} w={137.221} h={244.869}><img alt="" src={A('newspaper-1.webp')} className={fill} /></Transformed>
         <Img file="newspaper-2.webp" x={209} y={2481} w={225} h={271} />
         <Img file="torn-paper.webp" x={12} y={2429} w={358} h={567} />
-        <Reveal at={2480} kind="fadeUp">
-          <Centered cx={187.5} cy={2495} className={`${friendsTitle} text-[24px] leading-[30px] text-[#d64f16]`}>Our Love Story</Centered>
-        </Reveal>
+        <Centered cx={187.5} cy={2495} className={`${friendsTitle} text-[24px] leading-[30px] text-[#d64f16]`}>
+          <Handwritten at={2480}>Our Love Story</Handwritten>
+        </Centered>
         <Reveal at={2544} kind="fade" delay={150}>
           <Img file="timeline-line.svg" x={69.5} y={2549.6} w={3} h={175.6} />
           {[2543.7, 2636.9, 2714.1].map((y) => (
