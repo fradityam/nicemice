@@ -9,7 +9,7 @@ import coverMask from '../../assets/images/crazylove/cover-mask.svg';
 import bouquet1 from '../../assets/images/crazylove/bouquet-1.webp';
 import bouquet2 from '../../assets/images/crazylove/bouquet-2.webp';
 import kids from '../../assets/images/crazylove/kids.webp';
-import CrazyLoveContent, { ENABLE_ANIMATIONS, INTRO } from './CrazyLoveContent';
+import CrazyLoveContent, { CRAZY_FEEL, ENABLE_ANIMATIONS, INTRO } from './CrazyLoveContent';
 import { OPENING, type OpeningParts } from './crazyloveOpening';
 import { Reveal, RevealProvider, useCoverReveals } from './scrollReveal';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
@@ -99,7 +99,7 @@ function useCoverScale() {
 function CrazyLoveCover({ invitation: inv, guest, opening, onOpen }: { invitation: CrazyLoveInvitation; guest: string; opening: boolean; onOpen: () => void }) {
   const { ref, scale, top } = useCoverScale();
   const lang = greetingLanguage(inv.greeting);
-  const { reveals } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1500 });
+  const { reveals } = useCoverReveals({ enabled: ENABLE_ANIMATIONS, frameW: COVER_W, frameH: COVER_H, rootRef: ref, settleMs: 1500, feel: CRAZY_FEEL });
   return (
     <RevealProvider value={reveals}>
     <div ref={ref} className="absolute inset-0 overflow-hidden">
@@ -149,17 +149,17 @@ function CrazyLoveCover({ invitation: inv, guest, opening, onOpen }: { invitatio
           </Reveal>
         </div>
 
-        <Reveal at={0} kind="pop" origin={[0, 640]} delay={400}>
+        <Reveal at={0} kind="pop" origin={[0, 640]} tilt={-3} delay={400}>
           <Rot box={[-109, 341, 215.506, 275.268]} w={162.517} h={243.775} deg={13.66} part="sticker" drift={[-22, 14]}>
             <img alt="" src={bouquet1} className={fill} />
           </Rot>
         </Reveal>
-        <Reveal at={0} kind="pop" origin={[375, 0]} delay={480}>
+        <Reveal at={0} kind="pop" origin={[375, 0]} tilt={3} delay={480}>
           <Rot box={[267, -69, 246.773, 220.301]} w={137.311} h={205.966} deg={-119.18} part="sticker" drift={[18, -16]}>
             <img alt="" src={bouquet1} className={fill} />
           </Rot>
         </Reveal>
-        <Reveal at={0} kind="pop" origin={[5, 107]} delay={560}>
+        <Reveal at={0} kind="pop" origin={[5, 107]} tilt={3} delay={560}>
           <Rot box={[5, 107, 117.833, 141.64]} w={80.744} h={121.116} deg={-20.36} part="sticker" drift={[-14, -8]}>
             <img alt="" src={bouquet2} className={fill} />
           </Rot>
@@ -188,7 +188,7 @@ function CrazyLoveCover({ invitation: inv, guest, opening, onOpen }: { invitatio
           </button>
         </Reveal>
 
-        <Reveal at={0} kind="pop" origin={[98.2, 76.7]} delay={600}>
+        <Reveal at={0} kind="pop" origin={[98.2, 76.7]} tilt={-3} delay={600}>
           <Rot box={[53, 35, 90.316, 83.394]} w={89.929} h={82.974} deg={-0.27} part="sticker" drift={[-6, -14]}>
             <img alt="" src={kids} className={fill} />
           </Rot>

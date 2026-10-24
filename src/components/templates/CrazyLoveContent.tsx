@@ -6,7 +6,7 @@ import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
 import { OPENING } from './crazyloveOpening';
-import { Float, Reveal, RevealOffset, RevealProvider, useScrollReveals } from './scrollReveal';
+import { Float, Reveal, RevealOffset, RevealProvider, useInView, useScrollReveals, type RevealFeel } from './scrollReveal';
 
 // Every layer is placed at its position in the Figma "Content" frame (375 × 6051), in
 // Figma's layer order, and the whole frame is scaled to the column width. Sections the couple
@@ -94,6 +94,20 @@ function introStyle({ revealed, reducedMotion, done }: IntroState): CSSPropertie
 /** Subtle one-time reveals on the cover and as sections scroll into view. Set to false to turn them all off. */
 export const ENABLE_ANIMATIONS = true;
 
+// A polaroid placed by hand: held a little above the page, bigger and more tilted, then laid
+// down with the faintest press. A sticker (or a flower, or the kids) pressed on: from a touch
+// bigger and turned, a little past its place and back.
+const PLACED = {
+  settle: { from: (tilt: number) => `translateY(-14px) rotate(${tilt * 2}deg) scale(1.06)`, moveEase: 'cubic-bezier(0.3, 1.25, 0.6, 1)' },
+  pop: { from: (tilt: number) => `rotate(${tilt * 2.5}deg) scale(1.2)`, moveEase: 'cubic-bezier(0.34, 1.5, 0.64, 1)' },
+};
+/** How the cover's scrapbook is put together as it settles in (see PLACED). */
+export const CRAZY_FEEL: RevealFeel = { kinds: PLACED };
+/** How the page's polaroids and stickers are placed as they scroll into view: a sticker is pressed on quicker than the shared pace. */
+const CRAZY_SCROLL_FEEL: RevealFeel = { kinds: { ...PLACED, pop: { ...PLACED.pop, ms: 1000 } } };
+/** Which way a sticker at frame (x, y) starts turned: one way or the other, so neighbours differ. */
+const stickerTilt = (x: number, y: number) => (Math.round(x + y) % 2 ? -3 : 3);
+
 const fill = 'absolute inset-0 block max-w-none size-full';
 
 /** Image layer at a Figma box. */
@@ -134,12 +148,12 @@ function RotImg({ file, box, w, h, deg, flip }: { file: string; box: [number, nu
 }
 
 /**
- * A sticker that pops in (scale 0.9 → 1 about its centre) when it scrolls into view; with
+ * A sticker that is pressed on (see PLACED) about its centre when it scrolls into view; with
  * `timing`, at the collage's quicker pace (see COLLAGE_TIMING).
  */
 function PopImg({ delay, timing, ...img }: { file: string; x: number; y: number; w: number; h: number; delay?: number; timing?: Timing }) {
   return (
-    <Reveal at={img.y} kind="pop" origin={[img.x + img.w / 2, img.y + img.h / 2]} delay={delay} {...timing}>
+    <Reveal at={img.y} kind="pop" origin={[img.x + img.w / 2, img.y + img.h / 2]} tilt={stickerTilt(img.x, img.y)} delay={delay} {...timing}>
       <Img {...img} />
     </Reveal>
   );
@@ -147,7 +161,7 @@ function PopImg({ delay, timing, ...img }: { file: string; x: number; y: number;
 function PopRot({ delay, timing, ...img }: { file: string; box: [number, number, number, number]; w: number; h: number; deg: number; flip?: boolean; delay?: number; timing?: Timing }) {
   const [x, y, bw, bh] = img.box;
   return (
-    <Reveal at={y} kind="pop" origin={[x + bw / 2, y + bh / 2]} delay={delay} {...timing}>
+    <Reveal at={y} kind="pop" origin={[x + bw / 2, y + bh / 2]} tilt={stickerTilt(x, y)} delay={delay} {...timing}>
       <RotImg {...img} />
     </Reveal>
   );
@@ -469,7 +483,7 @@ function CollageFrame({ index, photo, open }: { index: number; photo: GalleryPho
 const COLLAGE_STICKERS: ReactNode[][] = [
   [
     <PopImg key="4" file="sticker-4.webp" x={254} y={95} w={25} h={25} delay={afterCover(560)} timing={COLLAGE_TIMING.sticker} />,
-    <Reveal key="9" at={0} kind="pop" origin={[134.5, 52]} delay={afterCover(500)} {...COLLAGE_TIMING.sticker}>
+    <Reveal key="9" at={0} kind="pop" origin={[134.5, 52]} tilt={-3} delay={afterCover(500)} {...COLLAGE_TIMING.sticker}>
       <Float box={[118, 34, 33, 36]} delay={1400}>
         <Img file="sticker-9.webp" x={118} y={34} w={33} h={36} />
       </Float>
@@ -564,6 +578,39 @@ const STORY_ARROWS = [
 
 const storyTitle = `${slab} font-bold text-[15px] leading-[16px]`;
 const storyText = `${slab} font-semibold text-[13px] whitespace-pre-line`;
+
+// The arrows are drawn a moment after the card above them has started coming in, from the
+// feathers to the head, at a pen's pace.
+const ARROW_DRAW_DELAY_MS = 750;
+const ARROW_DRAW_MS = 900;
+
+/**
+ * A heart arrow drawn from its feathers to its head as frame y `at` comes into view, as if by pen:
+ * a clip uncovers it along its own length (the same way round when it is flipped). Once drawn it is
+ * the plain image again; without the reveals it simply shows.
+ */
+function DrawnArrow({ at, x, deg, flip }: (typeof STORY_ARROWS)[number]) {
+  const ref = useRef<HTMLImageElement>(null);
+  const inView = useInView(at);
+  const [drawn, setDrawn] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!inView || drawn || !el) return;
+    const anim = el.animate([{ clipPath: 'inset(-2px 100% -2px -2px)' }, { clipPath: 'inset(-2px -2px -2px -2px)' }], {
+      duration: ARROW_DRAW_MS,
+      delay: ARROW_DRAW_DELAY_MS,
+      easing: 'cubic-bezier(0.45, 0, 0.55, 1)',
+      fill: 'both',
+    });
+    anim.finished.then(() => setDrawn(true), () => {});
+    return () => anim.cancel();
+  }, [inView, drawn]);
+  return (
+    <Rot box={[x, at, 64.601, 50.196]} w={62.054} h={21.86} deg={deg} flip={flip}>
+      <img ref={ref} alt="" src={A('heart-arrow.svg')} className={`${fill} object-cover`} style={inView === false ? { clipPath: 'inset(0 100% 0 0)' } : undefined} />
+    </Rot>
+  );
+}
 
 function StoryEntry({ card, moment }: { card: (typeof STORY_CARDS)[number]; moment: StoryMoment }) {
   return (
@@ -884,7 +931,7 @@ export default function CrazyLoveContent({ invitation: inv, slug, intro }: { inv
     return () => ro.disconnect();
   }, []);
 
-  const reveals = useScrollReveals({ enabled: ENABLE_ANIMATIONS, frameW: FRAME_W, frameH: FRAME_H, wrapRef, started: intro.revealed });
+  const reveals = useScrollReveals({ enabled: ENABLE_ANIMATIONS, frameW: FRAME_W, frameH: FRAME_H, wrapRef, started: intro.revealed, feel: CRAZY_SCROLL_FEEL });
   const receptionVenue = inv.reception.venue ?? inv.venue;
 
   return (
@@ -1010,9 +1057,7 @@ export default function CrazyLoveContent({ invitation: inv, slug, intro }: { inv
 
         {/* ===== Cerita Kami ===== */}
         {STORY_ARROWS.slice(0, story.length - 1).map((a) => (
-          <Reveal key={a.at} at={a.at} kind="fade" delay={300}>
-            <RotImg file="heart-arrow.svg" box={[a.x, a.at, 64.601, 50.196]} w={62.054} h={21.86} deg={a.deg} flip={a.flip} />
-          </Reveal>
+          <DrawnArrow key={a.at} {...a} />
         ))}
         {/* Each card is its scallop and its text, from alternating sides. (The cards don't overlap,
             so grouping them changes nothing in the stacking.) */}
