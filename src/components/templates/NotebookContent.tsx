@@ -174,7 +174,9 @@ const treeWind = (lead: boolean): Wind => ({
 // The lilies in the same breeze as the trees, from where their stems leave the frame. The right
 // one, which the wind reaches 0.4s before the left, is cut off right at the frame's edge, so it
 // only nods (its top dips 1–3px) until it has an image reaching past that edge; the left one,
-// lighter, leans its top 4–13px left, out over its own edge, and sways a little quicker.
+// lighter, leans its top 4–13px left, out over its own edge, and sways a little quicker. (The
+// right one stays still for now, see the closing flower arch; its nod is kept here for when it
+// moves again.)
 const LILY_WIND = {
   right: { keyframes: 'nb-breeze-nod', deg: 1.5, ms: WIND_STRENGTHS.breeze.ms, delay: 0, origin: '100% 81%' },
   left: { keyframes: 'nb-breeze', deg: 3.2, ms: 7800, delay: 400, origin: '0% 77%' },
@@ -1170,17 +1172,19 @@ export default function NotebookContent({ invitation: inv, slug, intro }: { invi
           )}
 
           {/* ===== Closing flower arch =====
-              Depth: the lilies and the bushes are nearest, drifting faster than the page; the
-              arch and the forests behind it stay put. The lilies, cut off at the frame's edges,
-              move in the same breeze as the trees (see LILY_WIND), about the point where their
-              stems leave the frame. Nothing with text is drawn over the moving lilies or the arch above them (see
-              Scene): the closing words and the footer's credit come earlier, under them, where
-              none of them reach. */}
+              Depth: the lily beside the bank card is nearest, drifting faster than the page; the
+              arch and the forests behind it stay put. That lily, cut off at the frame's edge,
+              moves in the same breeze as the trees (see LILY_WIND), about the point where its
+              stem leaves the frame. Nothing with text is drawn over it (see Scene): the closing
+              words and the footer's credit come earlier, under it, where it doesn't reach.
+              The lily by the arch stays still for now: the arch and bushes are drawn over it, so
+              while it moved they went onto a layer of their own, and the address card's Salin
+              button drawn over them lost its label's sub-pixel smoothing with them. Its leaves
+              show below the top of the arch, so a scene box ending above the arch would cut them
+              off as they moved. */}
           <Shift by={closingShift} from={3370}>
             <Reveal at={3389} kind="pop" origin={[309.5, 3638]} delay={300}>
-              <Scene box={[244, 3389, 131, 249.393]}>
-                <Img file="lily-1.webp" x={244} y={3389} w={131} h={249.393} depth={-8} wind={LILY_WIND.right} />
-              </Scene>
+              <Img file="lily-1.webp" x={244} y={3389} w={131} h={249.393} />
             </Reveal>
           </Shift>
           {/* The lily beside the bank card goes with it. */}
