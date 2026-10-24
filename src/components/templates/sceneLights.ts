@@ -2,10 +2,10 @@ import { useEffect, type RefObject } from 'react';
 import './sceneLights.css';
 
 // Lights that twinkle or glow in a template's scenes: La La Land's stars and street lamp, Friends'
-// Tiffany lamps and fountain. Each sets a custom property that its opacity reads (sceneLights.css),
-// about a dozen times a second from one timer for the whole page: the page repaints just those few
-// small boxes, nothing goes onto a layer of its own (where text drawn nearby would lose its
-// sub-pixel smoothing), and in between the page does no work at all. (A CSS animation, even in
+// fountain, Crazy Little Thing's bulbs. Each sets a custom property that its opacity reads
+// (sceneLights.css), about a dozen times a second from one timer for the whole page: the page
+// repaints just those few small boxes, nothing goes onto a layer of its own (where text drawn
+// nearby would lose its sub-pixel smoothing), and in between the page does no work at all. (A CSS animation, even in
 // steps, has the page recalculate its styles every frame while it runs: on a slow phone several
 // times the cost.)
 

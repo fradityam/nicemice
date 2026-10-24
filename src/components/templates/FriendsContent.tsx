@@ -1,4 +1,4 @@
-import { Fragment, createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentProps, type CSSProperties, type ReactNode } from 'react';
 import { parseIsoDate } from '../../invitations/dates';
 import { MAX_MESSAGE, MAX_NAME, timeAgo, useRsvpForm, useWishes, type Attendance, type SendError, type Wish, type WishesState } from '../../invitations/rsvp';
 import type { FriendsInvitation } from '../../invitations/types';
@@ -88,14 +88,19 @@ function introStyle({ revealed, reducedMotion, done, focus }: IntroState, k: num
   return { transform: 'none', transformOrigin, transition: `transform ${ms}ms ${ease} ${delayMs}ms` };
 }
 
-/** Image layer at a Figma box: a design file (`file`) or one of the couple's photos (`src`). */
-function Img({ file, src, x, y, w, h, alt = '', className = '', style }: { file?: string; src?: string; x: number; y: number; w: number; h: number; alt?: string; className?: string; style?: CSSProperties }) {
+/**
+ * Image layer at a Figma box: a design file (`file`) or one of the couple's photos (`src`); `lit`
+ * dims it until its scene's lamps are on (Lights).
+ */
+function Img({ file, src, x, y, w, h, alt = '', className = '', style, lit }: { file?: string; src?: string; x: number; y: number; w: number; h: number; alt?: string; className?: string; style?: CSSProperties; lit?: Lit }) {
+  const dark = useDark(lit);
   return (
     <img
+      {...dark}
       alt={alt}
       src={src ?? A(file!)}
       className={`absolute block max-w-none object-cover ${className}`}
-      style={{ left: x, top: y, width: w, height: h, ...style }}
+      style={{ left: x, top: y, width: w, height: h, ...style, ...dark?.style }}
     />
   );
 }
@@ -514,29 +519,151 @@ function Scene({ box: [x, y, w, h], children }: { box: [number, number, number, 
   );
 }
 
-// The Tiffany lamps' warm light (sceneLights.ts), a box this many frame px across over each
-// shade's centre: the two at the fountain, and Central Perk's. A halo around the shade, faint over
-// the glass itself so its colours aren't washed out.
-const GLOW_W = 150;
-const GLOW_H = 120;
-// Laid over the painting as it is, not blended with it: a blend mode would have the browser put
-// the whole page, text and all, on a layer of its own beside a moving scene.
-const GLOW = 'radial-gradient(closest-side, rgba(255,214,150,0.08) 0%, rgba(255,204,130,0.12) 45%, rgba(255,190,112,0.2) 62%, rgba(255,180,100,0.08) 82%, rgba(255,180,100,0) 100%)';
-const LAMP_GLOWS = {
-  fountainLeft: { x: 32, y: 425.7, ms: 6400, delay: 0 },
-  fountainRight: { x: 343, y: 425.7, ms: 7100, delay: -2600 },
-  perk: { x: 341, y: 2865, ms: 6800, delay: -1300 },
+// The Tiffany lamps coming on, in the fountain scene as the door finishes opening and at Central
+// Perk the first time it comes on screen. Until then the room is dim, as if they were off; they
+// flicker twice and come on, brighter than painted and with a warm halo, and the light spreads
+// from them, the nearest things brightening first, until the scene is exactly as painted. Each
+// painted layer is dimmed by a filter of its own, set frame by frame rather than animated (an
+// animated filter would put it on a layer of its own, and the text beside it with it), so the text
+// in between keeps its colours; the wall behind Central Perk by a shade drawn beneath its text.
+// Once lit, the filters, halos and shade are gone. For guests who prefer reduced motion, none of it.
+type Keys = [ms: number, value: number][];
+const LIGHTS_ON_MS = 1800;
+const LIT: Record<'lamp' | 'glow' | 'near' | 'doodle' | 'mid' | 'far' | 'shade', Keys> = {
+  // The shades' brightness: off, two flickers, on (brighter than painted), settling as painted.
+  lamp: [[0, 0.5], [140, 0.5], [160, 1.45], [220, 0.6], [330, 0.6], [350, 1.45], [390, 0.65], [500, 0.65], [520, 1.5], [1000, 1.4], [LIGHTS_ON_MS, 1]],
+  // The halo's opacity, with the lamps.
+  glow: [[0, 0], [140, 0], [160, 0.7], [220, 0.1], [330, 0.1], [350, 0.7], [390, 0.1], [500, 0.1], [520, 1], [1000, 1], [LIGHTS_ON_MS, 0]],
+  // The rest of the room's brightness, from the lamps outwards: what is beside them first, the
+  // walls and sky last. The Magna Doodle is never as dim, so its writing stays easy to read.
+  near: [[0, 0.5], [520, 0.5], [1150, 1]],
+  doodle: [[0, 0.75], [520, 0.75], [1000, 1]],
+  mid: [[0, 0.5], [650, 0.5], [1450, 1]],
+  far: [[0, 0.5], [800, 0.5], [LIGHTS_ON_MS, 1]],
+  // The wall's shade, as opaque as `far` is dim.
+  shade: [[0, 1], [800, 1], [LIGHTS_ON_MS, 0]],
 };
+type LitRole = keyof typeof LIT;
+// How far the halo has spread, as a share of its box: wider as it fades.
+const GLOW_SPREAD: Keys = [[0, 0.6], [520, 0.6], [LIGHTS_ON_MS, 1]];
+
+/** The value `keys` give `ms` into the lights coming on, easing in and out between them. */
+function keyed(keys: Keys, ms: number) {
+  const i = keys.findIndex(([at]) => at >= ms);
+  if (i < 0) return keys[keys.length - 1][1];
+  if (i === 0) return keys[0][1];
+  const [[a, va], [b, vb]] = [keys[i - 1], keys[i]];
+  return va + (vb - va) * (0.5 - Math.cos((Math.PI * (ms - a)) / (b - a)) / 2);
+}
 
 /**
- * A lamp's light breathing (sceneLights.ts) while it is on screen, once `active`: it comes on
- * softly. For guests who prefer reduced motion there is no element at all.
+ * A dimmed layer's style at `ms` into the lights coming on, in steps too small to see, so a layer
+ * is only painted again when it has changed.
  */
-function LampGlow({ x, y, ms, delay, active = true }: (typeof LAMP_GLOWS)[keyof typeof LAMP_GLOWS] & { active?: boolean }) {
-  const [ref, live] = useLive<HTMLDivElement>();
-  useLight(ref, 'glow', { ms, delay, active: active && live });
-  if (useStill()) return null;
-  return <div ref={ref} className="light-glow pointer-events-none absolute" style={{ left: x - GLOW_W / 2, top: y - GLOW_H / 2, width: GLOW_W, height: GLOW_H, backgroundImage: GLOW }} />;
+function litStyle(role: LitRole, ms: number): CSSProperties {
+  const v = Math.round(keyed(LIT[role], ms) * 100) / 100;
+  if (role === 'shade') return { opacity: v };
+  if (role === 'glow') return { opacity: v, backgroundSize: `${Math.round(keyed(GLOW_SPREAD, ms) * 100)}%` };
+  return { filter: `brightness(${v})` };
+}
+
+type LitProps = { 'data-lit': string; style: CSSProperties };
+type LightsGroup = 'fountain' | 'perk';
+/** A layer dimmed until its scene's lamps are on: the scene, and its part in the light. */
+type Lit = [LightsGroup, LitRole];
+
+/**
+ * The lamps of the page's two scenes coming on (`run`). Kept apart from the page's own state, so
+ * that once they are on only the layers they dimmed render again, not the whole page.
+ */
+class Lights {
+  private on = new Set<LightsGroup>();
+  private subs = new Set<() => void>();
+  private frames = new Map<LightsGroup, number>();
+  constructor(still: boolean) {
+    if (still) this.on = new Set(['fountain', 'perk']);
+  }
+  subscribe = (f: () => void) => {
+    this.subs.add(f);
+    return () => void this.subs.delete(f);
+  };
+  isOn = (group: LightsGroup) => this.on.has(group);
+  /** The scene's lamps coming on, its dimmed layers being in `wrap`: once only. */
+  run(group: LightsGroup, wrap: HTMLElement | null) {
+    if (!wrap || this.on.has(group) || this.frames.has(group)) return;
+    const els = [...wrap.querySelectorAll<HTMLElement>(`[data-lit^="${group} "]`)];
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const ms = now - t0;
+      for (const el of els) Object.assign(el.style, litStyle(el.dataset.lit!.split(' ')[1] as LitRole, ms));
+      if (ms < LIGHTS_ON_MS) return void this.frames.set(group, requestAnimationFrame(step));
+      this.frames.delete(group);
+      this.on.add(group);
+      this.subs.forEach((f) => f());
+    };
+    this.frames.set(group, requestAnimationFrame(step));
+  }
+  stop() {
+    this.frames.forEach(cancelAnimationFrame);
+    this.frames.clear();
+  }
+}
+const LightsContext = createContext<Lights | null>(null);
+const noSubscribe = () => () => {};
+
+/** Whether a scene's lamps are on: always, outside the page's lights or for no scene at all. */
+function useLightsOn(group: LightsGroup | undefined) {
+  const lights = useContext(LightsContext);
+  const watched = group && lights;
+  return useSyncExternalStore(watched ? watched.subscribe : noSubscribe, () => !watched || watched.isOn(group));
+}
+
+/** A layer's dimmed style, and the mark Lights finds it by, until its scene's lamps are on. */
+function useDark(lit: Lit | undefined): LitProps | undefined {
+  const on = useLightsOn(lit?.[0]);
+  return lit && !on ? { 'data-lit': lit.join(' '), style: litStyle(lit[1], 0) } : undefined;
+}
+
+/** The shade over the wall behind Central Perk until its lamp is on (PERK_SHADE). */
+function PerkShade() {
+  const lit = useDark(['perk', 'shade']);
+  if (!lit) return null;
+  const { top, h, fade } = PERK_SHADE;
+  return (
+    <div
+      {...lit}
+      className="pointer-events-none absolute left-0 w-[376px]"
+      style={{ top, height: h, backgroundImage: `linear-gradient(transparent, rgba(0,0,0,0.5) ${fade}px, rgba(0,0,0,0.5) calc(100% - ${fade}px), transparent)`, ...lit.style }}
+    />
+  );
+}
+
+/** An <img> of a scene, dimmed until its lamps are on. */
+function LitImg({ lit, style, ...props }: ComponentProps<'img'> & { lit: Lit }) {
+  const dark = useDark(lit);
+  return <img {...props} {...dark} style={{ ...style, ...dark?.style }} />;
+}
+
+// A lamp's halo: a box this many frame px across over its shade's centre (the two at the
+// fountain, and Central Perk's), faint over the glass itself so its colours aren't washed out.
+// Laid over the painting as it is, not blended with it: a blend mode would have the browser put
+// the whole page, text and all, on a layer of its own beside a moving scene.
+const GLOW_W = 280;
+const GLOW_H = 230;
+const GLOW = 'radial-gradient(closest-side, rgba(255,220,160,0.2) 0%, rgba(255,206,132,0.32) 30%, rgba(255,192,112,0.22) 55%, rgba(255,180,100,0.08) 80%, rgba(255,180,100,0) 100%)';
+const LAMPS = { fountainLeft: [32, 425.7], fountainRight: [343, 425.7], perk: [341, 2865] } satisfies Record<string, Focus>;
+
+/** A lamp's halo while it comes on, and nothing after. */
+function LampGlow({ group, at: [x, y] }: { group: LightsGroup; at: Focus }) {
+  const lit = useDark([group, 'glow']);
+  if (!lit) return null;
+  return (
+    <div
+      {...lit}
+      className="pointer-events-none absolute bg-center bg-no-repeat"
+      style={{ left: x - GLOW_W / 2, top: y - GLOW_H / 2, width: GLOW_W, height: GLOW_H, backgroundImage: GLOW, ...lit.style }}
+    />
+  );
 }
 
 // Bright spots on the fountain's jets that glint now and then (frame x, y; how often; how far
@@ -562,7 +689,9 @@ const GLINT_MASK: CSSProperties = {
 function FountainGlint({ x, y, ms, delay, active }: (typeof FOUNTAIN_GLINTS)[number] & { active: boolean }) {
   const [ref, live] = useLive<HTMLDivElement>();
   const water = useRef<HTMLImageElement>(null);
-  useLight(water, 'twinkle', { ms, delay, active: active && live });
+  // Once the lamps are on: the water glints in their light.
+  const lit = useLightsOn('fountain');
+  useLight(water, 'twinkle', { ms, delay, active: active && live && lit });
   if (useStill()) return null;
   const [left, top] = [x - GLINT_R, y - GLINT_R];
   return (
@@ -611,6 +740,14 @@ const EMPHASIS_DELAY_MS = 1100;
 // the wall (which stays with the page), so nothing slides on the rug and the stools peeking over
 // the couch shift behind it.
 const PERK_DEPTH = -8;
+
+// The fountain's lamps come on as the door finishes opening (or the camera is through the
+// peephole); Central Perk's once its couch has scrolled in.
+const FOUNTAIN_LIGHTS_AT_MS = OPENING.totalMs - 250;
+const PERK_LIGHTS_AT = 2925;
+// The wall behind Central Perk, which its shade dims: from just below the story's last line,
+// fading in, to behind the rug, fading out (the floor in front of it is the rug's).
+const PERK_SHADE = { top: 2800, h: 3190 - 2800, fade: 90 };
 
 // Handwritten headings start as soon as they are just on screen, before the reveals around them.
 // A name under a photo waits for the photo to start coming in; the Magna Doodle is written once the
@@ -665,8 +802,19 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
 
   const reveals = useScrollReveals({ enabled: ENABLE_ANIMATIONS, frameW: FRAME_W, frameH, wrapRef, started: intro.revealed });
 
+  const still = useStill();
+  const [lights] = useState(() => new Lights(still));
+  useEffect(() => () => lights.stop(), [lights]);
+  useEffect(() => {
+    if (!intro.revealed) return;
+    const id = setTimeout(() => lights.run('fountain', wrapRef.current), FOUNTAIN_LIGHTS_AT_MS);
+    return () => clearTimeout(id);
+  }, [intro.revealed, lights]);
+  useEffect(() => reveals?.watch(PERK_LIGHTS_AT, () => lights.run('perk', wrapRef.current)), [reveals, lights]);
+
   return (
     <RevealProvider value={reveals}>
+    <LightsContext.Provider value={lights}>
     {/* `clip` too (`hidden` is the fallback): a box that hides its overflow goes onto a layer of
         its own, with all the text in it, while a scene inside it moves (see Scene). */}
     <div ref={wrapRef} className="relative w-full overflow-hidden bg-[#fefffa]" style={{ aspectRatio: `${FRAME_W} / ${frameH}`, overflow: 'clip' }}>
@@ -679,9 +827,9 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         {/* The fountain scene's painting and grass: the farthest planes as the camera arrives. */}
         <div className="absolute left-0 top-[-236px] h-[851px] w-[375px] overflow-hidden" style={introStyle(intro, OPENING.scene.far, [0, -236])}>
           {/* The largest thing on screen at first (the page's LCP): fetched before the rest. */}
-          <img alt="" src={A('city-night.webp')} fetchPriority="high" className="absolute left-0 top-0 block h-[109.05%] w-full max-w-none" />
+          <LitImg lit={['fountain', 'far']} alt="" src={A('city-night.webp')} fetchPriority="high" className="absolute left-0 top-0 block h-[109.05%] w-full max-w-none" />
         </div>
-        <Img file="grass.webp" x={-113} y={492} w={602} h={243} style={introStyle(intro, OPENING.scene.mid, [-113, 492])} />
+        <Img file="grass.webp" x={-113} y={492} w={602} h={243} style={introStyle(intro, OPENING.scene.mid, [-113, 492])} lit={['fountain', 'mid']} />
         <div className="absolute left-0 top-[2018px] h-[1059px] w-[376px] bg-[#d64f16]" />
         {[2013, 2347, 2681].flatMap((y) => [0, 188].map((x) => <Img key={`${x}-${y}`} file="brick.webp" x={x} y={y} w={188} h={334} className="opacity-33" />))}
         {[0, 188].map((x) => (
@@ -772,7 +920,7 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
 
         {/* ===== Fountain scene (first section: the camera settles into it as the cover opens) ===== */}
         <div className="absolute left-0 top-0 h-[780px] w-[375px]" style={introStyle(intro, OPENING.scene.mid)}>
-          <Img file="fountain.webp" x={60} y={334} w={245} h={261} />
+          <Img file="fountain.webp" x={60} y={334} w={245} h={261} lit={['fountain', 'mid']} />
           {FOUNTAIN_GLINTS.map((g) => (
             <FountainGlint key={g.x} {...g} active={intro.revealed} />
           ))}
@@ -789,15 +937,14 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           </Centered>
 
           <Near style={introStyle(intro, OPENING.scene.near / OPENING.scene.mid)}>
-          <Img file="lamp.webp" x={264} y={389} w={157} h={236} />
-          <Img file="lamp.webp" x={-47} y={389} w={157} h={236} />
-          {/* The lamps come on as the cover opens. */}
-          <LampGlow {...LAMP_GLOWS.fountainRight} active={intro.revealed} />
-          <LampGlow {...LAMP_GLOWS.fountainLeft} active={intro.revealed} />
-          <Img file="orange-couch.webp" x={24} y={472} w={327} h={164} alt="The orange couch in front of the fountain" />
+          <Img file="lamp.webp" x={264} y={389} w={157} h={236} lit={['fountain', 'lamp']} />
+          <Img file="lamp.webp" x={-47} y={389} w={157} h={236} lit={['fountain', 'lamp']} />
+          <LampGlow group="fountain" at={LAMPS.fountainRight} />
+          <LampGlow group="fountain" at={LAMPS.fountainLeft} />
+          <Img file="orange-couch.webp" x={24} y={472} w={327} h={164} alt="The orange couch in front of the fountain" lit={['fountain', 'near']} />
 
           {/* Magna Doodle */}
-          <Img file="magna-doodle.webp" x={81.25} y={515} w={223.5} h={149} />
+          <Img file="magna-doodle.webp" x={81.25} y={515} w={223.5} h={149} lit={['fountain', 'doodle']} />
           {/* Written on it with its pen as the camera settles into the scene (its lines as one
               text, broken where the couple broke them), and then signed. */}
           <Centered cx={181.24} cy={572.84} className={`${friendsTitle} text-[14px] leading-[19px] text-[#3a3535]`} style={{ whiteSpace: 'pre' }} fit={FIT.doodle}>
@@ -881,6 +1028,8 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         <Transformed m={[0.974, 0.225, -62.181, -0.225, 0.974, 2716.135]} w={137.221} h={244.869}><img alt="" src={A('newspaper-1.webp')} className={fill} /></Transformed>
         <Img file="newspaper-2.webp" x={209} y={2481} w={225} h={271} />
         <Img file="torn-paper.webp" x={12} y={2429} w={358} h={567} />
+        {/* The wall behind Central Perk in the dark, beneath the story's text. */}
+        <PerkShade />
         <Centered cx={187.5} cy={2495} className={`${friendsTitle} text-[24px] leading-[30px] text-[#d64f16]`}>
           <Handwritten at={2480}>Our Love Story</Handwritten>
         </Centered>
@@ -898,16 +1047,16 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         ))}
 
         {/* ===== Central Perk ===== */}
-        <Img file="perk-bar.webp" x={47} y={2808} w={280} h={224} />
+        <Img file="perk-bar.webp" x={47} y={2808} w={280} h={224} lit={['perk', 'mid']} />
         {/* Its box reaches to the frame's edges (the rug and lamp are cut off there) and stops
             above the Ceremony frame. */}
         <Scene box={[0, 2826, FRAME_W, 3202 - 2826]}>
           <Depth depth={PERK_DEPTH}>
-            <Img file="carpet.webp" x={-62} y={3039} w={498} h={163} />
-            <Img file="lamp.webp" x={257} y={2826} w={167} h={251} />
-            <LampGlow {...LAMP_GLOWS.perk} />
-            <Img file="perk-couch.webp" x={17} y={2925} w={340} h={191} alt="The Central Perk couch" />
-            <Img file="perk-table.webp" x={71} y={3002} w={232} h={155} />
+            <Img file="carpet.webp" x={-62} y={3039} w={498} h={163} lit={['perk', 'near']} />
+            <Img file="lamp.webp" x={257} y={2826} w={167} h={251} lit={['perk', 'lamp']} />
+            <LampGlow group="perk" at={LAMPS.perk} />
+            <Img file="perk-couch.webp" x={17} y={2925} w={340} h={191} alt="The Central Perk couch" lit={['perk', 'near']} />
+            <Img file="perk-table.webp" x={71} y={3002} w={232} h={155} lit={['perk', 'near']} />
           </Depth>
         </Scene>
 
@@ -1050,7 +1199,7 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         </Shift>
 
         <Reveal at={666} kind="pop" origin={[187.5, 713.5]} delay={900}>
-          <Img file="turkey-dance.webp" x={142} y={666} w={91} h={95} />
+          <Img file="turkey-dance.webp" x={142} y={666} w={91} h={95} lit={['fountain', 'mid']} />
         </Reveal>
 
         {/* ===== Made with love by nicemice (no edge in Figma: the white gradient fades into it) ===== */}
@@ -1061,6 +1210,7 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
 
       {galleryOpen && <PhotoLightbox photos={photos} start={0} theme={theme} onClose={() => setGalleryOpen(false)} />}
     </div>
+    </LightsContext.Provider>
     </RevealProvider>
   );
 }
