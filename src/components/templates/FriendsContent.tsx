@@ -5,6 +5,7 @@ import type { FriendsInvitation } from '../../invitations/types';
 import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
+import { OPENING } from './friendsOpening';
 import { Float, Reveal, RevealOffset, RevealProvider, useScrollReveals } from './scrollReveal';
 
 // Every layer is placed at its position in the Figma "Content" frame (375 × 5768), in
@@ -58,26 +59,31 @@ const FIT = {
   signature: { w: 280 },
 } satisfies Record<string, FitBox | FitBox[]>;
 
-/** Cover → content transition (shared with the template). */
+/** Cover → content transition without animations (shared with the template): the cover fades. */
 export const INTRO = {
   EASE_OUT: 'cubic-bezier(0.33, 1, 0.68, 1)',
-  COVER_FADE_MS: 1000,
-  COVER_RISE_PX: 16,
-  CONTENT_DELAY_MS: 150,
-  CONTENT_MS: 900,
-  CONTENT_RISE_PX: 24,
   REDUCED_FADE_MS: 300,
-  get TOTAL_MS() {
-    return Math.max(this.COVER_FADE_MS, this.CONTENT_DELAY_MS + this.CONTENT_MS);
-  },
 };
-export type IntroState = { revealed: boolean; reducedMotion: boolean };
+/** A point in the frame (px) the camera moves to as the cover opens. */
+export type Focus = [x: number, y: number];
+/**
+ * The cover opening onto the page: `revealed` once it starts, `done` once the cover has gone,
+ * with the point the camera moves to (see friendsOpening.ts).
+ */
+export type IntroState = { revealed: boolean; reducedMotion: boolean; done: boolean; focus: Focus };
 
-function introStyle({ revealed, reducedMotion }: IntroState): CSSProperties {
-  if (reducedMotion) return {};
-  if (!revealed) return { opacity: 0, transform: `translateY(${INTRO.CONTENT_RISE_PX}px)` };
-  const t = `${INTRO.CONTENT_MS}ms ${INTRO.EASE_OUT} ${INTRO.CONTENT_DELAY_MS}ms`;
-  return { opacity: 1, transform: 'translateY(0)', transition: `opacity ${t}, transform ${t}` };
+/**
+ * One plane of the fountain scene as the camera arrives (OPENING.scene): `k` times larger about
+ * the focus under the cover, settling to its Figma position as the cover opens. `at` is where the
+ * plane's own box starts in the frame, which its origin is measured from. Nothing once the cover
+ * has gone, so the scene is exactly as laid out.
+ */
+function introStyle({ revealed, reducedMotion, done, focus }: IntroState, k: number, at: Focus = [0, 0]): CSSProperties {
+  if (!ENABLE_ANIMATIONS || reducedMotion || done) return {};
+  const transformOrigin = `${focus[0] - at[0]}px ${focus[1] - at[1]}px`;
+  if (!revealed) return { transform: `scale(${k})`, transformOrigin };
+  const { delayMs, ms, ease } = OPENING.scene;
+  return { transform: 'none', transformOrigin, transition: `transform ${ms}ms ${ease} ${delayMs}ms` };
 }
 
 /** Image layer at a Figma box: a design file (`file`) or one of the couple's photos (`src`). */
@@ -416,6 +422,19 @@ function WishesBand({ wishes }: { wishes: WishesState }) {
   );
 }
 
+/**
+ * The fountain scene's nearest layers (the lamps, couch and Magna Doodle), settling further than
+ * the rest as the camera arrives. Without a `style` (the cover has gone) there is no box at all.
+ */
+function Near({ style, children }: { style: CSSProperties; children: ReactNode }) {
+  if (!style.transform) return <div className="contents">{children}</div>;
+  return (
+    <div className="absolute left-0 top-0 h-[780px] w-[375px]" style={style}>
+      {children}
+    </div>
+  );
+}
+
 // ---------- Page ----------
 
 const storyTitle = 'ff-f72 -translate-y-1/2 absolute left-[89px] text-[15px] leading-[30px] tracking-[-0.017em] text-[#d64f16] whitespace-nowrap';
@@ -470,11 +489,12 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
         {/* ===== BG ===== */}
         <div className="absolute left-0 top-[459px] h-[1587px] w-[377px]" style={{ backgroundColor: PURPLE }} />
         <Img file="fabric-texture.webp" x={1.01} y={676.8} w={378} h={1408.1} className="opacity-10" />
-        <div className="absolute left-0 top-[-236px] h-[851px] w-[375px] overflow-hidden">
+        {/* The fountain scene's painting and grass: the farthest planes as the camera arrives. */}
+        <div className="absolute left-0 top-[-236px] h-[851px] w-[375px] overflow-hidden" style={introStyle(intro, OPENING.scene.far, [0, -236])}>
           {/* The largest thing on screen at first (the page's LCP): fetched before the rest. */}
           <img alt="" src={A('city-night.webp')} fetchPriority="high" className="absolute left-0 top-0 block h-[109.05%] w-full max-w-none" />
         </div>
-        <Img file="grass.webp" x={-113} y={492} w={602} h={243} />
+        <Img file="grass.webp" x={-113} y={492} w={602} h={243} style={introStyle(intro, OPENING.scene.mid, [-113, 492])} />
         <div className="absolute left-0 top-[2018px] h-[1059px] w-[376px] bg-[#d64f16]" />
         {[2013, 2347, 2681].flatMap((y) => [0, 188].map((x) => <Img key={`${x}-${y}`} file="brick.webp" x={x} y={y} w={188} h={334} className="opacity-33" />))}
         {[0, 188].map((x) => (
@@ -555,13 +575,11 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           </Centered>
         </Reveal>
 
-        {/* ===== Fountain scene (first section, rises in from the cover) ===== */}
-        <div className="absolute left-0 top-0 h-[780px] w-[375px]" style={introStyle(intro)}>
+        {/* ===== Fountain scene (first section: the camera settles into it as the cover opens) ===== */}
+        <div className="absolute left-0 top-0 h-[780px] w-[375px]" style={introStyle(intro, OPENING.scene.mid)}>
           <Img file="fountain.webp" x={60} y={334} w={245} h={261} />
-          <Img file="lamp.webp" x={264} y={389} w={157} h={236} />
-          <Img file="lamp.webp" x={-47} y={389} w={157} h={236} />
-          <Img file="orange-couch.webp" x={24} y={472} w={327} h={164} alt="The orange couch in front of the fountain" />
-          {/* h2: the cover's title (FriendsTemplate.tsx) is the page's one h1. */}
+          {/* h2: the cover's title (FriendsTemplate.tsx) is the page's one h1. (Drawn before the
+              lamps and couch, which it is well clear of, so they can settle as one plane.) */}
           <h2 ref={titleFit.ref} className={`-translate-x-1/2 -translate-y-1/2 absolute left-1/2 top-[116.5px] text-center ${friendsTitle} leading-[35px] text-white`} style={titleFit.style}>
             <span className="block text-[20px]">The one with</span>
             <span className="block text-[27px]">{inv.coupleNames}</span>
@@ -572,6 +590,11 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
             {weddingDate}
           </Centered>
 
+          <Near style={introStyle(intro, OPENING.scene.near / OPENING.scene.mid)}>
+          <Img file="lamp.webp" x={264} y={389} w={157} h={236} />
+          <Img file="lamp.webp" x={-47} y={389} w={157} h={236} />
+          <Img file="orange-couch.webp" x={24} y={472} w={327} h={164} alt="The orange couch in front of the fountain" />
+
           {/* Magna Doodle */}
           <Img file="magna-doodle.webp" x={81.25} y={515} w={223.5} h={149} />
           <Centered cx={181.24} cy={572.84} className={`${friendsTitle} text-[14px] leading-[19px] text-[#3a3535]`} fit={FIT.doodle}>
@@ -580,6 +603,7 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           <Centered cx={176.8} cy={614.87} className={`${friendsTitle} text-[12px] leading-[26px] text-[#3a3535]`} fit={FIT.doodleSignature}>
             {inv.doodle.signature}
           </Centered>
+          </Near>
         </div>
 
         <Reveal at={835} kind="fadeUp" delay={120}>
