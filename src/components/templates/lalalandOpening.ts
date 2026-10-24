@@ -143,8 +143,8 @@ export const GLOW_OPENING: Opening = {
   },
 };
 
-/** The opening La La Land uses. Locally, ?opening=iris or ?opening=glow on the URL tries each. */
+/** The opening La La Land uses: the glow. Locally, ?opening=iris on the URL tries the iris. */
 export const OPENING: Opening = (() => {
   const asked = import.meta.env.DEV ? new URLSearchParams(window.location.search).get('opening') : null;
-  return asked === 'glow' ? GLOW_OPENING : IRIS_OPENING;
+  return asked === 'iris' ? IRIS_OPENING : GLOW_OPENING;
 })();
