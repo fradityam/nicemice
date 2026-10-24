@@ -11,6 +11,7 @@ import bouquet2 from '../../assets/images/crazylove/bouquet-2.webp';
 import kids from '../../assets/images/crazylove/kids.webp';
 import CrazyLoveContent, { CRAZY_FEEL, ENABLE_ANIMATIONS, INTRO } from './CrazyLoveContent';
 import { OPENING, type OpeningParts } from './crazyloveOpening';
+import { Handwritten } from './handwriting';
 import { Reveal, RevealProvider, useCoverReveals } from './scrollReveal';
 import { MusicToggle, useBackgroundMusic } from './templateMusic';
 import { STAGE_BG } from './templateStage';
@@ -38,6 +39,8 @@ const OPEN_LABEL: Record<Language, string> = { en: 'Open the Invitation', id: 'B
 // The couple's names on the polaroid, and the greeting and guest's name under it, shrink to
 // stay inside their slots.
 const NAMES_FIT: FitBox = { w: 200 };
+// "said “I do!”" under the couple's names is written by hand once the polaroid has settled on the card.
+const I_DO_WRITE_DELAY_MS = 950;
 const LINE_FIT: FitBox = { w: 330 };
 
 /** A line of the cover that shrinks (towards its centre) when it is longer than its slot. */
@@ -143,7 +146,11 @@ function CrazyLoveCover({ invitation: inv, guest, opening, onOpen }: { invitatio
                 <FitLine as="span" fit={NAMES_FIT} className="mx-auto block w-max whitespace-nowrap text-[30px] leading-[26px]">
                   {inv.coupleNames}
                 </FitLine>
-                <span className="block text-[26px] leading-[26px]">said “I do!”</span>
+                <span className="block text-[26px] leading-[26px]">
+                  <Handwritten at={0} delay={I_DO_WRITE_DELAY_MS}>
+                    said “I do!”
+                  </Handwritten>
+                </span>
               </h1>
             </Rot>
           </Reveal>

@@ -6,6 +6,7 @@ import { useFit, type FitBox } from './fitText';
 import { MadeWithLoveFooter } from './MadeWithLoveFooter';
 import { PhotoLightbox, type LightboxPhoto, type LightboxTheme } from './PhotoLightbox';
 import { OPENING } from './crazyloveOpening';
+import { Handwritten } from './handwriting';
 import { useLight } from './sceneLights';
 import { Float, Reveal, RevealOffset, RevealProvider, useInView, useScrollReveals, type RevealFeel } from './scrollReveal';
 import './crazylove.css';
@@ -382,16 +383,50 @@ const slab = "font-['Josefin_Slab']";
 const sans = "font-['Josefin_Sans']";
 const pen = "font-['Nanum_Pen_Script'] font-normal";
 
-/** A section title with its two flourishes ("Cerita Kami", "Doa & Ucapan", "Tanda Kasih"). */
-function SectionTitle({ y, color, delay, children }: { y: number; color: string; delay?: number; children: ReactNode }) {
+// Drawing by pen: a stroke starts slowly, speeds up and slows down to its end.
+const DRAW_EASE = 'cubic-bezier(0.45, 0, 0.55, 1)';
+const FLOURISH_DRAW_MS = 700;
+
+/**
+ * An image drawn as if by pen once frame y `at` has come into view (and `wait` has cleared): a clip
+ * uncovers it from its left end to its right (`fromRight`, the other way), in its own coordinates.
+ * Returns the image's ref and the style to give it; once drawn it is the plain image again, and
+ * without the reveals it simply shows.
+ */
+function useDrawn(at: number, { ms, delay = 0, wait = false, fromRight = false }: { ms: number; delay?: number; wait?: boolean; fromRight?: boolean }) {
+  const ref = useRef<HTMLImageElement>(null);
+  const inView = useInView(at);
+  const [drawn, setDrawn] = useState(false);
+  const hidden = fromRight ? 'inset(-2px -2px -2px 100%)' : 'inset(-2px 100% -2px -2px)';
+  useEffect(() => {
+    const el = ref.current;
+    if (!inView || wait || drawn || !el) return;
+    const anim = el.animate([{ clipPath: hidden }, { clipPath: 'inset(-2px)' }], { duration: ms, delay, easing: DRAW_EASE, fill: 'both' });
+    anim.finished.then(() => setDrawn(true), () => {});
+    return () => anim.cancel();
+  }, [inView, wait, drawn, hidden, ms, delay]);
+  return { ref, style: inView === null || drawn ? undefined : { clipPath: hidden } };
+}
+
+/**
+ * A section title ("Cerita Kami", "Doa & Ucapan", "Tanda Kasih") written by hand as it comes into
+ * view, then its two flourishes drawn outwards from it.
+ */
+function SectionTitle({ y, color, children }: { y: number; color: string; children: string }) {
+  const [written, setWritten] = useState(false);
+  const left = useDrawn(y, { ms: FLOURISH_DRAW_MS, wait: !written, fromRight: true });
+  const right = useDrawn(y, { ms: FLOURISH_DRAW_MS, wait: !written });
+  const flourish = 'absolute block max-w-none object-cover';
   return (
-    <Reveal at={y} kind="fadeUp" delay={delay}>
+    <>
       <Top cx={187.5} y={y} className={`${pen} whitespace-nowrap text-[40px] leading-[normal]`} style={{ color }}>
-        {children}
+        <Handwritten at={y} onWritten={() => setWritten(true)}>
+          {children}
+        </Handwritten>
       </Top>
-      <Img file="flourish-left.svg" x={42} y={y + 19.028} w={52} h={10} />
-      <Img file="flourish-right.svg" x={282} y={y + 19.028} w={52} h={10} />
-    </Reveal>
+      <img ref={left.ref} alt="" src={A('flourish-left.svg')} className={flourish} style={{ left: 42, top: y + 19.028, width: 52, height: 10, ...left.style }} />
+      <img ref={right.ref} alt="" src={A('flourish-right.svg')} className={flourish} style={{ left: 282, top: y + 19.028, width: 52, height: 10, ...right.style }} />
+    </>
   );
 }
 
@@ -534,6 +569,30 @@ type Timing = { ms: number; cue: true };
 // after another, then the stickers pop on around them.
 const COLLAGE_TIMING = { frame: { ms: 800, cue: true }, sticker: { ms: 500, cue: true } } satisfies Record<string, Timing>;
 const afterCover = (delay: number) => OPENING.collageDelayMs + delay;
+// The quote under the collage is written once its polaroids are down.
+const QUOTE_WRITE_DELAY_MS = afterCover(1000);
+
+/** The quote under the collage, written by hand, and then its source. */
+function Quote() {
+  // Here rather than in the page, so that only the quote renders again once it is written.
+  const [written, setWritten] = useState(false);
+  return (
+    <>
+      <div style={{ color: BLUE }}>
+        <Top cx={188} y={511} className={`${pen} whitespace-pre text-[22px] leading-[normal]`}>
+          <Handwritten at={511} delay={QUOTE_WRITE_DELAY_MS} onWritten={() => setWritten(true)}>
+            {'He is the one who made me\nknow a little thing called love.'}
+          </Handwritten>
+        </Top>
+      </div>
+      <Top cx={187.5} y={567} className={`${pen} whitespace-nowrap text-[13px] leading-[normal]`} style={{ color: BROWN }}>
+        <Handwritten at={567} wait={!written} delay={150}>
+          Nam — Crazy Little Thing Called Love
+        </Handwritten>
+      </Top>
+    </>
+  );
+}
 
 // The three collage polaroids, top to bottom, each with the stickers that sit on or by it.
 // With fewer photos the frames used (and their stickers) move together towards the middle of
@@ -691,29 +750,14 @@ const ARROW_DRAW_DELAY_MS = 750;
 const ARROW_DRAW_MS = 900;
 
 /**
- * A heart arrow drawn from its feathers to its head as frame y `at` comes into view, as if by pen:
- * a clip uncovers it along its own length (the same way round when it is flipped). Once drawn it is
- * the plain image again; without the reveals it simply shows.
+ * A heart arrow drawn from its feathers to its head as frame y `at` comes into view (see useDrawn):
+ * along its own length, so the same way round when it is flipped.
  */
 function DrawnArrow({ at, x, deg, flip }: (typeof STORY_ARROWS)[number]) {
-  const ref = useRef<HTMLImageElement>(null);
-  const inView = useInView(at);
-  const [drawn, setDrawn] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!inView || drawn || !el) return;
-    const anim = el.animate([{ clipPath: 'inset(-2px 100% -2px -2px)' }, { clipPath: 'inset(-2px -2px -2px -2px)' }], {
-      duration: ARROW_DRAW_MS,
-      delay: ARROW_DRAW_DELAY_MS,
-      easing: 'cubic-bezier(0.45, 0, 0.55, 1)',
-      fill: 'both',
-    });
-    anim.finished.then(() => setDrawn(true), () => {});
-    return () => anim.cancel();
-  }, [inView, drawn]);
+  const drawn = useDrawn(at, { ms: ARROW_DRAW_MS, delay: ARROW_DRAW_DELAY_MS });
   return (
     <Rot box={[x, at, 64.601, 50.196]} w={62.054} h={21.86} deg={deg} flip={flip}>
-      <img ref={ref} alt="" src={A('heart-arrow.svg')} className={`${fill} object-cover`} style={inView === false ? { clipPath: 'inset(0 100% 0 0)' } : undefined} />
+      <img ref={drawn.ref} alt="" src={A('heart-arrow.svg')} className={`${fill} object-cover`} style={drawn.style} />
     </Rot>
   );
 }
@@ -853,35 +897,47 @@ const PAPER_2_H = 582;
 
 function WishesBand({ wishes }: { wishes: WishesState }) {
   const note = `${slab} px-[10px] py-[24px] text-center font-semibold text-[14px] leading-[18px]`;
+  const count = wishes.wishes.length > 0 ? ` (${wishes.wishes.length})` : '';
+  // Without the reveals, the title exactly as it was: the count a text of its own (one text
+  // set as a whole, as Handwritten needs, spaces its letters a hair differently).
+  const still = useInView(WISHES_Y) === null;
   return (
-    <Reveal at={WISHES_Y} kind="fadeUp">
+    <>
       <Top cx={187.5} y={WISHES_Y} className={`${pen} whitespace-nowrap text-[30px] leading-[30px]`} style={{ color: PINK }}>
-        Ucapan Tamu{wishes.wishes.length > 0 && ` (${wishes.wishes.length})`}
-      </Top>
-      <div className={`${fieldBox} overflow-y-auto px-[16px]`} style={{ top: WISHES_Y + 44, height: WISHES_H - 104, color: BROWN }}>
-        {wishes.wishes.length > 0 ? (
-          <ul>
-            {wishes.wishes.map((w, i) => (
-              <li key={`${i}-${w.time}`} className="border-b border-dashed border-[#b98e88] py-[12px] last:border-b-0">
-                <p className={`${slab} flex items-baseline justify-between gap-[8px] text-[15px] leading-[19px]`}>
-                  <span className="min-w-0 break-words font-bold">{w.name}</span>
-                  <span className="shrink-0 font-semibold text-[11px]" style={{ color: BLUE }}>{timeAgo(w.time, 'id')}</span>
-                </p>
-                <p className={`${slab} mt-[4px] whitespace-pre-line break-words font-semibold text-[14px] leading-[18px]`}>{w.message}</p>
-              </li>
-            ))}
-          </ul>
+        {still ? (
+          <>
+            Ucapan Tamu{count}
+          </>
         ) : (
-          <p className={note} style={{ color: BLUE }}>
-            {wishes.status === 'loading'
-              ? 'Memuat ucapan…'
-              : wishes.status === 'error'
-                ? 'Ucapan belum bisa ditampilkan saat ini.'
-                : 'Belum ada ucapan. Jadilah yang pertama!'}
-          </p>
+          <Handwritten at={WISHES_Y}>{`Ucapan Tamu${count}`}</Handwritten>
         )}
-      </div>
-    </Reveal>
+      </Top>
+      <Reveal at={WISHES_Y} kind="fadeUp">
+        <div className={`${fieldBox} overflow-y-auto px-[16px]`} style={{ top: WISHES_Y + 44, height: WISHES_H - 104, color: BROWN }}>
+          {wishes.wishes.length > 0 ? (
+            <ul>
+              {wishes.wishes.map((w, i) => (
+                <li key={`${i}-${w.time}`} className="border-b border-dashed border-[#b98e88] py-[12px] last:border-b-0">
+                  <p className={`${slab} flex items-baseline justify-between gap-[8px] text-[15px] leading-[19px]`}>
+                    <span className="min-w-0 break-words font-bold">{w.name}</span>
+                    <span className="shrink-0 font-semibold text-[11px]" style={{ color: BLUE }}>{timeAgo(w.time, 'id')}</span>
+                  </p>
+                  <p className={`${slab} mt-[4px] whitespace-pre-line break-words font-semibold text-[14px] leading-[18px]`}>{w.message}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={note} style={{ color: BLUE }}>
+              {wishes.status === 'loading'
+                ? 'Memuat ucapan…'
+                : wishes.status === 'error'
+                  ? 'Ucapan belum bisa ditampilkan saat ini.'
+                  : 'Belum ada ucapan. Jadilah yang pertama!'}
+            </p>
+          )}
+        </div>
+      </Reveal>
+    </>
   );
 }
 
@@ -968,25 +1024,62 @@ function Dresscode({ dresscode }: { dresscode: NonNullable<CrazyLoveInvitation['
 
 // ---------- Closing ----------
 
-/** "Ratu ♥ Radit": the signature with its " & " drawn as the heart, as in Figma. */
+const SIGNATURE_Y = 5667;
+// The signature is written once the closing words above it have mostly faded in.
+const SIGNATURE_WRITE_DELAY_MS = 900;
+// The heart between the names is pressed on as the first name is finished: from a touch bigger and
+// turned, a little past its place and back. The second name follows once it is.
+const HEART_PRESS_MS = 450;
+
+/**
+ * "Ratu ♥ Radit": the signature with its " & " drawn as the heart, as in Figma. Written by hand:
+ * the first name, then the heart pressed on, then the second name.
+ */
 function Signature({ text }: { text: string }) {
   const f = useFit<HTMLDivElement>(FIT.signature);
   const [first, ...rest] = text.split(' & ');
-  const className = `${pen} -translate-x-1/2 absolute top-[5667px] left-[187.5px] whitespace-pre text-[30px] leading-[22px]`;
+  const inView = useInView(SIGNATURE_Y);
+  const heart = useRef<HTMLImageElement>(null);
+  const [firstWritten, setFirstWritten] = useState(false);
+  const [heartOn, setHeartOn] = useState(false);
+  useEffect(() => {
+    const el = heart.current;
+    if (!firstWritten || !el) return;
+    const anim = el.animate([{ opacity: 0, transform: 'rotate(-12deg) scale(1.4)' }, { opacity: 1, transform: 'none' }], {
+      duration: HEART_PRESS_MS,
+      easing: 'cubic-bezier(0.34, 1.5, 0.64, 1)',
+    });
+    const on = () => setHeartOn(true);
+    anim.finished.then(on, on);
+    return () => anim.cancel();
+  }, [firstWritten]);
+  const className = `${pen} -translate-x-1/2 absolute left-[187.5px] whitespace-pre text-[30px] leading-[22px]`;
   if (!rest.length)
     return (
-      <div ref={f.ref} className={className} style={{ color: BLUE, ...f.style }}>
-        {text}
+      <div ref={f.ref} className={className} style={{ top: SIGNATURE_Y, color: BLUE, ...f.style }}>
+        <Handwritten at={SIGNATURE_Y} delay={SIGNATURE_WRITE_DELAY_MS}>
+          {text}
+        </Handwritten>
         {f.probe}
       </div>
     );
   // Figma's heart sits in the gap between the names (four spaces), 7px in. With no `left` it
   // stays where it is in the line, right after the first name; `top` is from the line's top.
   return (
-    <div ref={f.ref} className={className} style={{ color: BLUE, ...f.style }}>
-      {first}
-      <img alt="&" src={A('ending-heart.svg')} className="absolute top-[2px] ml-[7.14px] inline-block h-[17px] w-[18px] max-w-none" />
-      {`    ${rest.join(' & ')}`}
+    <div ref={f.ref} className={className} style={{ top: SIGNATURE_Y, color: BLUE, ...f.style }}>
+      <Handwritten at={SIGNATURE_Y} delay={SIGNATURE_WRITE_DELAY_MS} onWritten={() => setFirstWritten(true)}>
+        {first}
+      </Handwritten>
+      <img
+        ref={heart}
+        alt="&"
+        src={A('ending-heart.svg')}
+        className="absolute top-[2px] ml-[7.14px] inline-block h-[17px] w-[18px] max-w-none"
+        style={inView !== null && !firstWritten ? { opacity: 0 } : undefined}
+      />
+      <Handwritten at={SIGNATURE_Y} wait={!heartOn}>
+        {`    ${rest.join(' & ')}`}
+      </Handwritten>
       {f.probe}
     </div>
   );
@@ -1081,9 +1174,7 @@ export default function CrazyLoveContent({ invitation: inv, slug, intro }: { inv
               {inv.closing.text ?? DEFAULT_CLOSING}
             </Top>
           </Reveal>
-          <Reveal at={5640} kind="fadeUp" delay={150}>
-            <Signature text={inv.closing.signature} />
-          </Reveal>
+          <Signature text={inv.closing.signature} />
         </Shift>
 
         {/* ===== Tanda Kasih ===== */}
@@ -1152,7 +1243,7 @@ export default function CrazyLoveContent({ invitation: inv, slug, intro }: { inv
             <Rsvp inv={inv} slug={slug} onWish={wishes.add} />
           </Reveal>
           {bandH > 0 && <WishesBand wishes={wishes} />}
-          <SectionTitle y={4477} color={BROWN} delay={120}>Doa &amp; Ucapan</SectionTitle>
+          <SectionTitle y={4477} color={BROWN}>Doa &amp; Ucapan</SectionTitle>
           <Reveal at={4416} kind="pop" origin={[187.1, 4446.7]}>
             <Float box={[159, 4416, 56.23, 61.367]} delay={600}>
               <Img file="letter.svg" x={159} y={4416} w={56.23} h={61.367} />
@@ -1331,16 +1422,7 @@ export default function CrazyLoveContent({ invitation: inv, slug, intro }: { inv
             <img alt="" src={A('bow-small.svg')} className={fill} />
           </Rot>
 
-          <div style={{ color: BLUE }}>
-            <Top cx={188} y={511} className={`${pen} whitespace-nowrap text-[22px] leading-[normal]`}>
-              He is the one who made me
-              <br />
-              know a little thing called love.
-            </Top>
-          </div>
-          <Top cx={187.5} y={567} className={`${pen} whitespace-nowrap text-[13px] leading-[normal]`} style={{ color: BROWN }}>
-            Nam — Crazy Little Thing Called Love
-          </Top>
+          <Quote />
           <Img file="bow-quote.svg" x={42} y={486} w={74.888} h={69.998} />
 
           {collage.map((photo, i) => (
