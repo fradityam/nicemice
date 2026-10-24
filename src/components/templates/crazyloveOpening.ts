@@ -131,8 +131,8 @@ export const PAGE_OPENING: Opening = {
   },
 };
 
-/** The opening Crazy Love uses: the peel. Locally, ?opening=page on the URL tries the page turn. */
+/** The opening Crazy Love uses: the page turn (the designer's choice). Locally, ?opening=peel on the URL tries the peel. */
 export const OPENING: Opening = (() => {
   const asked = import.meta.env.DEV ? new URLSearchParams(window.location.search).get('opening') : null;
-  return asked === 'page' ? PAGE_OPENING : PEEL_OPENING;
+  return asked === 'peel' ? PEEL_OPENING : PAGE_OPENING;
 })();
