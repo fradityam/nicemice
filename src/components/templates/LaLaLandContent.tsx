@@ -119,10 +119,9 @@ export function FitSpan({ fit, children }: { fit: FitBox; children: ReactNode })
   );
 }
 
-// Handwritten headings start as soon as they are just on screen, before the reveals around them.
-// A name under a photo waits for the photo to start settling; the closing is signed once its
-// paper and words have faded in (they reveal at much the same moment, see the closing).
-const NAME_WRITE_DELAY_MS = 500;
+// Handwritten headings start as soon as they are just on screen, before the reveals around them;
+// the closing is signed once its paper and words have faded in (they reveal at much the same
+// moment, see the closing).
 const SIGN_DELAY_MS = 1300;
 
 /** Lines of text with a <br /> between them. */
@@ -1122,11 +1121,11 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
             </div>
           </div>
         </Reveal>
-        {/* Her name written by hand under her photo; her parents' line fades in. */}
-        <Fit fit={FIT.name} className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1594px] whitespace-nowrap">
-          <Handwritten at={1594} delay={NAME_WRITE_DELAY_MS}>{inv.bride.name}</Handwritten>
-        </Fit>
+        {/* Her name and her parents' line fade in together under her photo. */}
         <Reveal at={1594} kind="fadeUp" delay={150}>
+          <Fit fit={FIT.name} className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1594px] whitespace-nowrap">
+            {inv.bride.name}
+          </Fit>
           <Fit fit={FIT.parents} className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[13px] text-center text-white top-[1630px] whitespace-nowrap">
             {`${inv.bride.parentsLabel} ${inv.bride.parents}`}
           </Fit>
@@ -1147,10 +1146,10 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
             <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('ed8ee.svg')} />
           </div>
         </Reveal>
-        <Fit fit={FIT.name} className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1195px] whitespace-nowrap">
-          <Handwritten at={1195} delay={NAME_WRITE_DELAY_MS}>{inv.groom.name}</Handwritten>
-        </Fit>
         <Reveal at={1195} kind="fadeUp" delay={150}>
+          <Fit fit={FIT.name} className="-translate-x-1/2 absolute font-['Fasthand'] leading-[normal] left-1/2 text-[25px] text-center text-white top-[1195px] whitespace-nowrap">
+            {inv.groom.name}
+          </Fit>
           <Fit fit={FIT.parents} className="-translate-x-1/2 absolute font-['Raleway'] leading-[normal] left-[calc(50%-0.5px)] text-[13px] text-center text-white top-[1231px] whitespace-nowrap">
             {`${inv.groom.parentsLabel} ${inv.groom.parents}`}
           </Fit>

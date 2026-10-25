@@ -749,10 +749,8 @@ const PERK_LIGHTS_AT = 2925;
 // fading in, to behind the rug, fading out (the floor in front of it is the rug's).
 const PERK_SHADE = { top: 2800, h: 3190 - 2800, fade: 90 };
 
-// Handwritten headings start as soon as they are just on screen, before the reveals around them.
-// A name under a photo waits for the photo to start coming in; the Magna Doodle is written once the
-// camera has all but settled into its scene.
-const NAME_WRITE_DELAY_MS = 400;
+// Handwritten headings start as soon as they are just on screen, before the reveals around them;
+// the Magna Doodle is written once the camera has all but settled into its scene.
 const DOODLE_WRITE_DELAY_MS = OPENING.scene.delayMs + OPENING.scene.ms * 0.4;
 
 // ---------- Page ----------
@@ -971,11 +969,9 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           <Img src={inv.groom.photo} x={83} y={940} w={239} h={239} alt={inv.groom.name} style={{ clipPath: 'inset(3px 33px 12px 10px)' }} />
           <Img file="yellow-frame.webp" x={39} y={887} w={298} h={337} />
         </Reveal>
-        {/* His name written by hand under his photo; his parents' lines fade in. */}
-        <Centered cx={188} cy={1239} className={`${friendsTitle} text-[24px] leading-[30px] text-white`} fit={FIT.line}>
-          <Handwritten at={1225} delay={NAME_WRITE_DELAY_MS}>{inv.groom.name}</Handwritten>
-        </Centered>
+        {/* His name and his parents' lines fade in together under his photo. */}
         <Reveal at={1225} kind="fadeUp" delay={150}>
+          <Centered cx={188} cy={1239} className={`${friendsTitle} text-[24px] leading-[30px] text-white`} fit={FIT.line}>{inv.groom.name}</Centered>
           <Centered cx={187} cy={1265} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.groom.parentsLabel}</Centered>
           <Centered cx={187.5} cy={1286} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.groom.parents}</Centered>
         </Reveal>
@@ -984,10 +980,8 @@ export default function FriendsContent({ invitation: inv, slug, intro }: { invit
           <Img src={inv.bride.photo} x={70} y={1437} w={240} h={240} alt={inv.bride.name} style={{ clipPath: 'inset(0 21px 16px 23px)' }} />
           <Img file="yellow-frame.webp" x={39} y={1381} w={298} h={337} />
         </Reveal>
-        <Centered cx={188} cy={1733} className={`${friendsTitle} text-[24px] leading-[30px] text-white`} fit={FIT.line}>
-          <Handwritten at={1720} delay={NAME_WRITE_DELAY_MS}>{inv.bride.name}</Handwritten>
-        </Centered>
         <Reveal at={1720} kind="fadeUp" delay={150}>
+          <Centered cx={188} cy={1733} className={`${friendsTitle} text-[24px] leading-[30px] text-white`} fit={FIT.line}>{inv.bride.name}</Centered>
           <Centered cx={187.5} cy={1759} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.bride.parentsLabel}</Centered>
           <Centered cx={187} cy={1780} className="ff-f72 text-[16px] leading-[30px] tracking-[-0.017em] text-white" fit={FIT.line}>{inv.bride.parents}</Centered>
         </Reveal>
