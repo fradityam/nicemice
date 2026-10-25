@@ -254,6 +254,30 @@ function Flare({ file, top, w, h }: { file: string; top: number; w: number; h: n
   );
 }
 
+// A photo frame's marquee bulbs: one round of both circuits taking turns, each lit for half of it.
+const MARQUEE_MS = 2600;
+
+/**
+ * One ring of a photo frame's marquee bulbs, as two circuits (every other bulb, split out by
+ * scripts/marqueeCircuits.ts) taking turns to light up while it is on screen, like an old cinema's
+ * marquee. For guests who prefer reduced motion, the ring as painted.
+ */
+function Bulbs({ ring }: { ring: '6ebf7' | 'ed8ee' }) {
+  const [still] = useState(() => !ENABLE_ANIMATIONS || window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [ref, live] = useLive<HTMLDivElement>();
+  const a = useRef<HTMLImageElement>(null);
+  const b = useRef<HTMLImageElement>(null);
+  useLight(a, 'marquee', { ms: MARQUEE_MS, active: live });
+  useLight(b, 'marquee', { ms: MARQUEE_MS, delay: MARQUEE_MS / 2, active: live });
+  if (still) return <img alt="" className="absolute block inset-0 max-w-none size-full" src={A(`${ring}.svg`)} />;
+  return (
+    <div ref={ref} className="absolute inset-0">
+      <img ref={a} alt="" className="light-marquee absolute block inset-0 max-w-none size-full" src={A(`${ring}-a.svg`)} />
+      <img ref={b} alt="" className="light-marquee absolute block inset-0 max-w-none size-full" src={A(`${ring}-b.svg`)} />
+    </div>
+  );
+}
+
 /**
  * Layers which, inside a Scene, drift at their own `depth` as they scroll by (positive: further
  * away, so slower than the page; negative: nearer). The size of the whole frame at its origin, so
@@ -1109,14 +1133,14 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
           <div className="absolute flex inset-[27.93%_24.37%_65.98%_19.78%] items-center justify-center" style={{ containerType: 'size' }}>
             <div className="-scale-x-100 flex-none h-[100cqh] w-[100cqw]">
               <div className="relative size-full">
-                <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('6ebf7.svg')} />
+                <Bulbs ring="6ebf7" />
               </div>
             </div>
           </div>
           <div className="absolute flex inset-[27.95%_20.53%_65.65%_18.87%] items-center justify-center" style={{ containerType: 'size' }}>
             <div className="-scale-x-100 flex-none h-[100cqh] w-[100cqw]">
               <div className="relative size-full">
-                <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('ed8ee.svg')} />
+                <Bulbs ring="ed8ee" />
               </div>
             </div>
           </div>
@@ -1140,10 +1164,10 @@ export default function LaLaLandContent({ invitation: inv, slug, intro }: { invi
             <img alt={inv.groom.name} className="absolute left-0 top-0 max-w-none object-cover size-full" src={inv.groom.photo} />
           </div>
           <div className="absolute inset-[19.34%_22.98%_74.57%_21.17%]">
-            <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('6ebf7.svg')} />
+            <Bulbs ring="6ebf7" />
           </div>
           <div className="absolute inset-[19.36%_22.07%_74.25%_17.33%]">
-            <img alt="" className="absolute block inset-0 max-w-none size-full" src={A('ed8ee.svg')} />
+            <Bulbs ring="ed8ee" />
           </div>
         </Reveal>
         <Reveal at={1195} kind="fadeUp" delay={150}>

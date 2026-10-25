@@ -1,8 +1,11 @@
 /* Lights twinkling or glowing in a scene (sceneLights.ts): their opacity is set while they do;
-   without, they are not there at all. */
+   without, they are not there at all (a marquee's bulbs are then lit, as painted). */
 .light-twinkle {
   opacity: var(--light-twinkle, 0);
 }
 .light-glow {
   opacity: var(--light-glow, 0);
+}
+.light-marquee {
+  opacity: var(--light-marquee, 1);
 }

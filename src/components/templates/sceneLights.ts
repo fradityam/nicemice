@@ -1,8 +1,8 @@
 import { useEffect, type RefObject } from 'react';
 import './sceneLights.css';
 
-// Lights that twinkle or glow in a template's scenes: La La Land's stars and street lamp, Friends'
-// fountain, Crazy Little Thing's bulbs. Each sets a custom property that its opacity reads
+// Lights that twinkle or glow in a template's scenes: La La Land's stars, street lamp and marquee
+// frames, Friends' fountain, Crazy Little Thing's bulbs. Each sets a custom property that its opacity reads
 // (sceneLights.css), about a dozen times a second from one timer for the whole page: the page
 // repaints just those few small boxes, nothing goes onto a layer of its own (where text drawn
 // nearby would lose its sub-pixel smoothing), and in between the page does no work at all. (A CSS animation, even in
@@ -17,9 +17,12 @@ const CURVES = {
   twinkle: [[0, 0], [0.2, 0], [0.36, 0.85], [0.45, 0.4], [0.56, 0.7], [0.74, 0], [1, 0]],
   // A warm light, never quite still.
   glow: [[0, 0.55], [0.24, 0.85], [0.38, 0.72], [0.62, 1], [0.84, 0.68], [1, 0.55]],
+  // One circuit of an old cinema marquee's bulbs: lit as painted for a while, fading down, dim for
+  // a while and fading back up. The other circuit runs half a round behind.
+  marquee: [[0, 1], [0.25, 1], [0.5, 0.3], [0.75, 0.3], [1, 1]],
 } satisfies Record<string, Curve>;
 type Kind = keyof typeof CURVES;
-const PROPS: Record<Kind, string> = { twinkle: '--light-twinkle', glow: '--light-glow' };
+const PROPS: Record<Kind, string> = { twinkle: '--light-twinkle', glow: '--light-glow', marquee: '--light-marquee' };
 
 const TICK_MS = 80;
 // A lamp comes on softly the first time it starts.
