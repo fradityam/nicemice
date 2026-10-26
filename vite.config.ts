@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, type Plugin} from 'vite';
 import {sharePreviews} from './scripts/sharePreviews';
-import {sitemap} from './scripts/sitemap';
 import {notFoundPage} from './scripts/notFoundPage';
 import {GA_MEASUREMENT_ID} from './src/config';
 import {fontsHref} from './src/content/fonts';
@@ -27,9 +26,16 @@ function homeMeta(): Plugin {
   };
 }
 
-export default defineConfig(() => {
+// `vite build` builds the app, plus the blog's stylesheet as its own file (src/blog/blog.css),
+// which the app never loads. `vite build --ssr src/blog/render.tsx` (package.json) then builds
+// the blog's page components for scripts/blog/build.ts; it needs none of the app's plugins.
+// That script also writes sitemap.xml.
+export default defineConfig(({isSsrBuild}) => {
   return {
-    plugins: [react(), tailwindcss(), homeMeta(), sharePreviews(), sitemap(), notFoundPage()],
+    plugins: [react(), tailwindcss(), ...(isSsrBuild ? [] : [homeMeta(), sharePreviews(), notFoundPage()])],
+    build: isSsrBuild
+      ? {}
+      : {rollupOptions: {input: {index: path.resolve(__dirname, 'index.html'), blog: path.resolve(__dirname, 'src/blog/blog.css')}}},
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

@@ -4,7 +4,8 @@ import { PRICING } from './homeInfo';
 // Search-engine text for the site's public pages: the title and meta description (also used
 // as og:title / og:description), and each page's canonical address. One list, shared by:
 //   - the Worker (worker/index.ts), which writes these into the HTML crawlers receive;
-//   - the build (scripts/sitemap.ts), which lists exactly these pages in sitemap.xml;
+//   - the build (scripts/blog/build.ts), which lists these pages in sitemap.xml, followed by
+//     the blog's;
 //   - the app (src/main.tsx), which updates the tab title when moving between pages.
 // Only pages that should appear in search belong here. The price follows PRICING, so the
 // descriptions change along with the pricing section.

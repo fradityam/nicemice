@@ -13,6 +13,7 @@ export default function WhatsAppFloat() {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      data-wa-button="floating"
       aria-label="Ngobrol dengan Nice Mice lewat WhatsApp"
       onClick={() => track('whatsapp_click', { button: 'floating' })}
     >

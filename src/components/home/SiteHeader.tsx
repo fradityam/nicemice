@@ -5,7 +5,8 @@ import { PRICING } from '../../content/homeInfo';
 import OrderLink from './OrderLink';
 import { ArrowIcon } from './icons';
 
-export default function SiteHeader() {
+/** `home` goes before the section links: '' on the homepage, '/' on pages built outside the app (the blog). */
+export default function SiteHeader({ home = '' }: { home?: string }) {
   const topRef = useRef<HTMLDivElement>(null);
 
   // On desktop the announcement bar and nav stick together (see .site-top in home.css). Their
@@ -36,17 +37,17 @@ export default function SiteHeader() {
       </div>
 
       <header className="site-header">
-        <a className="brand" href="#beranda" aria-label="Nice Mice - beranda">
+        <a className="brand" href={`${home}#beranda`} aria-label="Nice Mice - beranda">
           <img src={logo} alt="nice mice" width={600} height={144} />
         </a>
         <nav aria-label="Navigasi utama">
-          <a href="#tentang">Tentang</a>
-          <a href="#tema">Tema</a>
-          <a href="#cara-pesan">Cara Pesan</a>
-          <a href="#harga">Harga</a>
-          <a href="#faq">FAQ</a>
+          <a href={`${home}#tentang`}>Tentang</a>
+          <a href={`${home}#tema`}>Tema</a>
+          <a href={`${home}#cara-pesan`}>Cara Pesan</a>
+          <a href={`${home}#harga`}>Harga</a>
+          <a href={`${home}#faq`}>FAQ</a>
         </nav>
-        <a className="button button-small button-outline" href="#tema">
+        <a className="button button-small button-outline" href={`${home}#tema`}>
           Pilih Tema
           <ArrowIcon />
         </a>

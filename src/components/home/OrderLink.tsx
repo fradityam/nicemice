@@ -23,6 +23,8 @@ export default function OrderLink({ message, button, theme, className, children 
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      data-wa-button={button}
+      data-wa-theme={theme}
       onClick={() => track('whatsapp_click', { button, ...(theme && { theme }) })}
     >
       {children}

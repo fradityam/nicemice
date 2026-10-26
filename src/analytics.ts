@@ -11,8 +11,12 @@ declare global {
   }
 }
 
-/** Where a WhatsApp button sits, for whatsapp_click. */
-export type WhatsAppButton = 'top_bar' | 'floating' | 'final_cta' | 'catalog_card' | 'pricing_custom' | 'partner';
+/**
+ * Where a WhatsApp button sits, for whatsapp_click. Also on each button as data-wa-button, which
+ * the blog's pages (built without the app, src/blog/BlogLayout.tsx) use to send the same event:
+ * blog_inline for a WhatsApp box inside an article, blog_cta for the one closing it.
+ */
+export type WhatsAppButton = 'top_bar' | 'floating' | 'final_cta' | 'catalog_card' | 'pricing_custom' | 'partner' | 'blog_inline' | 'blog_cta';
 
 export function track(event: string, params: Record<string, string> = {}) {
   window.gtag?.('event', event, params);

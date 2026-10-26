@@ -16,7 +16,8 @@ import type { OgData } from './ogData';
 //   - the app's other pages (hidden templates, "Segera Hadir"): noindex;
 //   - any other address: a 404 status and noindex, and the app shows its "not found" page.
 // Each also gets only the fonts that page uses (src/content/fonts.ts).
-// Old addresses in REDIRECTS get a 301 to the right page.
+// Old addresses in REDIRECTS get a 301 to the right page. The blog's published pages are
+// finished HTML files with their own tags (scripts/blog/build.ts), served as they are.
 
 interface Env {
   ASSETS: Fetcher;
@@ -37,6 +38,11 @@ export default {
     const path = normalizePath(url.pathname);
     if (Object.hasOwn(REDIRECTS, path)) {
       return Response.redirect(new URL(REDIRECTS[path] + url.search, url).href, 301);
+    }
+
+    if (path === '/blog' || path.startsWith('/blog/')) {
+      const blogPage = await blogFile(request, url, path, env);
+      if (blogPage) return blogPage;
     }
 
     const page = await env.ASSETS.fetch(new Request(new URL('/', url), request));
@@ -90,6 +96,24 @@ export default {
     return withTags(page, { title: couple.title, fonts: couple.template, content, extra: ['<meta name="robots" content="noindex, nofollow" />'] });
   },
 } satisfies ExportedHandler<Env>;
+
+/**
+ * A built blog page (scripts/blog/build.ts: dist/blog.html, dist/blog/<slug>.html) exactly as
+ * it is: it has its own tags. '/blog/<slug>/' gets a 301 to '/blog/<slug>' (Cloudflare's own
+ * redirect for it would be a 307); '/blog/<slug>.html' never reaches the Worker and gets
+ * Cloudflare's 307. Undefined when there's no such page: an unknown article gets the usual 404,
+ * and /blog, before anything is published, the app's "Segera Hadir" page, as before.
+ */
+async function blogFile(request: Request, url: URL, path: string, env: Env): Promise<Response | undefined> {
+  const file = await env.ASSETS.fetch(new Request(new URL(path, url), request));
+  if (!file.ok && file.status !== 304) {
+    await file.body?.cancel();
+    return undefined;
+  }
+  if (url.pathname === path) return file;
+  await file.body?.cancel();
+  return Response.redirect(new URL(path + url.search, url).href, 301);
+}
 
 /**
  * index.html with its <title> replaced (when given), the page's fonts, the <meta> tags named

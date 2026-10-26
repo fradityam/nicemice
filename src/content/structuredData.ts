@@ -7,7 +7,8 @@ import { SITE_URL } from './seo';
 // FAQ. Built from the same prices, FAQ and contacts as the page, so they always match. The
 // Worker (worker/index.ts) writes it into the homepage's <head>.
 
-const ORGANIZATION_ID = `${SITE_URL}/#organization`;
+/** Also the blog's publisher (scripts/blog/jsonLd.ts). */
+export const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 
 /** 'Rp149.000', '+Rp80.000', 'Mulai Rp99.000' → 149000, 80000, 99000. */
 const rupiah = (price: string) => Number(price.replace(/\D/g, ''));
