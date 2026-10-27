@@ -1,11 +1,19 @@
 {
   "authors": [
     {
-      "slug": "fadil-ratu",
-      "name": "[Nama Penulis]",
-      "role": "[Peran di Nice Mice]",
-      "bio": "[Bio singkat penulis, diisi sebelum artikel pertama terbit.]",
-      "url": "/tentang-kami",
+      "slug": "ratu",
+      "name": "Ratu",
+      "role": "Desainer",
+      "bio": "Berlatar belakang desain grafis. Ratu mendesain setiap tema undangan Nice Mice, dan dialah yang pertama kali bilang “ah, ini mah I can”.",
+      "url": "/tentang-kami#ratu",
+      "sameAs": []
+    },
+    {
+      "slug": "fadil",
+      "name": "Fadil",
+      "role": "Pembangun website & animasi",
+      "bio": "Fadil yang mengubah desain Ratu jadi undangan yang bisa dibuka dan disebar. Dia membangun website Nice Mice dan membuat animasi di setiap undangannya.",
+      "url": "/tentang-kami#fadil",
       "sameAs": []
     }
   ]

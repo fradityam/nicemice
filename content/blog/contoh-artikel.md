@@ -2,7 +2,6 @@
 title: "[Contoh] Judul Artikel Placeholder"
 description: "[Contoh] Deskripsi placeholder untuk menguji pipeline blog. Panjangnya sengaja dibuat sekitar 150 karakter supaya lolos pengecekan panjang deskripsi."
 date: 2026-10-26
-author: fadil-ratu
 cover: /images/blog/contoh-sampul.webp
 coverAlt: "Gambar sampul contoh untuk menguji blog"
 cluster: contoh

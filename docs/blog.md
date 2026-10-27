@@ -12,6 +12,8 @@ need to run JavaScript. The build also adds each article to `sitemap.xml`.
 | `/blog/<slug>/`, `/blog/` | 301 to the address without the slash (worker/index.ts) |
 | `/blog/<slug>.html` | 307 to `/blog/<slug>` (Cloudflare's own redirect; this path never reaches the Worker) |
 | `/blog/<unknown>` | the site's usual 404 |
+| `/tentang-kami` | the About page (`dist/tentang-kami.html`, from `content/pages/tentang-kami.yaml`; see below) |
+| `/tentang-kami/` | 301 to `/tentang-kami` |
 
 The index shows one article large on top: the newest pillar article, or else the newest
 article. The rest follow in a grid (3 columns on desktop, 2 on tablets, 1 on phones), newest
@@ -30,6 +32,7 @@ app's "Segera Hadir" page, marked noindex, exactly as before.
 
 1. Put the cover (and any other images) in `public/images/blog/`. Use WebP, at most 1600px
    wide, under 300 KB, with a lowercase-hyphenated name, e.g. `tema-friends-sampul.webp`.
+   Keep the original photo (JPEG, full size) in `content/images-src/` (see "Original images").
 2. Create `content/blog/<slug>.md`. The file name is the address: lowercase letters, digits
    and hyphens (`cara-memilih-tema-undangan.md` → `/blog/cara-memilih-tema-undangan`).
 3. Write the frontmatter (below) with `draft: true`, then the body.
@@ -46,7 +49,7 @@ title: "Cara Memilih Tema Undangan Digital"   # required; the page's H1. <title>
 description: "…"                               # required; 140–160 characters (meta description, link previews)
 date: 2026-11-02                               # required; published, YYYY-MM-DD
 updated: 2026-12-01                            # optional; shows "Diperbarui …", used as dateModified and the sitemap's lastmod
-author: fadil-ratu                             # required; a slug from content/authors.json
+author: [ratu, fadil]                          # optional; a slug from content/authors.json, or a list (default: [ratu, fadil])
 cover: /images/blog/tema-friends-sampul.webp   # required; a file in public/images/blog/
 coverAlt: "…"                                  # required; describes the cover image
 cluster: tema-undangan                         # required; the topic group (needs a label in content/blog.json clusterLabel)
@@ -66,17 +69,18 @@ Unknown fields stop the build, so a misspelt field name doesn't get silently ign
 ## What the page shows
 
 1. Breadcrumb (Beranda › Blog › title), the cluster's label (`clusterLabel`), and the H1, from `title`
-2. Byline: author (linking to their `url`), date, "Diperbarui …" when `updated` is set, reading time
+2. Byline: the authors ("Oleh Ratu & Fadil", each name linking to their `url`), date, "Diperbarui …" when `updated` is set, reading time
 3. Cover (loads first)
 4. "Ringkasan", from `summary`, a check before each point
 5. The body
 6. "Pertanyaan Umum", from `faq`: each question an H3 with its answer
 7. A link to the cluster's pillar article (on the cluster's other articles, once the pillar is published)
 8. "Artikel Terkait": up to 3, from `related` or else the newest from the same cluster; a small cover beside the title and date
-9. About the author
+9. About the authors (each one's name, role and bio)
 10. Closing WhatsApp box
 
-The structured data is BlogPosting (with the author as a Person and Nice Mice as publisher,
+The structured data is BlogPosting (with the authors as Persons, by the same `@id` as on
+`/tentang-kami`, e.g. `https://nicemice.id/tentang-kami#ratu`, and Nice Mice as publisher,
 the homepage's Organization), BreadcrumbList, and FAQPage when there's a `faq`. The blog index
 has Blog and BreadcrumbList.
 
@@ -114,19 +118,23 @@ sends: `button` is `blog_inline` for a box in the body, `blog_cta` for the closi
 {
   "authors": [
     {
-      "slug": "fadil-ratu",
-      "name": "…",
-      "role": "…",
+      "slug": "ratu",
+      "name": "Ratu",
+      "role": "Desainer",
       "bio": "…",
-      "url": "/tentang-kami",
+      "url": "/tentang-kami#ratu",
       "sameAs": ["https://www.instagram.com/…"]
-    }
+    },
+    { "slug": "fadil", "…": "…" }
   ]
 }
 ```
 
 `url` is a site path or an `https://` address; `sameAs` lists full addresses of the author's
 profiles (it may be empty). They are used for the byline, the author box and the JSON-LD Person.
+Each author's `url` is their place on `/tentang-kami` (`#<slug>` of someone in its `team`); that
+address is also their JSON-LD `@id`, so search engines see the same person on the About page and
+in every article. Their `role` and `bio` repeat the About page's; change both together.
 
 ## The blog index: `content/blog.json`
 
@@ -143,6 +151,63 @@ and `clusterLabel`, each cluster's label as shown above an article's title:
 The labels aren't links yet. The other values are placeholders; fill them in before the first
 article is published.
 
+## The About page: `content/pages/tentang-kami.yaml`
+
+`/tentang-kami` is built the same way as an article: a finished HTML page with the site's header
+and footer, its own title, description, canonical and link-preview tags, and no app JavaScript.
+It's in `STATIC_PAGES` (`src/content/seo.ts`), so the Worker serves it as it is and the build
+lists it in `sitemap.xml`. The footer links to it ("Tentang Kami").
+
+All its text is in the YAML file, top to bottom as on the page:
+
+| Field | What it is |
+| --- | --- |
+| `meta` | `title` (the `<title>` is "`title` \| Nice Mice"), `description`, and `ogImage`, the link-preview image (`og:image`, `twitter:image`; 1200×630, the build warns otherwise) |
+| `hero` | `label` above the H1, `h1`, `intro`, and `photo` (in `public/images/about/`) with `photoAlt`, which is also the preview image's alt text |
+| `timeline` | `steps`, each a `heading` (H3) and `text`, shown alternating left and right of a line (on phones: all to its right) |
+| `values` | `heading` and 4 `items`, each a `title` and `text` |
+| `team` | `heading` and `people`: `slug` (the person's id on the page: `/tentang-kami#ratu`), `name`, `role`, `bio`, `photo` (`null` shows a box with their initial) |
+| `facts` | `items`, each a `value` shown large and a `label` |
+| `testimonials` | `couples`: 1 or 2 couples from `TESTIMONIALS` (`src/content/homeInfo.ts`), whose quotes are shown as they are on the homepage |
+| `closing` | `heading`, `text`, `primaryCta` (`label`, `href`), and `whatsappLabel` for the WhatsApp button (`whatsapp_click` with `button: about_cta`; hidden while there's no WhatsApp number) |
+
+`timeline`, `facts` and `testimonials` also have a `heading`. It isn't shown; screen readers
+and search engines get it as the section's H2.
+
+The structured data is AboutPage (about the homepage's Organization), the Organization with the
+team as its `founder`s, a Person for each of them (`@id` `https://nicemice.id/tentang-kami#<slug>`,
+working for the Organization), and BreadcrumbList (Beranda › Tentang Kami).
+
+Blocks fade up as they scroll into view, and the timeline's line fills as the page passes it.
+That's only with JavaScript and when the visitor hasn't asked for reduced motion; otherwise
+everything is simply there. Styles: `src/blog/about.css`; the page: `src/blog/AboutPage.tsx`.
+
+## Original images: `content/images-src/` → `public/images/`
+
+`public/` is deployed, so it only holds the images the pages use: WebP, at most 1600px wide,
+under 300 KB. Keep each original (the full-size JPEG) in `content/images-src/`, in a folder
+matching its place in `public/images/`, and commit both:
+
+| Original | On the site |
+| --- | --- |
+| `content/images-src/about/fadil-ratu.jpg` | `public/images/about/fadil-ratu.webp` (the page), `fadil-ratu-og.webp` (link previews) |
+| `content/images-src/blog/<name>.jpg` | `public/images/blog/<name>.webp` |
+
+To make the WebP (sharp is already installed):
+
+```sh
+node -e "require('sharp')('content/images-src/about/fadil-ratu.jpg').rotate().resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true }).webp({ quality: 75, effort: 6 }).toFile('public/images/about/fadil-ratu.webp').then(console.log)"
+```
+
+Lower `quality` if the result is over 300 KB (the build warns).
+
+A link-preview image is a 1200×630 crop with the faces in the middle (keep it under 200 KB).
+`extract` picks the area of the original, here the full width from 440px down:
+
+```sh
+node -e "require('sharp')('content/images-src/about/fadil-ratu.jpg').rotate().extract({ left: 0, top: 440, width: 780, height: 410 }).resize(1200, 630).webp({ quality: 80, effort: 6 }).toFile('public/images/about/fadil-ratu-og.webp').then(console.log)"
+```
+
 ## Checks
 
 `ERROR` stops the build; `warn` is printed and the build carries on.
@@ -152,15 +217,17 @@ article is published.
 | ERROR | A required frontmatter field is missing or invalid, or there's an unknown field |
 | ERROR | File name (slug) isn't lowercase letters, digits and hyphens, or two articles share a slug |
 | ERROR | More than one `pillar: true` in a cluster |
-| ERROR | `author` isn't in `content/authors.json`; a slug in `related` has no article |
+| ERROR | An `author` isn't in `content/authors.json` or is listed twice; a slug in `related` has no article |
 | ERROR | The body has an H1 |
 | ERROR | An image (cover or in the body) has no alt text, isn't in `public/images/blog/`, or the file is missing |
 | ERROR | Unknown `:::`/`::` directive, or `::demo` with a theme that has no demo |
 | ERROR | A published article's `cluster` has no label in `content/blog.json` `clusterLabel` (a warning while all its articles are drafts) |
-| ERROR | A published article's author has a site-path `url` that isn't a page (`PAGES` in `src/content/seo.ts`, `/blog`, or a published article). While all their articles are drafts, this is only a warning |
+| ERROR | A published article's author has a site-path `url` that isn't a page (`PAGES` or `STATIC_PAGES` in `src/content/seo.ts`, `/blog`, or a published article; the `#…` part is ignored), or that points to `/tentang-kami#<slug>` with no such person in its `team`. While all their articles are drafts, this is only a warning |
+| ERROR | `content/pages/tentang-kami.yaml`: a missing, empty or unknown field, an image that isn't in `public/images/about/`, a person listed twice, or a testimonial couple not in `TESTIMONIALS` |
 | warn | Heading levels skip (`##` → `####`) |
 | warn | `"<title> \| Nice Mice"` over 60 characters; description outside 140–160 characters |
-| warn | An image file name in `public/images/blog/` isn't lowercase-hyphenated, or the file is over 300 KB |
+| warn | An image file name in `public/images/blog/` or `public/images/about/` isn't lowercase-hyphenated, or the file is over 300 KB |
+| warn | `/tentang-kami`'s title or description length (as for articles); its "Lihat Tema" link isn't one of the site's pages |
 | warn | Fewer than 2 internal links in the body |
 | warn | A link to an article that doesn't exist or is still a draft, or to a path that isn't a page; `related` naming a draft |
 | warn | Raw HTML in the body (it isn't shown) |
@@ -172,14 +239,14 @@ other articles (counted in the body only), plus the orphan articles that no othe
 
 `npm run build` runs three steps:
 
-1. `vite build` builds the app. It also builds `src/blog/blog.css` as its own file, which the
-   app never loads.
+1. `vite build` builds the app. It also builds `src/blog/blog.css` and `src/blog/about.css`
+   as their own files, which the app never loads.
 2. `vite build --ssr src/blog/render.tsx --outDir build/blog-ssr` builds the page components
    (`src/blog/`). They reuse the homepage's `SiteHeader` and `SiteFooter`, so the logo URLs
    match the app's.
 3. `tsx scripts/blog/build.ts` reads and checks the content (`scripts/blog/schema.ts`,
    `markdown.ts`), renders the pages with `renderToStaticMarkup`, and writes `dist/blog/`,
-   `dist/blog.html` and `dist/sitemap.xml`.
+   `dist/blog.html`, `dist/tentang-kami.html` and `dist/sitemap.xml`.
 
 Blog pages aren't hydrated: they load the app's main stylesheet (Tailwind and `home.css`, for
 the header and footer), `blog.css`, the Google Analytics snippet from `index.html`, and a small
@@ -228,7 +295,8 @@ collections:
         search_fields: ["authors.*.name"]
         value_field: "authors.*.slug"
         display_fields: ["authors.*.name"]
-        default: fadil-ratu
+        multiple: true
+        default: [ratu, fadil]
       - { name: cover, label: Gambar sampul, widget: image }
       - { name: coverAlt, label: Alt text sampul, widget: string }
       - { name: cluster, label: Cluster, widget: string }
@@ -260,7 +328,7 @@ collections:
               - { name: name, label: Nama, widget: string }
               - { name: role, label: Peran, widget: string }
               - { name: bio, label: Bio singkat, widget: text }
-              - { name: url, label: Halaman penulis, widget: string, default: /tentang-kami }
+              - { name: url, label: Halaman penulis, widget: string, hint: "/tentang-kami#<slug>" }
               - { name: sameAs, label: Profil lain (URL), widget: list, required: false }
       - name: blog
         label: Halaman blog

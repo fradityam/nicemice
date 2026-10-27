@@ -10,6 +10,7 @@ export default function SiteFooter({ home = '' }: { home?: string }) {
       </a>
       <p>Undangan digital, dirangkai dengan hati.</p>
       <div className="footer-links">
+        <a href="/tentang-kami">Tentang Kami</a>
         {CONTACT_INSTAGRAM && (
           <a href={CONTACT_INSTAGRAM} target="_blank" rel="noopener noreferrer">
             Instagram

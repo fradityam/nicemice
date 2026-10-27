@@ -5,7 +5,7 @@ import { PRICING } from './homeInfo';
 // as og:title / og:description), and each page's canonical address. One list, shared by:
 //   - the Worker (worker/index.ts), which writes these into the HTML crawlers receive;
 //   - the build (scripts/blog/build.ts), which lists these pages in sitemap.xml, followed by
-//     the blog's;
+//     STATIC_PAGES and the blog's;
 //   - the app (src/main.tsx), which updates the tab title when moving between pages.
 // Only pages that should appear in search belong here. The price follows PRICING, so the
 // descriptions change along with the pricing section.
@@ -47,6 +47,13 @@ export const PAGES: Record<string, PageSeo> = {
     theme: 'crazylove',
   },
 };
+
+/**
+ * Pages built outside the app as finished HTML, like the blog's (scripts/blog/build.ts writes
+ * dist/<path>.html, with its own title, description and canonical, from content/pages/). The
+ * Worker serves them as they are; the build lists them in sitemap.xml.
+ */
+export const STATIC_PAGES = new Set(['/tentang-kami']);
 
 /**
  * Pages the app has (src/main.tsx) that stay out of search: templates hidden from the

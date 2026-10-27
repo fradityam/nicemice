@@ -1,0 +1,532 @@
+/*
+ * /tentang-kami (src/blog/AboutPage.tsx). Its own file, built as a separate entry
+ * (vite.config.ts) and loaded only by that page, after the app's main stylesheet (Tailwind,
+ * and home.css with the header, footer, buttons and the colors and fonts of .nm-home).
+ * Sections alternate cream and colored bands with ink borders, as on the homepage.
+ */
+
+.nm-about h1,
+.nm-about h2,
+.nm-about h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+}
+
+.nm-about h2 {
+  font-size: clamp(2.2rem, 4.2vw, 3.6rem);
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  margin: 0 0 3rem;
+}
+
+.nm-about p {
+  margin: 0;
+}
+
+/* Like the homepage's section kickers (home.css .section-kicker). */
+.nm-about .about-kicker {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+
+.nm-about .about-kicker::before {
+  background: var(--red);
+  border-radius: 50%;
+  content: "";
+  display: inline-block;
+  height: 0.45rem;
+  margin-right: 0.6rem;
+  vertical-align: 0.1em;
+  width: 0.45rem;
+}
+
+/* --- Hero: the text beside the photo ------------------------------------------------------ */
+
+.nm-about .about-hero {
+  align-items: center;
+  display: grid;
+  gap: 5rem;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  margin: 0 auto;
+  max-width: calc(76rem + 12vw);
+  padding: 5rem 6vw 6.5rem;
+}
+
+.nm-about .about-hero h1 {
+  font-size: clamp(2.6rem, 5.4vw, 4.9rem);
+  letter-spacing: -0.045em;
+  line-height: 1.04;
+  margin: 0 0 1.75rem;
+}
+
+.nm-about .about-hero-intro {
+  font-size: 1.12rem;
+  line-height: 1.7;
+  max-width: 34rem;
+}
+
+.nm-about .about-hero-photo {
+  border: 1.5px solid var(--ink);
+  box-shadow: 0.7rem 0.7rem 0 var(--lime);
+  display: block;
+  height: auto;
+  justify-self: end;
+  max-width: 28rem;
+  width: 100%;
+}
+
+/* --- The story: a line down the middle, the steps alternating either side ------------------ */
+
+.nm-about .about-story {
+  border-top: 1.5px solid var(--ink);
+  padding: 6.5rem 6vw 7rem;
+}
+
+.nm-about .about-timeline {
+  margin: 0 auto;
+  max-width: 64rem;
+  position: relative;
+}
+
+.nm-about .about-timeline-line {
+  background: rgba(41, 23, 20, 0.16);
+  bottom: 0;
+  left: 50%;
+  position: absolute;
+  top: 0;
+  translate: -50% 0;
+  width: 1.5px;
+}
+
+/* Filled in red; the script grows it with the page's scroll (--progress), else it's full. */
+.nm-about .about-timeline-line span {
+  background: var(--red);
+  inset: 0;
+  position: absolute;
+  transform-origin: top;
+}
+
+.nm-about .about-timeline ol {
+  display: grid;
+  gap: 3.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nm-about .about-step {
+  column-gap: 7rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  position: relative;
+}
+
+.nm-about .about-step-text {
+  max-width: 25rem;
+}
+
+.nm-about .about-step:nth-child(odd) .about-step-text {
+  grid-column: 1;
+  justify-self: end;
+}
+
+.nm-about .about-step:nth-child(even) .about-step-text {
+  grid-column: 2;
+}
+
+.nm-about .about-marker {
+  align-items: center;
+  background: var(--cream);
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  display: flex;
+  height: 2.1rem;
+  justify-content: center;
+  left: 50%;
+  position: absolute;
+  top: -0.55rem;
+  translate: -50% 0;
+  width: 2.1rem;
+  z-index: 1;
+}
+
+.nm-about .about-marker svg {
+  fill: var(--red);
+  height: 0.95rem;
+  width: 0.95rem;
+}
+
+.nm-about .about-step-number {
+  color: var(--red);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+}
+
+.nm-about .about-step h3 {
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin: 0.5rem 0 0.85rem;
+}
+
+.nm-about .about-step p:last-child {
+  font-size: 1.02rem;
+  line-height: 1.75;
+}
+
+/* --- What we stand for --------------------------------------------------------------------- */
+
+.nm-about .about-values {
+  background: var(--paper);
+  border-bottom: 1.5px solid var(--ink);
+  border-top: 1.5px solid var(--ink);
+  padding: 6.5rem 6vw;
+}
+
+.nm-about .about-values > *,
+.nm-about .about-team > *,
+.nm-about .about-facts > ul {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 76rem;
+}
+
+.nm-about .about-values h2 {
+  margin-bottom: 3rem;
+}
+
+.nm-about .about-values ul {
+  display: grid;
+  gap: 2.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
+  padding: 0;
+}
+
+.nm-about .about-values li {
+  border-top: 1.5px solid var(--ink);
+  padding-top: 1.25rem;
+}
+
+.nm-about .about-values h3 {
+  font-size: 1.4rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 0.75rem;
+}
+
+.nm-about .about-values p {
+  line-height: 1.65;
+}
+
+/* --- The team ------------------------------------------------------------------------------ */
+
+.nm-about .about-team {
+  padding: 6.5rem 6vw 5rem;
+}
+
+.nm-about .about-team > * {
+  max-width: 58rem;
+}
+
+.nm-about .about-people {
+  display: grid;
+  gap: 3.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* /tentang-kami#ratu lands below the sticky header on desktop (home.css .site-top). */
+.nm-about [id] {
+  scroll-margin-top: calc(var(--nm-sticky-height, 8.4rem) + 1rem);
+}
+
+.nm-about .about-person img,
+.nm-about .about-photo-placeholder {
+  aspect-ratio: 4 / 3;
+  border: 1.5px solid var(--ink);
+  display: block;
+  margin-bottom: 1.5rem;
+  object-fit: cover;
+  width: 100%;
+}
+
+/* Until there's a photo: a paper box with the initial. */
+.nm-about .about-photo-placeholder {
+  align-items: center;
+  background: var(--paper);
+  border-style: dashed;
+  color: var(--red);
+  display: flex;
+  font-family: var(--serif);
+  font-size: clamp(4rem, 9vw, 7rem);
+  justify-content: center;
+  opacity: 0.85;
+}
+
+.nm-about .about-person h3 {
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0 0 0.4rem;
+}
+
+.nm-about .about-person-role {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem !important;
+  text-transform: uppercase;
+}
+
+.nm-about .about-person p:last-child {
+  line-height: 1.7;
+}
+
+/* --- Facts --------------------------------------------------------------------------------- */
+
+.nm-about .about-facts {
+  padding: 0 6vw 6.5rem;
+}
+
+.nm-about .about-facts ul {
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  max-width: 58rem;
+  padding: 0;
+}
+
+.nm-about .about-facts li {
+  padding: 2.25rem 1.25rem;
+  text-align: center;
+}
+
+.nm-about .about-facts li + li {
+  border-left: 1px solid var(--line);
+}
+
+.nm-about .about-fact-value {
+  display: block;
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 4.4vw, 3.4rem);
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.nm-about .about-fact-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  margin-top: 0.6rem;
+  text-transform: uppercase;
+}
+
+/* --- Testimonials -------------------------------------------------------------------------- */
+
+.nm-about .about-testimonials {
+  background: var(--pink);
+  border-top: 1.5px solid var(--ink);
+  padding: 6rem 6vw;
+}
+
+.nm-about .about-quotes {
+  display: grid;
+  gap: 3.5rem 4.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  margin: 0 auto;
+  max-width: 68rem;
+}
+
+.nm-about .about-quotes figure {
+  margin: 0;
+}
+
+.nm-about .about-quote-mark {
+  color: var(--red);
+  font-family: var(--serif);
+  font-size: 5rem;
+  height: 3rem;
+  line-height: 1;
+}
+
+.nm-about .about-quotes blockquote {
+  font-family: var(--serif);
+  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  letter-spacing: -0.025em;
+  line-height: 1.35;
+  margin: 0 0 1.25rem;
+}
+
+.nm-about .about-quotes figcaption {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nm-about .about-quotes figcaption::before {
+  content: "— ";
+}
+
+/* --- Closing ------------------------------------------------------------------------------- */
+
+.nm-about .about-closing {
+  background: var(--lime);
+  border-top: 1.5px solid var(--ink);
+  padding: 6.5rem 6vw 7rem;
+  text-align: center;
+}
+
+.nm-about .about-closing h2 {
+  font-size: clamp(2.4rem, 5vw, 4.4rem);
+  margin: 0 auto 1.25rem;
+  max-width: 48rem;
+}
+
+.nm-about .about-closing p {
+  font-size: 1.08rem;
+  line-height: 1.7;
+  margin: 0 auto;
+  max-width: 34rem;
+}
+
+.nm-about .about-closing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  justify-content: center;
+  margin-top: 2.25rem;
+}
+
+.nm-about .about-closing .button-outline {
+  background: var(--paper);
+}
+
+/* --- Motion (src/blog/AboutPage.tsx): only with JavaScript, and not for reduced motion ------ */
+
+@media (prefers-reduced-motion: no-preference) {
+  html.js .nm-about [data-reveal] {
+    opacity: 0;
+    transition:
+      opacity 700ms ease,
+      translate 800ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: calc(var(--i, 0) * 110ms);
+    translate: 0 1.25rem;
+  }
+
+  html.js .nm-about [data-reveal].is-in {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  html.js .nm-about .about-marker {
+    scale: 0;
+    transition: scale 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 150ms;
+  }
+
+  html.js .nm-about .is-in .about-marker {
+    scale: 1;
+  }
+
+  html.js .nm-about .about-timeline-line span {
+    transform: scaleY(var(--progress, 0));
+    transition: transform 150ms linear;
+  }
+}
+
+/* --- Smaller screens ----------------------------------------------------------------------- */
+
+@media (max-width: 980px) {
+  .nm-about .about-hero {
+    gap: 3rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  }
+
+  .nm-about .about-step {
+    column-gap: 4.5rem;
+  }
+
+  .nm-about .about-values ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 3rem;
+  }
+}
+
+/* Phones: one column; the timeline's line on the left, every step to its right. */
+@media (max-width: 720px) {
+  .nm-about h2 {
+    margin-bottom: 2.25rem;
+  }
+
+  .nm-about .about-hero {
+    gap: 2.5rem;
+    grid-template-columns: 1fr;
+    padding: 3rem 1.25rem 4rem;
+  }
+
+  .nm-about .about-hero-photo {
+    box-shadow: 0.5rem 0.5rem 0 var(--lime);
+    justify-self: start;
+    max-width: calc(100% - 0.5rem);
+  }
+
+  .nm-about .about-story,
+  .nm-about .about-values,
+  .nm-about .about-team,
+  .nm-about .about-testimonials,
+  .nm-about .about-closing {
+    padding: 4.5rem 1.25rem;
+  }
+
+  .nm-about .about-facts {
+    padding: 0 1.25rem 4.5rem;
+  }
+
+  .nm-about .about-timeline-line {
+    left: 1.05rem;
+  }
+
+  .nm-about .about-timeline ol {
+    gap: 3rem;
+  }
+
+  .nm-about .about-step {
+    display: block;
+    padding-left: 3.5rem;
+  }
+
+  .nm-about .about-marker {
+    left: 1.05rem;
+  }
+
+  .nm-about .about-step-text {
+    max-width: none;
+  }
+
+  .nm-about .about-values ul,
+  .nm-about .about-people {
+    grid-template-columns: 1fr;
+  }
+
+  .nm-about .about-facts ul {
+    grid-template-columns: 1fr;
+  }
+
+  .nm-about .about-facts li {
+    padding: 1.75rem 1rem;
+  }
+
+  .nm-about .about-facts li + li {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}

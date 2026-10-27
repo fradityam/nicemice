@@ -1,0 +1,77 @@
+# The /tentang-kami page (dist/tentang-kami.html), built by scripts/blog/build.ts and checked
+# against scripts/blog/schema.ts (aboutPageSchema). docs/blog.md describes the fields.
+# Headings marked "screen readers only" give each section its H2 without showing on the page.
+
+meta:
+  title: "Tentang Kami: Cerita Fadil & Ratu"   # rendered as "<title> | Nice Mice"
+  description: "Nice Mice lahir dari gemasnya kami mencari undangan digital untuk pernikahan sendiri. Kenalan dengan Fadil & Ratu, pasangan di balik undangan tema film."
+  ogImage: /images/about/fadil-ratu-og.webp   # link previews only (1200x630, from the same photo); alt is hero.photoAlt
+
+hero:
+  label: "Cerita Kami"
+  h1: "Awalnya cuma gemas sama undangan nikahan sendiri."
+  intro: "Kami Fadil dan Ratu, pasangan suami istri di balik Nice Mice. Kami bikin undangan digital yang terasa seperti cerita kalian sendiri, dan menyiapkannya sampai siap disebar."
+  photo: /images/about/fadil-ratu.webp   # from content/images-src/about/fadil-ratu.jpg
+  photoAlt: "Fadil dan Ratu, pasangan di balik Nice Mice, duduk berdua di bangku taman"
+
+timeline:
+  heading: "Perjalanan Nice Mice"   # screen readers only
+  steps:
+    - heading: "Ratu, si tukang rencana"
+      text: "Dari dulu Ratu punya banyak ide bisnis, dari pernak-pernik aksesoris sampai macam-macam lainnya. Sayangnya, semuanya selalu berhenti di rencana."
+    - heading: "Lucu, tapi belum “kita banget”"
+      text: "Waktu menyiapkan pernikahan, kami keliling mencari undangan digital. Banyak yang lucu, tapi Ratu, yang latar belakangnya desain grafis, terus merasa ini masih bisa lebih bagus, dan lebih terasa “kita”."
+    - heading: "“Ah, ini mah I can.”"
+      text: "Akhirnya kami tetap pakai jasa undangan digital lain, dan hasilnya bagus. Tapi kalimat itu sudah terucap. Lalu kebiasaan lama hampir kambuh: idenya mengendap seminggu, dua minggu, dan nyaris terlupa."
+    - heading: "Fadil ikut yakin"
+      text: "Melihat Ratu begitu pede soal desain undangannya, Fadil ikut yakin. Daripada idenya terlupa lagi, Fadil menawarkan diri membangun websitenya. Kata Ratu sih, menawarkan diri untuk dieksploitasi. Ratu mendesain, Fadil membangun, dan lahirlah Nice Mice: rencana Ratu pertama yang benar-benar jalan."
+    - heading: "Mulai dari yang kami suka: film"
+      text: "Kami hobi nonton film, jadi koleksi pertama kami adalah tema film: Friends, La La Land, The Notebook, dan Crazy Little Thing Called Love. Film baru permulaan. Nanti akan ada tema lain, apa pun yang bikin pasangan merasa “ini cerita kita”."
+
+values:
+  heading: "Yang kami pegang"
+  items:
+    - title: "Harga jelas dari awal"
+      text: "Paket, harga, dan apa saja yang termasuk sudah tertulis sebelum kamu bayar. Tidak ada biaya kejutan."
+    - title: "Terima beres"
+      text: "Kamu pilih tema dan kirim detail acara. Sisanya kami siapkan sampai link-nya siap disebar."
+    - title: "Terasa kalian banget"
+      text: "Setiap tema dirancang supaya undangan terasa seperti cerita kalian, bukan template yang sama dengan semua orang."
+    - title: "Praktis untuk tamu"
+      text: "Nama tamu, RSVP, peta, dan amplop digital ada dalam satu link yang tinggal dibuka dari WhatsApp."
+
+# Each person is /tentang-kami#<slug>, the address their entry in content/authors.json links to.
+team:
+  heading: "Orang di balik Nice Mice"
+  people:
+    - slug: ratu
+      name: "Ratu"
+      role: "Desainer"
+      bio: "Berlatar belakang desain grafis. Ratu mendesain setiap tema undangan Nice Mice, dan dialah yang pertama kali bilang “ah, ini mah I can”."
+      photo: null   # placeholder until a real photo is added: /images/about/<file>.webp
+    - slug: fadil
+      name: "Fadil"
+      role: "Pembangun website & animasi"
+      bio: "Fadil yang mengubah desain Ratu jadi undangan yang bisa dibuka dan disebar. Dia membangun website Nice Mice dan membuat animasi di setiap undangannya."
+      photo: null
+
+facts:
+  heading: "Nice Mice dalam angka"   # screen readers only
+  items:
+    - value: "3x24 jam"
+      label: "waktu pengerjaan"
+    - value: "2x"
+      label: "revisi gratis"
+    - value: "12 bulan"
+      label: "undangan aktif"
+
+# Quotes from the homepage (TESTIMONIALS in src/content/homeInfo.ts), picked by couple.
+testimonials:
+  heading: "Kata pasangan Nice Mice"   # screen readers only
+  couples: ["Nabila & Arga", "Dinda & Fajar"]
+
+closing:
+  heading: "Sekarang, giliran cerita kalian."
+  text: "Pilih tema yang paling terasa seperti kalian, atau ngobrol dulu dengan kami lewat WhatsApp."
+  primaryCta: { label: "Lihat Tema", href: "/#tema" }
+  whatsappLabel: "Chat lewat WhatsApp"   # the usual order message; hidden while there's no WhatsApp number

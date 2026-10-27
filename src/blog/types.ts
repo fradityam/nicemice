@@ -6,7 +6,7 @@ export interface Author {
   name: string;
   role: string;
   bio: string;
-  /** Site path or full URL of the author's page, e.g. '/tentang-kami'. */
+  /** Site path or full URL of the author's page, e.g. '/tentang-kami#ratu'. */
   url: string;
   sameAs: string[];
 }
@@ -44,7 +44,7 @@ export interface PageHead {
 
 /** Files from the SPA's build that blog pages reuse. */
 export interface SiteAssets {
-  /** Stylesheets, e.g. ['/assets/index-abc.css', '/assets/blog-def.css']. */
+  /** Stylesheets, e.g. ['/assets/index-abc.css', '/assets/blog-def.css'] (about-….css on /tentang-kami). */
   css: string[];
   /** The Google Analytics <script> from dist/index.html, exactly as built. */
   analytics: string;
@@ -60,7 +60,8 @@ export interface ArticlePageData {
   date: string;
   updated?: string;
   readingMinutes: number;
-  author: Author;
+  /** In the frontmatter's order; the byline joins them: "Ratu & Fadil". */
+  authors: Author[];
   cover: Image;
   summary?: string[];
   /** The article's Markdown, as HTML (scripts/blog/markdown.ts). */
@@ -80,4 +81,21 @@ export interface IndexPageData {
   featured: ArticleCard;
   /** The rest, newest first. */
   articles: ArticleCard[];
+}
+
+/** /tentang-kami: content/pages/tentang-kami.yaml, with image sizes and the chosen testimonials. */
+export interface AboutPageData {
+  head: PageHead;
+  assets: SiteAssets;
+  hero: { label: string; h1: string; intro: string; photo: Image };
+  timeline: { heading: string; steps: { heading: string; text: string }[] };
+  values: { heading: string; items: { title: string; text: string }[] };
+  team: {
+    heading: string;
+    /** `slug` is the person's id on the page (/tentang-kami#ratu). No photo: a placeholder. */
+    people: { slug: string; name: string; role: string; bio: string; photo?: Image }[];
+  };
+  facts: { heading: string; items: { value: string; label: string }[] };
+  testimonials: { heading: string; items: { quote: string; couple: string; city: string }[] };
+  closing: { heading: string; text: string; primaryCta: { label: string; href: string }; whatsappLabel: string };
 }

@@ -1,9 +1,11 @@
 import { SITE_URL } from '../../src/content/seo';
 import { ORGANIZATION_ID } from '../../src/content/structuredData';
-import type { ArticleCard, Author, Image } from '../../src/blog/types';
+import type { AboutPageData, ArticleCard, Author, Image } from '../../src/blog/types';
 
-// The blog's structured data (JSON-LD). The publisher is the homepage's Organization, by the
-// same @id; it's described again here because search engines read each page on its own.
+// The structured data (JSON-LD) of the blog and /tentang-kami. The publisher is the homepage's
+// Organization, by the same @id; it's described again here because search engines read each
+// page on its own. Ratu and Fadil are Persons with the same @id on /tentang-kami and in every
+// article they wrote (/tentang-kami#ratu, their url in content/authors.json).
 
 const BLOG_ID = `${SITE_URL}/blog#blog`;
 
@@ -34,6 +36,16 @@ function breadcrumb(items: { name: string; url: string }[]) {
   };
 }
 
+/** An article's author; on this site, `url` is their place on /tentang-kami and also their @id. */
+const person = (author: Author) => ({
+  '@type': 'Person',
+  ...(author.url.startsWith('/') ? { '@id': absoluteUrl(author.url) } : {}),
+  name: author.name,
+  url: absoluteUrl(author.url),
+  jobTitle: author.role,
+  ...(author.sameAs.length ? { sameAs: author.sameAs } : {}),
+});
+
 /** Safe inside <script>. */
 const serialize = (graph: object[]) => JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c');
 
@@ -44,10 +56,9 @@ export function articleJsonLd(article: {
   cover: Image;
   date: string;
   updated?: string;
-  author: Author;
+  authors: Author[];
   faq?: { q: string; a: string }[];
 }) {
-  const { author } = article;
   return serialize([
     {
       '@type': 'BlogPosting',
@@ -58,13 +69,7 @@ export function articleJsonLd(article: {
       datePublished: dateTime(article.date),
       dateModified: dateTime(article.updated ?? article.date),
       inLanguage: 'id-ID',
-      author: {
-        '@type': 'Person',
-        name: author.name,
-        url: absoluteUrl(author.url),
-        jobTitle: author.role,
-        ...(author.sameAs.length ? { sameAs: author.sameAs } : {}),
-      },
+      author: article.authors.map(person),
       publisher,
       mainEntityOfPage: { '@type': 'WebPage', '@id': article.url },
       isPartOf: { '@id': BLOG_ID },
@@ -107,6 +112,39 @@ export function blogIndexJsonLd(index: { title: string; description: string; art
     breadcrumb([
       { name: 'Beranda', url: `${SITE_URL}/` },
       { name: 'Blog', url: `${SITE_URL}/blog` },
+    ]),
+  ]);
+}
+
+/** /tentang-kami: AboutPage about the Organization, its founders (the team) as Persons, and the breadcrumb. */
+export function aboutJsonLd(page: { url: string; title: string; description: string; photo: Image; people: AboutPageData['team']['people'] }) {
+  const personId = (slug: string) => `${page.url}#${slug}`;
+  return serialize([
+    {
+      '@type': 'AboutPage',
+      '@id': `${page.url}#webpage`,
+      url: page.url,
+      name: page.title,
+      description: page.description,
+      inLanguage: 'id-ID',
+      primaryImageOfPage: imageObject(page.photo),
+      mainEntity: { '@id': ORGANIZATION_ID },
+      isPartOf: { '@id': `${SITE_URL}/#website` },
+    },
+    { ...publisher, founder: page.people.map((p) => ({ '@id': personId(p.slug) })) },
+    ...page.people.map((p) => ({
+      '@type': 'Person',
+      '@id': personId(p.slug),
+      name: p.name,
+      jobTitle: p.role,
+      description: p.bio,
+      url: personId(p.slug),
+      worksFor: { '@id': ORGANIZATION_ID },
+      ...(p.photo ? { image: absoluteUrl(p.photo.src) } : {}),
+    })),
+    breadcrumb([
+      { name: 'Beranda', url: `${SITE_URL}/` },
+      { name: 'Tentang Kami', url: page.url },
     ]),
   ]);
 }

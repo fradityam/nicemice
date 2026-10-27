@@ -1,5 +1,5 @@
 import { fontsHref, type FontSet } from '../src/content/fonts';
-import { canonicalUrl, normalizePath, NOINDEX_PATHS, pageSeo, REDIRECTS } from '../src/content/seo';
+import { canonicalUrl, normalizePath, NOINDEX_PATHS, pageSeo, REDIRECTS, STATIC_PAGES } from '../src/content/seo';
 import { HOMEPAGE_JSON_LD } from '../src/content/structuredData';
 import { guestNameFromSearch, MAX_GUEST_NAME } from '../src/invitations/guestNameText';
 import ogDataJson from './og-data.json';
@@ -16,8 +16,9 @@ import type { OgData } from './ogData';
 //   - the app's other pages (hidden templates, "Segera Hadir"): noindex;
 //   - any other address: a 404 status and noindex, and the app shows its "not found" page.
 // Each also gets only the fonts that page uses (src/content/fonts.ts).
-// Old addresses in REDIRECTS get a 301 to the right page. The blog's published pages are
-// finished HTML files with their own tags (scripts/blog/build.ts), served as they are.
+// Old addresses in REDIRECTS get a 301 to the right page. The blog's published pages and
+// STATIC_PAGES (/tentang-kami) are finished HTML files with their own tags
+// (scripts/blog/build.ts), served as they are.
 
 interface Env {
   ASSETS: Fetcher;
@@ -40,9 +41,9 @@ export default {
       return Response.redirect(new URL(REDIRECTS[path] + url.search, url).href, 301);
     }
 
-    if (path === '/blog' || path.startsWith('/blog/')) {
-      const blogPage = await blogFile(request, url, path, env);
-      if (blogPage) return blogPage;
+    if (path === '/blog' || path.startsWith('/blog/') || STATIC_PAGES.has(path)) {
+      const builtPage = await staticFile(request, url, path, env);
+      if (builtPage) return builtPage;
     }
 
     const page = await env.ASSETS.fetch(new Request(new URL('/', url), request));
@@ -98,13 +99,14 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 /**
- * A built blog page (scripts/blog/build.ts: dist/blog.html, dist/blog/<slug>.html) exactly as
- * it is: it has its own tags. '/blog/<slug>/' gets a 301 to '/blog/<slug>' (Cloudflare's own
- * redirect for it would be a 307); '/blog/<slug>.html' never reaches the Worker and gets
- * Cloudflare's 307. Undefined when there's no such page: an unknown article gets the usual 404,
- * and /blog, before anything is published, the app's "Segera Hadir" page, as before.
+ * A page built as finished HTML (scripts/blog/build.ts: dist/blog.html, dist/blog/<slug>.html,
+ * dist/tentang-kami.html) exactly as it is: it has its own tags. '/blog/<slug>/' gets a 301 to
+ * '/blog/<slug>' (Cloudflare's own redirect for it would be a 307); '/blog/<slug>.html' never
+ * reaches the Worker and gets Cloudflare's 307. Undefined when there's no such page: an unknown
+ * article gets the usual 404, and /blog, before anything is published, the app's "Segera
+ * Hadir" page, as before.
  */
-async function blogFile(request: Request, url: URL, path: string, env: Env): Promise<Response | undefined> {
+async function staticFile(request: Request, url: URL, path: string, env: Env): Promise<Response | undefined> {
   const file = await env.ASSETS.fetch(new Request(new URL(path, url), request));
   if (!file.ok && file.status !== 304) {
     await file.body?.cancel();

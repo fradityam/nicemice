@@ -6,7 +6,7 @@ import SiteFooter from '../components/home/SiteFooter';
 import SiteHeader from '../components/home/SiteHeader';
 import type { ArticleCard, PageHead, SiteAssets } from './types';
 
-// A whole blog page: <head> with its own title, description, canonical, link-preview tags and
+// A whole blog page (or /tentang-kami, src/blog/AboutPage.tsx): <head> with its own title, description, canonical, link-preview tags and
 // structured data, then the homepage's header and footer around the content. Rendered once at
 // build time (scripts/blog/build.ts), never hydrated: the page loads no app JavaScript, only
 // Google Analytics (the same snippet as index.html) and the small script below.
@@ -31,14 +31,35 @@ const PAGE_SCRIPT = `(function () {
   });
 })();`;
 
-/** `wide`: the homepage sections' width (the blog index), instead of an article's reading width. */
-export default function BlogLayout({ head, assets, wide = false, children }: { head: PageHead; assets: SiteAssets; wide?: boolean; children: ReactNode }) {
+/**
+ * `wide`: the homepage sections' width (the blog index), instead of an article's reading width.
+ * `mainClass`: <main>'s class instead of the blog's. `headScript`, `script`: the page's own
+ * inline scripts, at the start of <head> and after the page script.
+ */
+export default function BlogLayout({
+  head,
+  assets,
+  wide = false,
+  mainClass = wide ? 'nm-blog nm-blog-wide' : 'nm-blog',
+  headScript,
+  script,
+  children,
+}: {
+  head: PageHead;
+  assets: SiteAssets;
+  wide?: boolean;
+  mainClass?: string;
+  headScript?: string;
+  script?: string;
+  children: ReactNode;
+}) {
   const image = `${SITE_URL}${head.image.src}`;
   return (
     <html lang="id">
       <head>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {headScript && <script dangerouslySetInnerHTML={{ __html: headScript }} />}
         <title>{head.title}</title>
         <meta name="description" content={head.description} />
         <link rel="canonical" href={head.canonical} />
@@ -66,16 +87,19 @@ export default function BlogLayout({ head, assets, wide = false, children }: { h
           <meta key={property} property={property} content={content} />
         ))}
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content={image} />
+        <meta name="twitter:image:alt" content={head.image.alt} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: head.jsonLd }} />
         <script dangerouslySetInnerHTML={{ __html: assets.analytics }} />
       </head>
       <body className="bg-[#FAF9F6] text-zinc-800 antialiased font-sans">
         <div className="nm-home">
           <SiteHeader home="/" />
-          <main className={wide ? 'nm-blog nm-blog-wide' : 'nm-blog'}>{children}</main>
+          <main className={mainClass}>{children}</main>
           <SiteFooter home="/" />
         </div>
         <script dangerouslySetInnerHTML={{ __html: PAGE_SCRIPT }} />
+        {script && <script dangerouslySetInnerHTML={{ __html: script }} />}
       </body>
     </html>
   );

@@ -26,8 +26,8 @@ function homeMeta(): Plugin {
   };
 }
 
-// `vite build` builds the app, plus the blog's stylesheet as its own file (src/blog/blog.css),
-// which the app never loads. `vite build --ssr src/blog/render.tsx` (package.json) then builds
+// `vite build` builds the app, plus the blog's and /tentang-kami's stylesheets as their own
+// files (src/blog/blog.css, about.css), which the app never loads. `vite build --ssr src/blog/render.tsx` (package.json) then builds
 // the blog's page components for scripts/blog/build.ts; it needs none of the app's plugins.
 // That script also writes sitemap.xml.
 export default defineConfig(({isSsrBuild}) => {
@@ -35,7 +35,7 @@ export default defineConfig(({isSsrBuild}) => {
     plugins: [react(), tailwindcss(), ...(isSsrBuild ? [] : [homeMeta(), sharePreviews(), notFoundPage()])],
     build: isSsrBuild
       ? {}
-      : {rollupOptions: {input: {index: path.resolve(__dirname, 'index.html'), blog: path.resolve(__dirname, 'src/blog/blog.css')}}},
+      : {rollupOptions: {input: {index: path.resolve(__dirname, 'index.html'), blog: path.resolve(__dirname, 'src/blog/blog.css'), about: path.resolve(__dirname, 'src/blog/about.css')}}},
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

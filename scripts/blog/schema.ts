@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// What an article's frontmatter (content/blog/<slug>.md), content/authors.json and
-// content/blog.json may contain. Checked by the build (scripts/blog/build.ts); anything else,
+// What an article's frontmatter (content/blog/<slug>.md), content/authors.json,
+// content/blog.json and content/pages/tentang-kami.yaml may contain. Checked by the build (scripts/blog/build.ts); anything else,
 // a missing field or a misspelt one, stops it. docs/blog.md describes the fields.
 
 /** Lowercase letters and digits, words joined by single hyphens: 'undangan-digital-2027'. */
@@ -18,12 +18,16 @@ const date = z.preprocess(
 
 const text = z.string().trim().min(1, 'must not be empty');
 
+/** Who writes an article when its frontmatter doesn't say. */
+export const DEFAULT_AUTHORS = ['ratu', 'fadil'];
+
 export const frontmatterSchema = z.strictObject({
   title: text,
   description: text,
   date,
   updated: date.optional(),
-  author: text,
+  /** One slug from content/authors.json, or a list of them. */
+  author: z.union([text.transform((slug) => [slug]), z.array(text).min(1, 'needs at least one author')]).default(DEFAULT_AUTHORS),
   cover: z.string().startsWith('/images/blog/', 'must be an image in public/images/blog/, written /images/blog/<file>'),
   coverAlt: text,
   cluster: text,
@@ -57,6 +61,54 @@ export const blogIndexSchema = z.strictObject({
   /** Each cluster slug's label, shown above an article's H1: { "sebar-undangan": "Sebar Undangan" }. */
   clusterLabel: z.record(z.string(), text),
 });
+
+const aboutImage = z.string().startsWith('/images/about/', 'must be an image in public/images/about/, written /images/about/<file>');
+
+export const aboutPageSchema = z.strictObject({
+  /** `ogImage`: the link-preview image (og:image, twitter:image), 1200x630. */
+  meta: z.strictObject({ title: text, description: text, ogImage: aboutImage }),
+  hero: z.strictObject({ label: text, h1: text, intro: text, photo: aboutImage, photoAlt: text }),
+  timeline: z.strictObject({
+    heading: text,
+    steps: z.array(z.strictObject({ heading: text, text })).min(1),
+  }),
+  values: z.strictObject({
+    heading: text,
+    items: z.array(z.strictObject({ title: text, text })).min(1),
+  }),
+  team: z.strictObject({
+    heading: text,
+    people: z
+      .array(
+        z.strictObject({
+          slug: z.string().regex(SLUG, 'must be lowercase letters, digits and hyphens'),
+          name: text,
+          role: text,
+          bio: text,
+          /** null: a placeholder box until there's a photo. */
+          photo: aboutImage.nullable(),
+        }),
+      )
+      .min(1),
+  }),
+  facts: z.strictObject({
+    heading: text,
+    items: z.array(z.strictObject({ value: text, label: text })).min(1),
+  }),
+  testimonials: z.strictObject({
+    heading: text,
+    /** Couples from TESTIMONIALS in src/content/homeInfo.ts, e.g. "Nabila & Arga". */
+    couples: z.array(text).min(1).max(2, 'at most 2'),
+  }),
+  closing: z.strictObject({
+    heading: text,
+    text,
+    primaryCta: z.strictObject({ label: text, href: z.string().startsWith('/', "must be a site path, e.g. '/#tema'") }),
+    whatsappLabel: text,
+  }),
+});
+
+export type AboutPageContent = z.infer<typeof aboutPageSchema>;
 
 /** "authors.0.url: must be …", "coverAlt: is required" */
 export const describeZodError = (error: z.ZodError) =>

@@ -1,17 +1,30 @@
-import type { ReactElement } from 'react';
+import { Fragment, type ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { CheckIcon } from '../components/home/icons';
 import BlogLayout, { ArticleCardView, ArticleGrid, Breadcrumb, DateText, RelatedList, WhatsAppCta } from './BlogLayout';
-import type { ArticlePageData, IndexPageData } from './types';
+import AboutPage from './AboutPage';
+import type { AboutPageData, ArticlePageData, Author, IndexPageData } from './types';
 
-// The blog's pages as finished HTML. Built by Vite as a server bundle (`vite build --ssr`, see
-// package.json), so the header and footer get the same /assets/ image URLs as the app, and
-// called by scripts/blog/build.ts, which writes the files into dist/.
+// The blog's pages, and /tentang-kami, as finished HTML. Built by Vite as a server bundle
+// (`vite build --ssr`, see package.json), so the header and footer get the same /assets/ image
+// URLs as the app, and called by scripts/blog/build.ts, which writes the files into dist/.
 
 const page = (element: ReactElement) => `<!doctype html>\n${renderToStaticMarkup(element)}\n`;
 
+/** "Ratu", "Ratu & Fadil", "A, B & C", each name linking to the author's page. */
+function AuthorNames({ authors }: { authors: Author[] }) {
+  return authors.map((author, i) => (
+    <Fragment key={author.slug}>
+      {i > 0 && (i === authors.length - 1 ? ' & ' : ', ')}
+      <a href={author.url} rel="author">
+        {author.name}
+      </a>
+    </Fragment>
+  ));
+}
+
 export function renderArticle(data: ArticlePageData): string {
-  const { author, cover } = data;
+  const { authors, cover } = data;
   return page(
     <BlogLayout head={data.head} assets={data.assets}>
       <article className="blog-article">
@@ -19,10 +32,7 @@ export function renderArticle(data: ArticlePageData): string {
         <p className="blog-cluster">{data.cluster}</p>
         <h1>{data.title}</h1>
         <p className="blog-byline">
-          Oleh{' '}
-          <a href={author.url} rel="author">
-            {author.name}
-          </a>
+          Oleh <AuthorNames authors={authors} />
           <span aria-hidden="true"> · </span>
           <DateText date={data.date} />
           {data.updated && (
@@ -88,11 +98,15 @@ export function renderArticle(data: ArticlePageData): string {
 
       <section className="blog-author" aria-label="Tentang penulis">
         <p className="blog-kicker">Tentang Penulis</p>
-        <p className="blog-author-name">
-          <a href={author.url}>{author.name}</a>
-        </p>
-        <p className="blog-author-role">{author.role}</p>
-        <p>{author.bio}</p>
+        {authors.map((author) => (
+          <div key={author.slug}>
+            <p className="blog-author-name">
+              <a href={author.url}>{author.name}</a>
+            </p>
+            <p className="blog-author-role">{author.role}</p>
+            <p>{author.bio}</p>
+          </div>
+        ))}
       </section>
 
       <WhatsAppCta />
@@ -120,4 +134,8 @@ export function renderIndex(data: IndexPageData): string {
       </div>
     </BlogLayout>,
   );
+}
+
+export function renderAbout(data: AboutPageData): string {
+  return page(<AboutPage {...data} />);
 }

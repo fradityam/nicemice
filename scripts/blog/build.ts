@@ -2,24 +2,29 @@ import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import matter from 'gray-matter';
-import { canonicalUrl, PAGES, SITE_URL } from '../../src/content/seo';
-import type { ArticleCard, Author, Image, SiteAssets } from '../../src/blog/types';
-import { articleJsonLd, blogIndexJsonLd } from './jsonLd';
+import { parse as parseYaml } from 'yaml';
+import { TESTIMONIALS } from '../../src/content/homeInfo';
+import { canonicalUrl, PAGES, SITE_URL, STATIC_PAGES } from '../../src/content/seo';
+import type { AboutPageData, ArticleCard, Author, Image, SiteAssets } from '../../src/blog/types';
+import { aboutJsonLd, articleJsonLd, blogIndexJsonLd } from './jsonLd';
 import { imageSize, internalPath, PUBLIC_DIR, renderBody, type Issues, type RenderedBody } from './markdown';
-import { authorsSchema, blogIndexSchema, describeZodError, frontmatterSchema, SLUG, type Frontmatter } from './schema';
+import { aboutPageSchema, authorsSchema, blogIndexSchema, describeZodError, frontmatterSchema, SLUG, type Frontmatter } from './schema';
 
 // The blog, built after the app (`npm run build`, see package.json): every article in
 // content/blog/<slug>.md becomes dist/blog/<slug>.html, a finished page with its own tags and
-// structured data, and the list of them dist/blog.html; then sitemap.xml. Drafts are checked
-// but never written. With nothing published there's no dist/blog.html, and /blog stays the
-// app's "Segera Hadir" page (worker/index.ts).
+// structured data, and the list of them dist/blog.html; content/pages/tentang-kami.yaml
+// becomes dist/tentang-kami.html (STATIC_PAGES); then sitemap.xml. Drafts are checked but
+// never written. With nothing published there's no dist/blog.html, and /blog stays the app's
+// "Segera Hadir" page (worker/index.ts).
 //
 // Problems that would put a broken page online stop the build; the rest are printed as
 // warnings. docs/blog.md lists them all.
 
 const DIST = path.resolve('dist');
 const BLOG_DIR = path.resolve('content/blog');
-const IMAGES_DIR = path.join(PUBLIC_DIR, 'images/blog');
+const IMAGE_DIRS = ['images/blog', 'images/about'];
+const ABOUT_FILE = path.resolve('content/pages/tentang-kami.yaml');
+const ABOUT_PATH = '/tentang-kami';
 const SSR_ENTRY = path.resolve('build/blog-ssr/render.js');
 
 const TITLE_SUFFIX = ' | Nice Mice';
@@ -49,6 +54,11 @@ interface Article {
 
 const readJson = (file: string) => JSON.parse(fs.readFileSync(file, 'utf8'));
 const relative = (file: string) => path.relative(process.cwd(), file).replaceAll('\\', '/');
+/** '/tentang-kami#ratu' → '/tentang-kami'; '/blog/' → '/blog'; '/#tema' → '/'. */
+const pagePath = (url: string) => {
+  const p = url.replace(/[?#].*$/, '') || '/';
+  return p.length > 1 ? p.replace(/\/+$/, '') : p;
+};
 
 function checkLengths(issues: Issues, title: string, description: string) {
   const fullTitle = title + TITLE_SUFFIX;
@@ -74,6 +84,59 @@ else {
 const indexFile = path.resolve('content/blog.json');
 const indexResult = blogIndexSchema.safeParse(readJson(indexFile));
 if (!indexResult.success) describeZodError(indexResult.error).forEach((m) => issuesFor(relative(indexFile)).fail(m));
+
+// --- /tentang-kami --------------------------------------------------------------------------
+
+const aboutIssues = issuesFor(relative(ABOUT_FILE));
+let aboutYaml: unknown;
+try {
+  aboutYaml = parseYaml(fs.readFileSync(ABOUT_FILE, 'utf8'));
+} catch (e) {
+  aboutIssues.fail(`isn't valid YAML: ${(e as Error).message}`);
+}
+const aboutResult = aboutYaml === undefined ? undefined : aboutPageSchema.safeParse(aboutYaml);
+if (aboutResult && !aboutResult.success) describeZodError(aboutResult.error).forEach((m) => aboutIssues.fail(m));
+const about = aboutResult?.success ? aboutResult.data : undefined;
+
+/** An image on /tentang-kami, with its size; the build stops when the file is missing. */
+async function aboutImage(src: string, alt: string, where: string): Promise<Image> {
+  const size = await imageSize(src);
+  if (!size) aboutIssues.fail(`${where}: ${src} not found in public${src}`);
+  return { src, alt, width: size?.width ?? 0, height: size?.height ?? 0 };
+}
+
+let aboutPage: Omit<AboutPageData, 'head' | 'assets'> | undefined;
+let aboutOgImage: Image | undefined;
+if (about) {
+  checkLengths(aboutIssues, about.meta.title, about.meta.description);
+  const slugs = about.team.people.map((p) => p.slug);
+  for (const slug of new Set(slugs.filter((s, i) => slugs.indexOf(s) !== i))) aboutIssues.fail(`team: "${slug}" is listed twice`);
+  const testimonials = about.testimonials.couples.flatMap((couple) => {
+    const found = TESTIMONIALS.find((t) => t.couple === couple);
+    if (!found) aboutIssues.fail(`testimonials: no "${couple}" in TESTIMONIALS (src/content/homeInfo.ts: ${TESTIMONIALS.map((t) => t.couple).join(', ')})`);
+    return found ? [found] : [];
+  });
+  aboutOgImage = await aboutImage(about.meta.ogImage, about.hero.photoAlt, 'meta.ogImage');
+  if (aboutOgImage.width && (aboutOgImage.width !== 1200 || aboutOgImage.height !== 630)) {
+    aboutIssues.warn(`meta.ogImage is ${aboutOgImage.width}x${aboutOgImage.height}; link previews expect 1200x630`);
+  }
+  aboutPage = {
+    hero: { ...about.hero, photo: await aboutImage(about.hero.photo, about.hero.photoAlt, 'hero.photo') },
+    timeline: about.timeline,
+    values: about.values,
+    team: {
+      heading: about.team.heading,
+      people: await Promise.all(
+        about.team.people.map(async ({ photo, ...person }, i) =>
+          photo ? { ...person, photo: await aboutImage(photo, `${person.name}, ${person.role} Nice Mice`, `team.people.${i}.photo`) } : person,
+        ),
+      ),
+    },
+    facts: about.facts,
+    testimonials: { heading: about.testimonials.heading, items: testimonials },
+    closing: about.closing,
+  };
+}
 
 // --- Articles: frontmatter, then the Markdown ------------------------------------------------
 
@@ -127,7 +190,10 @@ const isPublished = (slug: string) => bySlug.get(slug)?.fm.draft === false;
 const pillars = new Map<string, Article[]>();
 for (const article of articles) {
   const { fm, issues } = article;
-  if (!authors.has(fm.author)) issues.fail(`author "${fm.author}" isn't in content/authors.json (${[...authors.keys()].join(', ')})`);
+  for (const slug of fm.author) {
+    if (!authors.has(slug)) issues.fail(`author "${slug}" isn't in content/authors.json (${[...authors.keys()].join(', ')})`);
+  }
+  if (new Set(fm.author).size < fm.author.length) issues.fail('author lists someone twice');
   for (const slug of fm.related ?? []) {
     if (!bySlug.has(slug)) issues.fail(`related: no article "${slug}" (content/blog/${slug}.md)`);
     else if (slug === article.slug) issues.fail(`related: lists itself`);
@@ -142,7 +208,12 @@ for (const [cluster, list] of pillars) {
 }
 
 // Pages that will exist once this build is online.
-const routes = new Set([...Object.keys(PAGES), ...(published.length ? ['/blog'] : []), ...published.map((a) => `/blog/${a.slug}`)]);
+const routes = new Set([...Object.keys(PAGES), ...STATIC_PAGES, ...(published.length ? ['/blog'] : []), ...published.map((a) => `/blog/${a.slug}`)]);
+
+if (aboutPage) {
+  const { href } = aboutPage.closing.primaryCta;
+  if (!routes.has(pagePath(href))) aboutIssues.warn(`closing.primaryCta links to ${href}, which isn't one of the site's pages`);
+}
 
 for (const article of articles) {
   for (const link of new Set(article.body.internalLinks)) {
@@ -153,14 +224,21 @@ for (const article of articles) {
   }
 }
 
-// An author's page on this site must exist before an article naming them is published.
+// An author's page on this site must exist before an article naming them is published. On
+// /tentang-kami, the #part must be someone in its team (their id there, and in the JSON-LD).
 for (const author of authors.values()) {
   if (!author.url.startsWith('/')) continue;
-  const target = author.url.length > 1 ? author.url.replace(/\/+$/, '') : author.url;
-  if (routes.has(target)) continue;
-  const used = articles.filter((a) => a.fm.author === author.slug);
+  const hash = author.url.match(/#(.+)$/)?.[1];
+  const target = pagePath(author.url);
+  const problem = !routes.has(target)
+    ? "isn't one of the site's pages (src/content/seo.ts PAGES or STATIC_PAGES, or a published article)"
+    : target === ABOUT_PATH && hash && aboutPage && !aboutPage.team.people.some((p) => p.slug === hash)
+      ? `has no #${hash} (team.people in ${relative(ABOUT_FILE)}: ${aboutPage.team.people.map((p) => p.slug).join(', ')})`
+      : undefined;
+  if (!problem) continue;
+  const used = articles.filter((a) => a.fm.author.includes(author.slug));
   if (!used.length) continue;
-  const message = `author "${author.slug}" links to ${author.url}, which isn't one of the site's pages (src/content/seo.ts PAGES or a published article)`;
+  const message = `author "${author.slug}" links to ${author.url}, which ${problem}`;
   if (used.some((a) => !a.fm.draft)) issuesFor(relative(authorsFile)).fail(message);
   else issuesFor(relative(authorsFile)).warn(`${message}; fine while their articles are drafts`);
 }
@@ -179,12 +257,14 @@ if (indexResult.success) {
 
 if (published.length && indexResult.success) checkLengths(issuesFor(relative(indexFile)), indexResult.data.title.replace(TITLE_SUFFIX, ''), indexResult.data.description);
 
-// Every file in public/images/blog/, used or not.
-if (fs.existsSync(IMAGES_DIR)) {
-  for (const name of fs.readdirSync(IMAGES_DIR)) {
-    const issues = issuesFor(`public/images/blog/${name}`);
+// Every file in public/images/blog/ and public/images/about/, used or not.
+for (const dir of IMAGE_DIRS) {
+  const full = path.join(PUBLIC_DIR, dir);
+  if (!fs.existsSync(full)) continue;
+  for (const name of fs.readdirSync(full)) {
+    const issues = issuesFor(`public/${dir}/${name}`);
     if (!IMAGE_FILE_NAME.test(name)) issues.warn('name it in lowercase words joined by hyphens, e.g. undangan-digital-friends.webp');
-    const bytes = fs.statSync(path.join(IMAGES_DIR, name)).size;
+    const bytes = fs.statSync(path.join(full, name)).size;
     if (bytes > MAX_IMAGE_BYTES) issues.warn(`${Math.round(bytes / 1024)} KB; keep images under ${MAX_IMAGE_BYTES / 1024} KB (WebP, at most 1600px wide)`);
   }
 }
@@ -199,19 +279,45 @@ if (errors.length) {
 }
 
 const indexHtml = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
-const assets: SiteAssets = {
-  css: [
-    // The app's main stylesheet (Tailwind, and home.css with the header and footer)…
-    ...[...indexHtml.matchAll(/<link\b[^>]*\brel="stylesheet"[^>]*>/g)].map((m) => m[0].match(/href="(\/assets\/[^"]+\.css)"/)?.[1]).filter((href): href is string => !!href),
-    // …and the blog's own (vite.config.ts).
-    ...fs.readdirSync(path.join(DIST, 'assets')).filter((f) => /^blog-[\w-]+\.css$/.test(f)).map((f) => `/assets/${f}`),
-  ],
-  analytics: indexHtml.match(/<script>\s*(window\.dataLayer[\s\S]*?)<\/script>/)?.[1] ?? '',
-};
-if (assets.css.length !== 2) throw new Error(`Blog: expected the app's stylesheet and blog.css in dist/, found ${JSON.stringify(assets.css)}`);
-if (!assets.analytics) throw new Error("Blog: Google Analytics' script not found in dist/index.html");
+// The app's main stylesheet (Tailwind, and home.css with the header and footer)…
+const appCss = [...indexHtml.matchAll(/<link\b[^>]*\brel="stylesheet"[^>]*>/g)]
+  .map((m) => m[0].match(/href="(\/assets\/[^"]+\.css)"/)?.[1])
+  .filter((href): href is string => !!href);
+// …and the page's own (vite.config.ts): blog-<hash>.css, about-<hash>.css.
+const ownCss = (name: 'blog' | 'about') =>
+  fs
+    .readdirSync(path.join(DIST, 'assets'))
+    .filter((f) => f.startsWith(`${name}-`) && /^[a-z]+-[\w-]+\.css$/.test(f))
+    .map((f) => `/assets/${f}`);
+const analytics = indexHtml.match(/<script>\s*(window\.dataLayer[\s\S]*?)<\/script>/)?.[1] ?? '';
+const assets: SiteAssets = { css: [...appCss, ...ownCss('blog')], analytics };
+const aboutAssets: SiteAssets = { css: [...appCss, ...ownCss('about')], analytics };
+for (const [name, { css }] of [['blog', assets], ['about', aboutAssets]] as const) {
+  if (css.length !== 2) throw new Error(`Blog: expected the app's stylesheet and ${name}.css in dist/, found ${JSON.stringify(css)}`);
+}
+if (!analytics) throw new Error("Blog: Google Analytics' script not found in dist/index.html");
 
-const { renderArticle, renderIndex } = (await import(pathToFileURL(SSR_ENTRY).href)) as typeof import('../../src/blog/render');
+const { renderAbout, renderArticle, renderIndex } = (await import(pathToFileURL(SSR_ENTRY).href)) as typeof import('../../src/blog/render');
+
+if (about && aboutPage && aboutOgImage) {
+  const url = canonicalUrl(ABOUT_PATH);
+  const { photo } = aboutPage.hero;
+  fs.writeFileSync(
+    path.join(DIST, 'tentang-kami.html'),
+    renderAbout({
+      head: {
+        title: about.meta.title + TITLE_SUFFIX,
+        description: about.meta.description,
+        canonical: url,
+        ogType: 'website',
+        image: aboutOgImage,
+        jsonLd: aboutJsonLd({ url, title: about.meta.title, description: about.meta.description, photo, people: aboutPage.team.people }),
+      },
+      assets: aboutAssets,
+      ...aboutPage,
+    }),
+  );
+}
 
 const card = (a: Article): ArticleCard => ({ slug: a.slug, title: a.fm.title, description: a.fm.description, date: a.fm.date, cover: a.cover });
 
@@ -219,7 +325,7 @@ if (published.length) fs.mkdirSync(path.join(DIST, 'blog'), { recursive: true })
 for (const article of published) {
   const { fm, slug } = article;
   const url = `${SITE_URL}/blog/${slug}`;
-  const author = authors.get(fm.author)!;
+  const articleAuthors = fm.author.map((slug) => authors.get(slug)!);
   const pillar = fm.pillar ? undefined : published.find((a) => a.fm.pillar && a.fm.cluster === fm.cluster);
   const chosen = (fm.related ?? []).filter(isPublished).map((s) => bySlug.get(s)!);
   const related = (chosen.length ? chosen : published.filter((a) => a !== article && a.fm.cluster === fm.cluster && a !== pillar)).slice(0, MAX_RELATED);
@@ -235,7 +341,7 @@ for (const article of published) {
         'article:published_time': fm.date,
         'article:modified_time': fm.updated ?? fm.date,
       },
-      jsonLd: articleJsonLd({ url, title: fm.title, description: fm.description, cover: article.cover, date: fm.date, updated: fm.updated, author, faq: fm.faq }),
+      jsonLd: articleJsonLd({ url, title: fm.title, description: fm.description, cover: article.cover, date: fm.date, updated: fm.updated, authors: articleAuthors, faq: fm.faq }),
     },
     assets,
     cluster: indexResult.success ? indexResult.data.clusterLabel[fm.cluster] : fm.cluster,
@@ -243,7 +349,7 @@ for (const article of published) {
     date: fm.date,
     updated: fm.updated,
     readingMinutes: Math.max(1, Math.round(article.body.words / WORDS_PER_MINUTE)),
-    author,
+    authors: articleAuthors,
     cover: article.cover,
     summary: fm.summary,
     bodyHtml: article.body.html,
@@ -278,14 +384,14 @@ if (published.length && indexResult.success) {
   );
 }
 
-// --- sitemap.xml: the pages in src/content/seo.ts, then the blog -----------------------------
+// --- sitemap.xml: the pages in src/content/seo.ts (PAGES, STATIC_PAGES), then the blog -------
 // <lastmod> only for the blog, from the articles' own dates: the build date isn't when a page
 // changed, and Google ignores a lastmod it can't trust.
 
 const escapeXml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const lastmod = (a: Article) => a.fm.updated ?? a.fm.date;
 const sitemapUrls: { loc: string; lastmod?: string }[] = [
-  ...Object.keys(PAGES).map((p) => ({ loc: canonicalUrl(p) })),
+  ...[...Object.keys(PAGES), ...STATIC_PAGES].map((p) => ({ loc: canonicalUrl(p) })),
   ...(published.length ? [{ loc: canonicalUrl('/blog'), lastmod: published.map(lastmod).sort().at(-1) }] : []),
   ...published.map((a) => ({ loc: canonicalUrl(`/blog/${a.slug}`), lastmod: lastmod(a) })),
 ];
@@ -301,7 +407,8 @@ fs.writeFileSync(
 const linksOut = new Map(articles.map((a) => [a.slug, new Set(a.body.internalLinks.map((l) => l.match(/^\/blog\/([^/]+)$/)?.[1]).filter((s): s is string => !!s && s !== a.slug && bySlug.has(s)))]));
 const linksIn = (slug: string) => articles.filter((a) => linksOut.get(a.slug)!.has(slug)).map((a) => a.slug);
 
-console.log(`\nBlog: ${published.length} published, ${articles.length - published.length} draft(s)${published.length ? `, written to dist/blog/` : '; /blog stays "Segera Hadir"'}. sitemap.xml: ${sitemapUrls.length} pages.`);
+console.log(`\n${ABOUT_PATH}: written to dist/tentang-kami.html.`);
+console.log(`Blog: ${published.length} published, ${articles.length - published.length} draft(s)${published.length ? `, written to dist/blog/` : '; /blog stays "Segera Hadir"'}. sitemap.xml: ${sitemapUrls.length} pages.`);
 if (articles.length) {
   console.log('  Article links (in the body; in = other articles linking here, out = articles linked):');
   for (const a of articles) {
