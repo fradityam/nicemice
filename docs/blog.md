@@ -120,7 +120,7 @@ sends: `button` is `blog_inline` for a box in the body, `blog_cta` for the closi
     {
       "slug": "ratu",
       "name": "Ratu",
-      "role": "Desainer",
+      "role": "Graphic Designer",
       "bio": "…",
       "url": "/tentang-kami#ratu",
       "sameAs": ["https://www.instagram.com/…"]

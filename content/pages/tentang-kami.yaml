@@ -46,18 +46,18 @@ team:
   people:
     - slug: ratu
       name: "Ratu"
-      role: "Desainer"
+      role: "Graphic Designer"
       bio: "Berlatar belakang desain grafis. Ratu mendesain setiap tema undangan Nice Mice, dan dialah yang pertama kali bilang “ah, ini mah I can”."
       photo: /images/about/ratu-avatar.webp   # round avatar: square 400x400, from content/images-src/about/ratu.jpeg; null shows the initial
-      photoAlt: "Ratu, desainer Nice Mice, tersenyum sambil memberi salam hormat di dek kayu"
+      photoAlt: "Ratu, graphic designer Nice Mice, tersenyum sambil memberi salam hormat"
       accent: lime   # the circle behind the avatar: lime or red
       badge: brush   # the sticker on the avatar: brush (designs) or code (builds)
     - slug: fadil
       name: "Fadil"
-      role: "Pembangun website & animasi"
+      role: "Web Developer"
       bio: "Fadil yang mengubah desain Ratu jadi undangan yang bisa dibuka dan disebar. Dia membangun website Nice Mice dan membuat animasi di setiap undangannya."
       photo: /images/about/fadil-avatar.webp   # from content/images-src/about/fadil.jpeg
-      photoAlt: "Fadil, pembangun website Nice Mice, berdiri di jalan setapak taman"
+      photoAlt: "Fadil, web developer Nice Mice, berdiri di jalan setapak taman"
       accent: red
       badge: code
 
