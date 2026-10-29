@@ -166,7 +166,7 @@ All its text is in the YAML file, top to bottom as on the page:
 | `hero` | `label` above the H1, `h1`, `intro`, and `photo` (in `public/images/about/`) with `photoAlt`, which is also the preview image's alt text |
 | `timeline` | `steps`, each a `heading` (H3) and `text`, shown alternating left and right of a line (on phones: all to its right) |
 | `values` | `heading` and 4 `items`, each a `title` and `text` |
-| `team` | `heading` and `people`: `slug` (the person's id on the page: `/tentang-kami#ratu`), `name`, `role`, `bio`, `photo` (`null` shows a box with their initial) |
+| `team` | `heading` and `people`: `slug` (the person's id on the page: `/tentang-kami#ratu`), `name`, `role`, `bio`, `photo` (a square photo in `public/images/about/`, 400×400, under 60 KB, shown as a round avatar; `null` shows their initial in the circle) with `photoAlt` (required with a photo), `accent` (the circle behind the avatar: `lime` or `red`) and `badge` (the sticker on it: `brush` or `code`, or none); the photo is also the Person's JSON-LD `image` |
 | `facts` | `items`, each a `value` shown large and a `label` |
 | `testimonials` | `couples`: 1 or 2 couples from `TESTIMONIALS` (`src/content/homeInfo.ts`), whose quotes are shown as they are on the homepage |
 | `closing` | `heading`, `text`, `primaryCta` (`label`, `href`), and `whatsappLabel` for the WhatsApp button (`whatsapp_click` with `button: about_cta`; hidden while there's no WhatsApp number) |
@@ -190,6 +190,7 @@ matching its place in `public/images/`, and commit both:
 
 | Original | On the site |
 | --- | --- |
+| `content/images-src/about/ratu.jpeg`, `fadil.jpeg` | `public/images/about/ratu-avatar.webp`, `fadil-avatar.webp` (square head-and-shoulders crops, faces about the same size) |
 | `content/images-src/about/fadil-ratu.jpg` | `public/images/about/fadil-ratu.webp` (the page), `fadil-ratu-og.webp` (link previews) |
 | `content/images-src/blog/<name>.jpg` | `public/images/blog/<name>.webp` |
 

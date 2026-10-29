@@ -92,8 +92,8 @@ export interface AboutPageData {
   values: { heading: string; items: { title: string; text: string }[] };
   team: {
     heading: string;
-    /** `slug` is the person's id on the page (/tentang-kami#ratu). No photo: a placeholder. */
-    people: { slug: string; name: string; role: string; bio: string; photo?: Image }[];
+    /** `slug` is the person's id on the page (/tentang-kami#ratu). No photo: their initial in the circle. */
+    people: { slug: string; name: string; role: string; bio: string; photo?: Image; accent: 'lime' | 'red'; badge?: 'brush' | 'code' }[];
   };
   facts: { heading: string; items: { value: string; label: string }[] };
   testimonials: { heading: string; items: { quote: string; couple: string; city: string }[] };

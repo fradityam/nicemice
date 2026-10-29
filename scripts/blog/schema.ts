@@ -80,14 +80,21 @@ export const aboutPageSchema = z.strictObject({
     heading: text,
     people: z
       .array(
-        z.strictObject({
-          slug: z.string().regex(SLUG, 'must be lowercase letters, digits and hyphens'),
-          name: text,
-          role: text,
-          bio: text,
-          /** null: a placeholder box until there's a photo. */
-          photo: aboutImage.nullable(),
-        }),
+        z
+          .strictObject({
+            slug: z.string().regex(SLUG, 'must be lowercase letters, digits and hyphens'),
+            name: text,
+            role: text,
+            bio: text,
+            /** A square photo for the round avatar, e.g. 400x400. null: the initial in the circle instead. */
+            photo: aboutImage.nullable(),
+            photoAlt: text.optional(),
+            /** The circle behind the avatar. */
+            accent: z.enum(['lime', 'red']).default('lime'),
+            /** The sticker on the avatar: a brush (designs) or </> (builds). None when left out. */
+            badge: z.enum(['brush', 'code']).optional(),
+          })
+          .refine((person) => !person.photo || person.photoAlt, { message: 'needs photoAlt, describing the photo', path: ['photoAlt'] }),
       )
       .min(1),
   }),

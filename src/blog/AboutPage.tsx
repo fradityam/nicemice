@@ -52,6 +52,28 @@ const REVEAL_SCRIPT = `(function () {
 /** The stagger step of a block within its group (about.css). */
 const order = (i: number) => ({ '--i': i }) as CSSProperties;
 
+/** The sticker on a team member's avatar: a brush for designing, </> for building. */
+function Badge({ kind }: { kind: 'brush' | 'code' }) {
+  return (
+    <span className={`about-badge about-badge-${kind}`} aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        {kind === 'brush' ? (
+          <>
+            <path d="M14.5 4.5l5 5L10 19l-5.5 1 1-5.5z" />
+            <path d="M12.5 6.5l5 5" />
+          </>
+        ) : (
+          <>
+            <path d="M8 7l-5 5 5 5" />
+            <path d="M16 7l5 5-5 5" />
+            <path d="M13.5 4.5l-3 15" />
+          </>
+        )}
+      </svg>
+    </span>
+  );
+}
+
 export default function AboutPage({ head, assets, hero, timeline, values, team, facts, testimonials, closing }: AboutPageData) {
   const whatsapp = whatsappLink(ORDER_MESSAGE);
   return (
@@ -122,16 +144,29 @@ export default function AboutPage({ head, assets, hero, timeline, values, team, 
         <div className="about-people">
           {team.people.map((person, i) => (
             <article className="about-person" id={person.slug} key={person.slug} data-reveal="" style={order(i)}>
-              {person.photo ? (
-                <img src={person.photo.src} alt={person.photo.alt} width={person.photo.width} height={person.photo.height} loading="lazy" decoding="async" />
-              ) : (
-                <div className="about-photo-placeholder" aria-hidden="true">
-                  {person.name.charAt(0)}
-                </div>
-              )}
-              <h3>{person.name}</h3>
-              <p className="about-person-role">{person.role}</p>
-              <p>{person.bio}</p>
+              <div className={`about-avatar about-avatar-${person.accent}`}>
+                {person.photo ? (
+                  <img
+                    className="about-avatar-photo"
+                    src={person.photo.src}
+                    alt={person.photo.alt}
+                    width={person.photo.width}
+                    height={person.photo.height}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <span className="about-avatar-photo about-avatar-initial" aria-hidden="true">
+                    {person.name.charAt(0)}
+                  </span>
+                )}
+                {person.badge && <Badge kind={person.badge} />}
+              </div>
+              <div className="about-person-text">
+                <h3>{person.name}</h3>
+                <p className="about-person-role">{person.role}</p>
+                <p>{person.bio}</p>
+              </div>
             </article>
           ))}
         </div>

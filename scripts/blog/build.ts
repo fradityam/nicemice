@@ -127,9 +127,12 @@ if (about) {
     team: {
       heading: about.team.heading,
       people: await Promise.all(
-        about.team.people.map(async ({ photo, ...person }, i) =>
-          photo ? { ...person, photo: await aboutImage(photo, `${person.name}, ${person.role} Nice Mice`, `team.people.${i}.photo`) } : person,
-        ),
+        about.team.people.map(async ({ photo, photoAlt, ...person }, i) => {
+          if (!photo) return person;
+          const image = await aboutImage(photo, photoAlt!, `team.people.${i}.photo`);
+          if (image.width && image.width !== image.height) aboutIssues.warn(`team.people.${i}.photo is ${image.width}x${image.height}; the round avatar needs a square photo`);
+          return { ...person, photo: image };
+        }),
       ),
     },
     facts: about.facts,
